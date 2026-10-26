@@ -10,7 +10,7 @@ separat unterstützt.
 
 Veröffentlichen Sie Sicherheitslücken nicht als öffentliches Issue. Verwenden
 Sie stattdessen GitHubs Funktion
-[Report a vulnerability](https://github.com/Comvenio/comvenio-cli/security/advisories/new).
+[Report a vulnerability](https://github.com/TES-Factory/comvenio-cli/security/advisories/new).
 
 Beschreiben Sie nach Möglichkeit:
 
@@ -24,5 +24,5 @@ Vereinsdaten. Falls ein Token versehentlich offengelegt wurde, widerrufen Sie
 es sofort in Comvenio und erstellen Sie ein neues Token.
 
 Normale Fehler und Supportfragen gehören in die
-[öffentlichen Issue-Formulare](https://github.com/Comvenio/comvenio-cli/issues/new/choose).
+[öffentlichen Issue-Formulare](https://github.com/TES-Factory/comvenio-cli/issues/new/choose).
 

@@ -33,7 +33,7 @@ Die CLI ist Source-Available und wird aus dem öffentlichen Repository gebaut;
 es gibt kein npm-Paket. Voraussetzung sind `git` und [Bun](https://bun.sh).
 
 ```bash
-git clone https://github.com/Comvenio/comvenio-cli.git
+git clone https://github.com/TES-Factory/comvenio-cli.git
 cd comvenio-cli
 bun install
 bun run build

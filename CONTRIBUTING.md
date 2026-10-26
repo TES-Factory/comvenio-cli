@@ -12,14 +12,14 @@ mit Comvenio bestimmt.
    [SECURITY.md](SECURITY.md).
 
 Nutzen Sie anschließend das passende
-[Issue-Formular](https://github.com/Comvenio/comvenio-cli/issues/new/choose).
+[Issue-Formular](https://github.com/TES-Factory/comvenio-cli/issues/new/choose).
 
 ## Entwicklung lokal prüfen
 
 Voraussetzungen sind Git und Bun.
 
 ```bash
-git clone https://github.com/Comvenio/comvenio-cli.git
+git clone https://github.com/TES-Factory/comvenio-cli.git
 cd comvenio-cli
 bun install
 bun run typecheck
