@@ -218,17 +218,17 @@ Helferkoordination, Saisonplanung und Vereins-Onboarding.
 Alle Skills installieren:
 
 ```bash
-npx skills add Comvenio/comvenio-skills --all
+npx skills add TES-Factory/comvenio-skills --all
 ```
 
 Verfügbare Skills zuerst anzeigen:
 
 ```bash
-npx skills add Comvenio/comvenio-skills --list
+npx skills add TES-Factory/comvenio-skills --list
 ```
 
 Der vollständige Katalog und weitere Installationsmöglichkeiten stehen im
-Repository [Comvenio/comvenio-skills](https://github.com/Comvenio/comvenio-skills).
+Repository [TES-Factory/comvenio-skills](https://github.com/TES-Factory/comvenio-skills).
 Die Skills verwenden ausschließlich dieses CLI. Zugangsdaten gehören niemals
 in den Chat; `comvenio login` öffnet den sicheren Comvenio-OAuth-Flow.
 
@@ -494,7 +494,7 @@ im Comvenio-Backend geprüft.
 ## Support und Mitwirkung
 
 Nutzen Sie für Fehler, Wünsche und allgemeine Hilfe die
-[Issue-Formulare](https://github.com/Comvenio/comvenio-cli/issues/new/choose).
+[Issue-Formulare](https://github.com/TES-Factory/comvenio-cli/issues/new/choose).
 Veröffentlichen Sie dort keine Zugriffstoken, Passwörter oder
 personenbezogenen Vereinsdaten.
 
