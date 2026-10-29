@@ -2249,6 +2249,7 @@
           "name": "layout",
           "values": [
             "grid",
+            "rows",
             "masonry",
             "carousel",
             "filmstrip",
@@ -2259,8 +2260,8 @@
       "beschreibung": {
         "kategorie": "medien",
         "zweck": {
-          "de": "Bildergalerie als Raster, Mauerwerk, Karussell, Filmstreifen oder Diashow.",
-          "en": "Image gallery as a grid, masonry layout, carousel, filmstrip or slideshow."
+          "de": "Bildergalerie als Raster, Zeilen, Mauerwerk, Karussell, Filmstreifen oder Diashow.",
+          "en": "Image gallery as a grid, justified rows, masonry layout, carousel, filmstrip or slideshow."
         },
         "datenquelle": {
           "de": "Je nach im Formular gewählter Quelle: ausgewählte Dateien aus dem Dateibereich, Bilder eines gewählten Events, Bilder der letzten begonnenen öffentlichen Events aus Event-Galerie und freigegebenen Beiträgen des Event-Feeds (bis zu 50, je Event begrenzt), ein Ordner aus dem Dateibereich, externe Bild-URLs oder öffentliche Vereinsbilder.",
