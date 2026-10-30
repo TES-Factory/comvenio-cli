@@ -63,12 +63,19 @@ const eventChanges = z.object({
   has_protocol_support: z.boolean().optional(), has_counter_support: z.boolean().optional(), has_purchase_support: z.boolean().optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, "Mindestens eine Änderung ist erforderlich.");
 
+// Fields of the event-service's EventSeriesCreate/-Update (BUG 39bd671c): a series always hangs on an existing
+// template event; department_id is sent as default_department_id. Without defaults, so changes reset nothing.
+const seriesFields = {
+  title: shortText, template_event_id: uuid, department_id: uuid, description: text.nullable().optional(),
+  series_type: z.enum(["RECURRING", "YEARLY_TEMPLATE"]), materialization_mode: z.enum(["AUTO", "MANUAL"]),
+  timezone, rrule: z.string().min(3).max(2_000), dtstart: dateTime, duration_minutes: z.number().int().min(1).max(100_800),
+};
 const seriesData = z.object({
-  name: shortText, department_id: uuid, title_template: shortText.optional(), description_template: text.nullable().optional(),
-  event_type: eventFields.event_type, visibility_scope: eventFields.visibility_scope, timezone: timezone.default("Europe/Berlin"),
-  rrule: z.string().min(3).max(2_000), dtstart: dateTime, duration_minutes: z.number().int().min(1).max(100_800),
-}).strict();
-const seriesChanges = seriesData.partial().strict().refine((value) => Object.keys(value).length > 0);
+  ...seriesFields,
+  series_type: seriesFields.series_type.default("RECURRING"), materialization_mode: seriesFields.materialization_mode.default("AUTO"),
+  timezone: timezone.default("Europe/Berlin"), rrule: seriesFields.rrule.optional(),
+}).strict().refine((value) => value.series_type === "YEARLY_TEMPLATE" || value.rrule !== undefined, "Eine wiederkehrende Serie braucht eine Regel (rrule).");
+const seriesChanges = z.object(seriesFields).partial().strict().refine((value) => Object.keys(value).length > 0);
 const areaData = z.object({ name: shortText, description: text.nullable().optional(), color: color.nullable().optional(), is_public: z.boolean().default(false), public_description: text.nullable().optional(), area_category: z.string().max(100).nullable().optional() }).strict();
 const areaChanges = areaData.partial().strict().refine((value) => Object.keys(value).length > 0);
 const noteData = z.object({ content: text, is_public: z.boolean().default(false) }).strict();
@@ -126,7 +133,7 @@ export const K8_ACTION_SCHEMAS: Readonly<Record<K8ActionId, K8ActionSchemaContra
   ])),
   "cai.event.08.series_list_show_create_materialize_promote_recurring_promote_yearly_n": contract(union([
     branch("list", {}), branch("show", { series_id: uuid }), branch("create", { series: seriesData }), branch("update", { series_id: uuid, changes: seriesChanges }),
-    branch("delete", { series_id: uuid }, true), branch("materialize", { series_id: uuid, range: localRange }, true), branch("materialize_next", { series_id: uuid }, true),
+    branch("delete", { series_id: uuid }, true), branch("materialize", { series_id: uuid, range: localRange }, true), branch("materialize_next", { series_id: uuid, start_time: dateTime }, true),
     branch("promote_recurring", { event_id: uuid, recurrence: z.object({ rrule: z.string().min(3).max(2_000), timezone: timezone.default("Europe/Berlin") }).strict() }, true),
     branch("promote_yearly", { event_id: uuid, recurrence: z.object({ timezone: timezone.default("Europe/Berlin"), years_ahead: z.number().int().min(1).max(20).default(5) }).strict() }, true),
   ])),
