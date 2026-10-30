@@ -78,3 +78,11 @@ test("materialize_next sends the start of the next instance", async () => {
 test("materialize_next requires a start", () => {
   expect(() => schema.parse({ club_id: club, operation: "materialize_next", series_id: seriesId })).toThrow();
 });
+
+// BUG 97c6782c: EventSeriesMaterializeRequest reads window_start/window_end; {start, end} ended in 422 on confirm.
+test("materialize sends the window the service reads", async () => {
+  const range = { from: "2026-01-01", to: "2026-03-01", timezone: "Europe/Berlin", from_inclusive: true, to_exclusive: true };
+  const request = await send("materialize", { series_id: seriesId, range, confirmation });
+  expect(request).toMatchObject({ method: "POST", path: `/event-series/${seriesId}/materialize` });
+  expect(request.body).toEqual({ window_start: "2025-12-31T23:00:00.000Z", window_end: "2026-02-28T23:00:00.000Z" });
+});

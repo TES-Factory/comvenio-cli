@@ -99,7 +99,7 @@ const seriesBody = (values: JsonObject): JsonObject => {
 simple(series, "create", "POST", fixed("/event-series/"), { body: (i) => ({ club_id: string(i, "club_id"), ...seriesBody(object(i, "series")) }) });
 simple(series, "update", "PATCH", by("/event-series/", "series_id"), { body: (i) => seriesBody(object(i, "changes")) });
 simple(series, "delete", "DELETE", by("/event-series/", "series_id"), { deleted_id: "series_id" });
-simple(series, "materialize", "POST", by("/event-series/", "series_id", "/materialize"), { body: (i) => rangeQuery(range(i)) });
+simple(series, "materialize", "POST", by("/event-series/", "series_id", "/materialize"), { body: (i) => { const window = rangeQuery(range(i)); return { window_start: window.start!, window_end: window.end! }; } });
 simple(series, "materialize_next", "POST", by("/event-series/", "series_id", "/materialize-next"), { body: (i) => ({ start_time: string(i, "start_time") }) });
 simple(series, "promote_recurring", "POST", by("/events/", "event_id", "/promote-to-recurring-series"), { body: nested("recurrence") });
 simple(series, "promote_yearly", "POST", by("/events/", "event_id", "/promote-to-yearly-series"), { body: nested("recurrence") });
