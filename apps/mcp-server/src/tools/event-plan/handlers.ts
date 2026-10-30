@@ -91,11 +91,16 @@ simple(template, "instantiate", "POST", by("/events/", "template_id", "/event-fr
 const series = "cai.event.08.series_list_show_create_materialize_promote_recurring_promote_yearly_n" as const;
 simple(series, "list", "GET", by("/event-series/by-club/", "club_id"));
 simple(series, "show", "GET", by("/event-series/", "series_id"));
-simple(series, "create", "POST", fixed("/event-series/"), { body: nested("series", (i) => ({ club_id: string(i, "club_id") })) });
-simple(series, "update", "PATCH", by("/event-series/", "series_id"), { body: nested("changes") });
+// The event-service reads the department of a series as default_department_id.
+const seriesBody = (values: JsonObject): JsonObject => {
+  const { department_id: department, ...rest } = values;
+  return department === undefined ? rest : { ...rest, default_department_id: department };
+};
+simple(series, "create", "POST", fixed("/event-series/"), { body: (i) => ({ club_id: string(i, "club_id"), ...seriesBody(object(i, "series")) }) });
+simple(series, "update", "PATCH", by("/event-series/", "series_id"), { body: (i) => seriesBody(object(i, "changes")) });
 simple(series, "delete", "DELETE", by("/event-series/", "series_id"), { deleted_id: "series_id" });
 simple(series, "materialize", "POST", by("/event-series/", "series_id", "/materialize"), { body: (i) => rangeQuery(range(i)) });
-simple(series, "materialize_next", "POST", by("/event-series/", "series_id", "/materialize-next"));
+simple(series, "materialize_next", "POST", by("/event-series/", "series_id", "/materialize-next"), { body: (i) => ({ start_time: string(i, "start_time") }) });
 simple(series, "promote_recurring", "POST", by("/events/", "event_id", "/promote-to-recurring-series"), { body: nested("recurrence") });
 simple(series, "promote_yearly", "POST", by("/events/", "event_id", "/promote-to-yearly-series"), { body: nested("recurrence") });
 
