@@ -101,3 +101,19 @@ test("assign_series needs both ids", () => {
   expect(() => schema.parse({ club_id: club, operation: "assign_series", event_id: eventId })).toThrow();
   expect(() => schema.parse({ club_id: club, operation: "assign_series", series_id: seriesId })).toThrow();
 });
+
+// 31f24a73: an open end is duration_minutes null — on create and on update, never replaced by a default.
+test("create: an open end sends duration_minutes null", async () => {
+  const request = await send("create", { series: { ...yearly, duration_minutes: null } });
+  expect((request.body as Record<string, unknown>).duration_minutes).toBeNull();
+});
+
+test("update: duration_minutes null opens the end", async () => {
+  const request = await send("update", { series_id: seriesId, changes: { duration_minutes: null } });
+  expect(request).toMatchObject({ method: "PATCH", path: `/event-series/${seriesId}` });
+  expect(request.body).toEqual({ duration_minutes: null });
+});
+
+test("duration_minutes stays a positive number when given", () => {
+  expect(() => schema.parse({ club_id: club, operation: "update", series_id: seriesId, changes: { duration_minutes: 0 } })).toThrow();
+});
