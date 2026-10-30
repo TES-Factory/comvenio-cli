@@ -203,9 +203,10 @@ describe("Comvenio connector inventory contract", () => {
     // +5 community page through the club of the sign-in (community-hub 14, cai.community.01..05),
     // +10 automations over OAuth (automatisierungen-07, cai.club.16..25),
     // +1 own club pages in a community (community-hub 15, cai.community.06.club_page),
-    // +1 change a team termin over OAuth (cai.teams.32.termin_update, team prefix in old titles).
-    expect(directActionIds).toHaveLength(401);
-    expect(new Set(directActionIds).size).toBe(401);
+    // +1 change a team termin over OAuth (cai.teams.32.termin_update, team prefix in old titles),
+    // +2 feedback to Comvenio through the CLI (task 15c9ab96, cai.feedback.01.create, cai.feedback.02.list).
+    expect(directActionIds).toHaveLength(403);
+    expect(new Set(directActionIds).size).toBe(403);
     expect(additiveActionIds).toEqual([
       // Wochenvorschau (ai-service): the classic command ran on the device token only.
       "cai.club.11.weekly_preview_create",
@@ -236,6 +237,9 @@ describe("Comvenio connector inventory contract", () => {
       "cai.community.04.screenshot",
       "cai.community.05.design",
       "cai.community.06.club_page",
+      // Feedback to Comvenio: user-service /users/me/feedback, context cli/<agent> <version>.
+      "cai.feedback.01.create",
+      "cai.feedback.02.list",
       // Kein Legacy-Gegenstueck: Das Legacy-Inventar vom 2026-07-14 kannte die
       // Vereinsbuchhaltung nicht. Die 19 Aktionen decken Jahresplan, Posten und
       // Buchungen des finance-service ab; Rechnungen, Beitraege, Spenden und
@@ -347,8 +351,8 @@ describe("Comvenio connector inventory contract", () => {
     expect(Object.keys(definitions).sort()).toEqual([...directActionIds].sort());
     expect(Object.keys(schemas).sort()).toEqual([...directActionIds].sort());
     expect(summary).toMatchObject({
-      discovered_actions: 401,
-      published_domain_actions: 399,
+      discovered_actions: 403,
+      published_domain_actions: 401,
       blocked_action_ids: [
         "cai.club.01.info",
         "cai.role.15.effective",
@@ -519,10 +523,10 @@ function k7Dependencies(client: ComvenioApiClient): K7ExecutionDependencies {
 }
 
 describe("K7 identity, club, member, team and role contract", () => {
-  test("TC-01/TC-02: maps all six domains and exactly 101 inventoried actions", () => {
-    expect(K7_ACTION_IDS).toHaveLength(101);
-    expect(Object.keys(K7_ACTION_DEFINITIONS)).toHaveLength(101);
-    expect(Object.keys(K7_ACTION_SCHEMAS)).toHaveLength(101);
+  test("TC-01/TC-02: maps all seven domains and exactly 103 inventoried actions", () => {
+    expect(K7_ACTION_IDS).toHaveLength(103);
+    expect(Object.keys(K7_ACTION_DEFINITIONS)).toHaveLength(103);
+    expect(Object.keys(K7_ACTION_SCHEMAS)).toHaveLength(103);
 
     const sets = createK7ToolSets(k7Dependencies(k7Client(async () => null)));
     expect({
@@ -532,7 +536,8 @@ describe("K7 identity, club, member, team and role contract", () => {
       team: sets.team.listDefinitions().length,
       teams: sets.teams.listDefinitions().length,
       role: sets.role.listDefinitions().length,
-    }).toEqual({ identity: 1, club: 25, member: 21, team: 7, teams: 32, role: 15 });
+      feedback: sets.feedback.listDefinitions().length,
+    }).toEqual({ identity: 1, club: 25, member: 21, team: 7, teams: 32, role: 15, feedback: 2 });
     expect(K7_ACTION_IDS.some((id) => /login|logout|log_service|master.?admin/iu.test(id))).toBe(false);
   });
 

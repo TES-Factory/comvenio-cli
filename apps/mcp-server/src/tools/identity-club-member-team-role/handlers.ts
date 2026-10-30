@@ -692,6 +692,23 @@ const handlers: Partial<Record<K7ActionId, K7ActionHandler>> = {
     return rows(await request(client, context, "GET", "role", `/position-roles/by-position/${string(input, "position_id")}`))
       .map(redactPositionRole);
   },
+  // The user-service forwards to the RTS; no club and no user id leave with it.
+  async "cai.feedback.01.create"(input, context, client) {
+    return request(client, context, "POST", "user", "/users/me/feedback", {
+      body: { ...nested(input, "feedback"), context: feedbackContext(context.surface, record(input).client ?? null) },
+    });
+  },
+  async "cai.feedback.02.list"(_input, context, client) {
+    return request(client, context, "GET", "user", "/users/me/feedback");
+  },
 };
+
+// "cli/<agent> <version>" shows the team that an agent entered the feedback through the CLI (task 15c9ab96).
+export function feedbackContext(surface: string, client: JsonValue): string {
+  const fields = client !== null && typeof client === "object" && !Array.isArray(client) ? client : {};
+  const agent = typeof fields.agent === "string" && fields.agent.trim() ? fields.agent.trim() : "unbekannt";
+  const version = typeof fields.version === "string" && fields.version.trim() ? ` ${fields.version.trim()}` : "";
+  return `${surface}/${agent}${version}`.slice(0, 500);
+}
 
 export const K7_ACTION_HANDLERS = Object.freeze(handlers);

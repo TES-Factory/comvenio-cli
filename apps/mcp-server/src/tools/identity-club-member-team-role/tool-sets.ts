@@ -263,6 +263,11 @@ export class RoleToolSet extends K7ToolSet {
   constructor(dependencies: K7ExecutionDependencies) { super("role", dependencies); }
 }
 
+// Feedback to Comvenio: send and read the own feedback (task 15c9ab96).
+export class FeedbackToolSet extends K7ToolSet {
+  constructor(dependencies: K7ExecutionDependencies) { super("feedback", dependencies); }
+}
+
 export interface K7ToolSets {
   identity: IdentityToolSet;
   club: ClubToolSet;
@@ -270,6 +275,7 @@ export interface K7ToolSets {
   team: TeamToolSet;
   teams: TeamsSeasonToolSet;
   role: RoleToolSet;
+  feedback: FeedbackToolSet;
 }
 
 export function createK7ToolSets(dependencies: K7ExecutionDependencies): K7ToolSets {
@@ -280,5 +286,6 @@ export function createK7ToolSets(dependencies: K7ExecutionDependencies): K7ToolS
     team: new TeamToolSet(dependencies),
     teams: new TeamsSeasonToolSet(dependencies),
     role: new RoleToolSet(dependencies),
+    feedback: new FeedbackToolSet(dependencies),
   };
 }

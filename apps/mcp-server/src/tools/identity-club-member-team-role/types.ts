@@ -118,10 +118,12 @@ export const K7_ACTION_IDS = [
   "cai.role.13.position_unlink",
   "cai.role.14.position_list",
   "cai.role.15.effective",
+  "cai.feedback.01.create",
+  "cai.feedback.02.list",
 ] as const;
 
 export type K7ActionId = (typeof K7_ACTION_IDS)[number];
-export type K7Domain = "whoami" | "club" | "member" | "team" | "teams" | "role";
+export type K7Domain = "whoami" | "club" | "member" | "team" | "teams" | "role" | "feedback";
 export type K7ExecutionGate = "inline" | "write_safety" | "job" | "blocked";
 export type K7PublicationState = "implemented" | "blocked";
 

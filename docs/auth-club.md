@@ -1,8 +1,8 @@
 ---
 id: auth-club
 kategorie: thema
-domaenen: [login, logout, whoami, action, club]
-stichwoerter: [login, anmeldung, verein, club, scopes, rechte, maschinen-grant, automation, ci]
+domaenen: [login, logout, whoami, action, club, feedback]
+stichwoerter: [login, anmeldung, verein, club, scopes, rechte, maschinen-grant, automation, ci, feedback, wunsch]
 ---
 
 # Anmeldung und Vereinskontext
@@ -288,6 +288,16 @@ hochgeladene Logo gilt sofort überall, wo die Plattform das Vereinslogo
 zeigt: Kopfzeile der Homepage, Bild-Widget mit Vereinslogo als Quelle,
 Vereinsauswahl.
 
+### Feedback an Comvenio senden
+
+Fehler, Verbesserungen und Wünsche gehen direkt an das Comvenio-Team — wie
+„Feedback geben“ in Web und App. Art ist `ERROR`, `IMPROVEMENT`, `WISHLIST`
+oder `FEEDBACK`; der Betreff ist freiwillig (höchstens 200 Zeichen). Der
+Aufruf liefert eine Vorschau, gesendet wird erst mit `comvenio action
+confirm`. Das CLI vermerkt, über welchen KI-Assistenten und welche
+CLI-Version das Feedback kam; Verein und Personen werden nicht mitgeschickt.
+Eigene Feedbacks mit Stand und Antwort des Teams liest `cai.feedback.02.list`.
+
 ## Beispiele
 
 Anmeldung mit eingeschränkten Scopes, danach Identität prüfen:
@@ -312,6 +322,15 @@ Neue Abteilung anlegen:
 comvenio action call cai.club.08.department_add \
   --input '{"department":{"name":"Dart","description":"Dart-Abteilung","slug":"dart","color_theme_1":"#123456","parent_department_id":null,"is_default":false}}' \
   --json
+```
+
+Wunsch an Comvenio senden (Vorschau, dann bestätigen) und Antworten lesen:
+
+```bash
+comvenio action call cai.feedback.01.create \
+  --input '{"feedback":{"kind":"WISHLIST","subject":"Jahresserien","message":"Bitte Serien auf vorhandenen Vorlagen anlegen können."}}' \
+  --json
+comvenio action call cai.feedback.02.list --json
 ```
 
 ## Befehle und Actions
@@ -358,6 +377,11 @@ comvenio action call cai.club.08.department_add \
 - `cai.club.23.automation_resume` — automation-resume (ändern) · Scopes: `club.write`
 - `cai.club.24.automation_run` — automation-run (ändern mit Bestätigung) · Scopes: `club.write`
 - `cai.club.25.automation_delete` — automation-delete (ändern mit Bestätigung) · Scopes: `club.write`
+
+**feedback**
+
+- `cai.feedback.01.create` — feedback create (ändern mit Bestätigung) · Scopes: `club.write`
+- `cai.feedback.02.list` — feedback list (lesen) · Scopes: `club.read`
 <!-- /gen:docs -->
 
 ## Fehler
