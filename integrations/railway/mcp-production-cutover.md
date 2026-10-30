@@ -27,6 +27,15 @@ Der Worker kann vor dem Railway-Cutover bereitgestellt werden: Der bisherige MCP
 
 Repository: `comvenio-cli`; Railway-Konfiguration: `railway.json`.
 
+Railway-Dienst: Projekt `comvenio` → Environment `production` → Service
+`comvenio-cli`, Service-ID `8bc975b9-e01a-49f7-b95d-96b5d9c24d0d`. Diese ID
+nennt den Dienst eindeutig, etwa für `railway logs --service` oder
+`railway deployment list --service`.
+
+Welcher Commit live läuft, zeigt heute nur die Deploy-Liste (Railway bzw.
+GitHub-Deployments von `comvenio-cli`); einen Versions-Endpunkt neben
+`/health` gibt es noch nicht. Er ist als Vorrat `0f723a3e` vorgemerkt.
+
 Folgende Service-Variablen setzen oder aktualisieren:
 
 ```text
