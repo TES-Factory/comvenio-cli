@@ -103,6 +103,7 @@ simple(series, "materialize", "POST", by("/event-series/", "series_id", "/materi
 simple(series, "materialize_next", "POST", by("/event-series/", "series_id", "/materialize-next"), { body: (i) => ({ start_time: string(i, "start_time") }) });
 simple(series, "promote_recurring", "POST", by("/events/", "event_id", "/promote-to-recurring-series"), { body: nested("recurrence") });
 simple(series, "promote_yearly", "POST", by("/events/", "event_id", "/promote-to-yearly-series"), { body: nested("recurrence") });
+simple(series, "assign_series", "POST", by("/events/", "event_id", "/assign-to-series"), { body: (i) => ({ series_id: string(i, "series_id") }) });
 
 const area = "cai.event.09.area_list_add_show_update_delete_bulk_copy" as const;
 simple(area, "list", "GET", by("/events/areas/by-event/", "event_id"));

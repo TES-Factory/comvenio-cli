@@ -136,6 +136,8 @@ export const K8_ACTION_SCHEMAS: Readonly<Record<K8ActionId, K8ActionSchemaContra
     branch("delete", { series_id: uuid }, true), branch("materialize", { series_id: uuid, range: localRange }, true), branch("materialize_next", { series_id: uuid, start_time: dateTime }, true),
     branch("promote_recurring", { event_id: uuid, recurrence: z.object({ rrule: z.string().min(3).max(2_000), timezone: timezone.default("Europe/Berlin") }).strict() }, true),
     branch("promote_yearly", { event_id: uuid, recurrence: z.object({ timezone: timezone.default("Europe/Berlin"), years_ahead: z.number().int().min(1).max(20).default(5) }).strict() }, true),
+    // b69dd094: attach an existing event to an existing yearly series; idempotent in the event-service.
+    branch("assign_series", { event_id: uuid, series_id: uuid }, true),
   ])),
   "cai.event.09.area_list_add_show_update_delete_bulk_copy": contract(union([
     branch("list", { event_id: uuid }), branch("add", { event_id: uuid, area: areaData }), branch("show", { area_id: uuid }), branch("update", { area_id: uuid, changes: areaChanges }), branch("delete", { area_id: uuid }, true),

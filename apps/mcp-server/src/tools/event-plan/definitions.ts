@@ -90,7 +90,7 @@ export const K8_ACTION_DEFINITIONS: Readonly<Record<K8ActionId, K8ActionDefiniti
     ],
   }),
   "cai.event.08.series_list_show_create_materialize_promote_recurring_promote_yearly_n": action({
-    action_id: "cai.event.08.series_list_show_create_materialize_promote_recurring_promote_yearly_n", domain: "event", source_action: "series list|show|create|update|delete|materialize|next|promote-recurring|promote-yearly", operations: [
+    action_id: "cai.event.08.series_list_show_create_materialize_promote_recurring_promote_yearly_n", domain: "event", source_action: "series list|show|create|update|delete|materialize|next|promote-recurring|promote-yearly|assign", operations: [
       read("list", "/event-series/by-club/{club_id}"), read("show", "/event-series/{series_id}"),
       write("create", "POST", "/event-series/"), write("update", "PATCH", "/event-series/{series_id}"),
       write("delete", "DELETE", "/event-series/{series_id}", "critical_write"),
@@ -98,6 +98,7 @@ export const K8_ACTION_DEFINITIONS: Readonly<Record<K8ActionId, K8ActionDefiniti
       write("materialize_next", "POST", "/event-series/{series_id}/materialize-next", "critical_write"),
       write("promote_recurring", "POST", "/events/{event_id}/promote-to-recurring-series", "critical_write"),
       write("promote_yearly", "POST", "/events/{event_id}/promote-to-yearly-series", "critical_write"),
+      write("assign_series", "POST", "/events/{event_id}/assign-to-series", "critical_write"),
     ],
   }),
   "cai.event.09.area_list_add_show_update_delete_bulk_copy": action({

@@ -86,3 +86,18 @@ test("materialize sends the window the service reads", async () => {
   expect(request).toMatchObject({ method: "POST", path: `/event-series/${seriesId}/materialize` });
   expect(request.body).toEqual({ window_start: "2025-12-31T23:00:00.000Z", window_end: "2026-02-28T23:00:00.000Z" });
 });
+
+// b69dd094: attach an existing event to an existing yearly series (POST /events/{id}/assign-to-series,
+// AssignToSeriesRequest reads series_id only). The service answers idempotently.
+const eventId = "66666666-6666-4666-8666-666666666666";
+
+test("assign_series sends the series the service reads", async () => {
+  const request = await send("assign_series", { event_id: eventId, series_id: seriesId, confirmation });
+  expect(request).toMatchObject({ method: "POST", path: `/events/${eventId}/assign-to-series` });
+  expect(request.body).toEqual({ series_id: seriesId });
+});
+
+test("assign_series needs both ids", () => {
+  expect(() => schema.parse({ club_id: club, operation: "assign_series", event_id: eventId })).toThrow();
+  expect(() => schema.parse({ club_id: club, operation: "assign_series", series_id: seriesId })).toThrow();
+});
