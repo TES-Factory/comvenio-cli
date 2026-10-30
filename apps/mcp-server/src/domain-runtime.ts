@@ -640,9 +640,9 @@ function confirmationPreview(
   return parsed.success ? parsed.data : null;
 }
 
-function impactFor(
-  definition: DomainDefinition,
-  operation: DomainOperation,
+export function impactFor(
+  definition: Pick<DomainDefinition, "source_action">,
+  operation: Pick<DomainOperation, "operation">,
 ): {
   creates: number;
   updates: number;
@@ -653,8 +653,10 @@ function impactFor(
   affected_total: number;
   summary: string;
 } {
-  const action = `${definition.source_action} ${operation.operation}`
-    .toLowerCase();
+  // The source action lists every operation of the action ("series list|show|create|delete|…").
+  // Only the current operation counts, otherwise each one inherits "delete" (BUG b956d7dd).
+  const verbs = definition.source_action.split(/\s+/u).filter((word) => !word.includes("|"));
+  const action = `${verbs.join(" ")} ${operation.operation}`.toLowerCase();
   const kind = /(?:delete|remove|reject|cancel)/u.test(action)
     ? "deletes"
     : /(?:publish|public)/u.test(action)
@@ -663,7 +665,7 @@ function impactFor(
         ? "imports"
         : /export/u.test(action)
           ? "exports"
-          : /(?:create|add)/u.test(action)
+          : /(?:create|add|materialize|clone|instantiate|copy|duplicate)/u.test(action)
             ? "creates"
             : "updates";
   return {
