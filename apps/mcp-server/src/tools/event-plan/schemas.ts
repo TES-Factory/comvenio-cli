@@ -68,7 +68,9 @@ const eventChanges = z.object({
 const seriesFields = {
   title: shortText, template_event_id: uuid, department_id: uuid, description: text.nullable().optional(),
   series_type: z.enum(["RECURRING", "YEARLY_TEMPLATE"]), materialization_mode: z.enum(["AUTO", "MANUAL"]),
-  timezone, rrule: z.string().min(3).max(2_000), dtstart: dateTime, duration_minutes: z.number().int().min(1).max(100_800),
+  timezone, rrule: z.string().min(3).max(2_000), dtstart: dateTime,
+  // 31f24a73: null is an open end (the event-service keeps duration_minutes NULL, instances get no end_time).
+  duration_minutes: z.number().int().min(1).max(100_800).nullable(),
 };
 const seriesData = z.object({
   ...seriesFields,
