@@ -23,6 +23,7 @@ const sourcePath: Record<K7Domain, string> = {
   team: "src/commands/team.ts",
   teams: "src/commands/teams.ts",
   role: "src/commands/role.ts",
+  feedback: "src/commands/action.ts",
 };
 
 const route = (
@@ -610,6 +611,17 @@ export const K7_ACTION_DEFINITIONS: Readonly<Record<K7ActionId, K7ActionDefiniti
     action_id: "cai.role.15.effective", domain: "role", source_action: "effective", scopes: CLUB_READ,
     permission: policy([], "optional", true), routes: [route(null, "GET", "role", "/permissions/effective/self")],
     blocker: "Der erforderliche Self-Endpunkt GET /permissions/effective/self ist im Role-Service noch nicht implementiert; der Legacy-Fremdmember-Pfad wird nicht exponiert.",
+  }),
+  // Feedback to Comvenio (task 15c9ab96): the user-service forwards to the RTS product intake, like web and app.
+  // Sending is confirmed: the preview shows subject and text before anything leaves the club.
+  "cai.feedback.01.create": definition({
+    action_id: "cai.feedback.01.create", domain: "feedback", source_action: "feedback create", scopes: CLUB_WRITE,
+    permission: policy([], "optional", true), risk: "critical_write",
+    routes: [route(null, "POST", "user", "/users/me/feedback")],
+  }),
+  "cai.feedback.02.list": definition({
+    action_id: "cai.feedback.02.list", domain: "feedback", source_action: "feedback list", scopes: CLUB_READ,
+    permission: policy([], "optional", true), routes: [route(null, "GET", "user", "/users/me/feedback")],
   }),
 });
 

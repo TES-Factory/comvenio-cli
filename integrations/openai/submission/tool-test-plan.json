@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "catalog_source_hash_sha256": "324496f651e64b07929059f7262843f9e49690f7a5435a9696d6288b4fc26284",
+  "catalog_source_hash_sha256": "48e4f9d285138278be67115ee4a07ff8c80e970934dea4663eab932675c54adc",
   "coverage": "every_published_tool",
   "cases": [
     {
@@ -1626,6 +1626,36 @@
     {
       "tool_name": "cv_event_calendar_widget_read",
       "prompt": "Prüfe „Comvenio: Persönlichen Vereinskalender öffnen“ mit synthetischen Daten im ausgewählten Testverein.",
+      "expected_response_fixture": "fixtures/provider/openai/full-connector-v1.response.json",
+      "required_surfaces": [
+        "web",
+        "mobile"
+      ],
+      "verifies": [
+        "schema",
+        "security_schemes",
+        "annotations",
+        "rbac_recheck"
+      ]
+    },
+    {
+      "tool_name": "cv_feedback_01_create",
+      "prompt": "Prüfe „Comvenio: feedback – feedback create“ mit synthetischen Daten im ausgewählten Testverein.",
+      "expected_response_fixture": "fixtures/provider/openai/full-connector-v1.response.json",
+      "required_surfaces": [
+        "web",
+        "mobile"
+      ],
+      "verifies": [
+        "schema",
+        "security_schemes",
+        "annotations",
+        "rbac_recheck"
+      ]
+    },
+    {
+      "tool_name": "cv_feedback_02_list",
+      "prompt": "Prüfe „Comvenio: feedback – feedback list“ mit synthetischen Daten im ausgewählten Testverein.",
       "expected_response_fixture": "fixtures/provider/openai/full-connector-v1.response.json",
       "required_surfaces": [
         "web",

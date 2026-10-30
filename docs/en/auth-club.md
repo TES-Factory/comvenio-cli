@@ -1,8 +1,8 @@
 ---
 id: auth-club
 kategorie: thema
-domaenen: [login, logout, whoami, action, club]
-stichwoerter: [login, sign-in, club, scopes, permissions, machine-grant, automation, ci]
+domaenen: [login, logout, whoami, action, club, feedback]
+stichwoerter: [login, sign-in, club, scopes, permissions, machine-grant, automation, ci, feedback, wish]
 ---
 
 # Sign-in and club context
@@ -281,6 +281,16 @@ uploaded logo there takes effect immediately everywhere the platform shows
 the club logo: homepage header, image widget with the club logo as source,
 club selection.
 
+### Sending feedback to Comvenio
+
+Errors, improvements and wishes go straight to the Comvenio team — like
+"Give feedback" in the web app and the app. The kind is `ERROR`,
+`IMPROVEMENT`, `WISHLIST` or `FEEDBACK`; the subject is optional (at most
+200 characters). The call returns a preview; it is sent only with `comvenio
+action confirm`. The CLI notes which AI assistant and which CLI version the
+feedback came through; neither the club nor any person is sent along. Read
+your own feedback with its state and the team's answer with `cai.feedback.02.list`.
+
 ## Examples
 
 Sign in with restricted scopes, then check identity:
@@ -305,6 +315,15 @@ Create a new department:
 comvenio action call cai.club.08.department_add \
   --input '{"department":{"name":"Dart","description":"Dart department","slug":"dart","color_theme_1":"#123456","parent_department_id":null,"is_default":false}}' \
   --json
+```
+
+Send a wish to Comvenio (preview, then confirm) and read the answers:
+
+```bash
+comvenio action call cai.feedback.01.create \
+  --input '{"feedback":{"kind":"WISHLIST","subject":"Yearly series","message":"Please allow series on existing templates."}}' \
+  --json
+comvenio action call cai.feedback.02.list --json
 ```
 
 ## Commands and actions
@@ -351,6 +370,11 @@ comvenio action call cai.club.08.department_add \
 - `cai.club.23.automation_resume` — automation-resume (change) · Scopes: `club.write`
 - `cai.club.24.automation_run` — automation-run (change with confirmation) · Scopes: `club.write`
 - `cai.club.25.automation_delete` — automation-delete (change with confirmation) · Scopes: `club.write`
+
+**feedback**
+
+- `cai.feedback.01.create` — feedback create (change with confirmation) · Scopes: `club.write`
+- `cai.feedback.02.list` — feedback list (read) · Scopes: `club.read`
 <!-- /gen:docs -->
 
 ## Errors

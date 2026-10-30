@@ -18,6 +18,7 @@ import {
   runFileUpload,
 } from "./action-file-upload.ts";
 import { formatActionDescription, formatCallText, inputVariants, saveScreenshots } from "./action-output.ts";
+import { withFeedbackClient } from "./feedback-client.ts";
 
 type Options = {
   file?: string;
@@ -170,7 +171,7 @@ export function registerActionCommands(cli: CAC): void {
         if (!actionId) {
           throw new Error("action call benötigt eine kanonische Action-ID.");
         }
-        const input = parseInput(options);
+        const input = withFeedbackClient(actionId, parseInput(options));
         const tools = await client.listTools();
         const toolName = connectorActionToolName(actionId);
         const tool = tools.find((entry) => entry.name === toolName);

@@ -13,6 +13,26 @@ const emailOrEmpty = z.union([z.string().email().max(320), z.literal("")]);
 const urlOrEmpty = z.union([z.string().url().max(2_048), z.literal("")]);
 
 const clubContext = z.object({ club_id: uuid }).strict();
+// Feedback to Comvenio (user-service /users/me/feedback → RTS product intake, task 15c9ab96).
+// "client" names the agent and CLI version; the CLI fills it, the handler turns it into the context.
+const feedbackKind = z.enum(["FEEDBACK", "IMPROVEMENT", "WISHLIST", "ERROR"]);
+const feedbackClient = z.object({ agent: z.string().trim().min(1).max(80), version: z.string().trim().max(80).optional() }).strict();
+const feedbackCreate = z.object({
+  club_id: uuid,
+  feedback: z.object({ kind: feedbackKind, subject: z.string().trim().min(1).max(200).optional(), message: z.string().trim().min(1).max(10_000) }).strict(),
+  client: feedbackClient.optional(),
+}).strict();
+const feedbackOutput = z.object({
+  id: uuid,
+  kind: z.string().max(40),
+  subject: z.string().max(200).nullable().optional(),
+  message: z.string().max(20_000),
+  context: z.string().max(500).nullable().optional(),
+  status: z.string().max(40),
+  reply: z.string().max(20_000).nullable().optional(),
+  replied_at: z.string().max(64).nullable().optional(),
+  created_at: z.string().max(64),
+}).strip();
 const entityContext = (field: string) => z.object({ club_id: uuid, [field]: uuid }).strict();
 const deleted = z.object({ deleted: z.literal(true), id: uuid }).strict();
 // Forum (message-service): GET /forum/boards?flat=true and GET /forum/threads.
@@ -1145,4 +1165,6 @@ export const K7_ACTION_SCHEMAS: Readonly<Record<K7ActionId, K7ActionSchemaContra
   "cai.role.13.position_unlink": contract(entityContext("assignment_id"), deleted),
   "cai.role.14.position_list": contract(entityContext("position_id"), z.array(positionRoleOutput)),
   "cai.role.15.effective": contract(z.object({ club_id: uuid, department_id: uuid.optional() }).strict(), z.object({ club_id: uuid, department_id: uuid.nullable(), permissions: z.array(permissionOutput) }).strict()),
+  "cai.feedback.01.create": contract(feedbackCreate, feedbackOutput),
+  "cai.feedback.02.list": contract(clubContext, z.array(feedbackOutput)),
 });
