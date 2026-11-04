@@ -7,8 +7,8 @@
     "render": "node render.mjs"
   },
   "dependencies": {
-    "@remotion/bundler": "^4.0.0",
-    "@remotion/cli": "^4.0.0",
+    "@remotion/bundler": "^4.0.540",
+    "@remotion/cli": "^4.0.540",
     "@remotion/renderer": "^4.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
