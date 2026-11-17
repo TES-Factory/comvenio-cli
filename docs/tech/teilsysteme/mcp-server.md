@@ -9,10 +9,28 @@ routen: []
 cli: []
 dateien:
 - apps/mcp-server/**
-use_cases: []
+use_cases:
+- UC-1
+- UC-2
+- UC-3
+- UC-4
+- UC-5
+- UC-6
+- UC-7
 entscheidungen: []
 faehigkeiten:
 - mcp-server
+- oeffentliche-werkzeuge
+- lazy-auth
+- rechte-filter
+- mandantentrennung
+- fachwerkzeuge
+- vorschau-und-bestaetigung
+- widgets
+- jobs-und-dateien
+- hilfe
+- fehlerantworten
+- betrieb
 quellen: []
 letzte_beschreibung:
   klammer: null
@@ -23,15 +41,37 @@ letzte_beschreibung:
 
 ## Zweck
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+Der MCP-Server ist der Comvenio AI Connector: Er macht die Vereinsfunktionen, die das comvenio-CLI nutzt, in ChatGPT und Claude als Remote-MCP-Werkzeuge verfügbar — für Mitglieder, Nutzer und Verwalter aller angeschlossenen Vereine. Ein kanonischer Werkzeugkatalog trägt Namen, Schemata, Sicherheitsklasse, OAuth-Scopes, Vereinsrechte und Widget-Bindungen; Rechte werden vor der Werkzeugauswahl ermittelt und bei jedem Backend-Aufruf erneut durchgesetzt. Dazu kommen MCP-Apps-Widgets, Vorschau und Bestätigung kritischer Schreibvorgänge, asynchrone Jobs mit Dateiprüfung, eine Hilfe und einheitliche Fehlerantworten. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeServer; code:apps/mcp-server/src/runtime-tools.ts#createRuntimeToolCatalog; code:apps/mcp-server/src/domain-runtime.ts#registerFullDomainRuntime; code:apps/mcp-server/src/widget-runtime.ts#registerFullWidgetRuntime; comvenio-ai-connector; comvenio-ai-connector-02 -->
+
+<!-- techdoc:luecke Begründung fehlt: Das Hilfe-Werkzeug hat kein Lastenheft mit Kennung, nur Code und Tests -->
 
 ## Use Cases
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+**UC-1 Öffentliches ohne Anmeldung lesen.** Akteur: anonyme Nutzer in ChatGPT oder Claude. Auslöser: öffentliche Lesewerkzeuge, etwa veröffentlichte Termine, News und Speisepläne. Ablauf: Öffentliche Werkzeuge laufen ohne Login mit dem Scope `public.read`; die Antworten werden vor der Rückgabe auf öffentliche Felder reduziert. Ergebnis: öffentliche Vereinsinhalte im Chat. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeAccessPolicy; code:apps/mcp-server/src/public/redaction.ts#eventRecord; code:apps/mcp-server/src/public/redaction.ts#newsRecord; comvenio-ai-connector-06 -->
+
+**UC-2 Anmelden, wenn es privat wird (Lazy Auth).** Akteur: Mitglieder und Verwalter. Auslöser: Aufruf eines privaten oder schreibenden Werkzeugs ohne passenden Scope. Ablauf: Der Server antwortet mit einer OAuth-Challenge samt aller nötigen Scopes; der Nutzer meldet sich im Comvenio-Browserflow an, wählt bei mehreren Vereinen einen und genehmigt die Scopes. Scopes geben nie mehr Rechte, als der Backend-RBAC zulässt. Ergebnis: verbundenes Konto mit Vereinsbindung. <!-- q: code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; code:apps/mcp-server/src/tool-security-schemes.ts#installToolSecuritySchemeProjection; code:apps/mcp-server/src/http/auth.ts#extractBearerToken; comvenio-ai-connector-03; comvenio-ai-connector-06 -->
+
+**UC-3 Vereinsfunktionen als Werkzeuge nutzen.** Akteur: Mitglieder und Verwalter nach ihren Vereinsrechten. Auslöser: Fachwerkzeuge der Domänen Identität, Verein, Mitglieder, Teams und Rollen; Veranstaltungen und Planung; Sitzungen und Turniere; Buchungen, Objekte und Aufgaben; Rezepte, Speisepläne und Einkäufe; Homepage, News und Daten; Sponsoring und Marketing; Finanzen. Ablauf: Jedes Werkzeug entsteht aus einem geprüften Operationsvertrag und ruft die öffentliche Dienst-API mit expliziter `club_id`; der Dienst prüft Mandant, Rolle und Fachobjekt erneut. Ergebnis: Vereinsarbeit im Chat. <!-- q: code:apps/mcp-server/src/domain-runtime.ts#registerFullDomainRuntime; code:apps/mcp-server/src/domain-runtime.ts#fullDomainOperationContracts; code:apps/mcp-server/src/domain-runtime.ts#domainToolName; comvenio-ai-connector-07; comvenio-ai-connector-08; comvenio-ai-connector-09; comvenio-ai-connector-10; comvenio-ai-connector-11; comvenio-ai-connector-12; comvenio-ai-connector-13 -->
+
+**UC-4 Kritisches mit Vorschau bestätigen.** Akteur: Verwalter. Auslöser: Veröffentlichen, Löschen, Massenänderung, Import, Export personenbezogener Daten. Ablauf: Der Server erstellt eine Vorschau mit Verein, Ziel, Wirkung je Operation (anlegen, ändern, löschen), betroffener Anzahl und maskierten Feldern und gibt ein kurzlebiges Bestätigungstoken aus, gebunden an Nutzer, Verein, Payload-Hash und Aktion; erst die zweite Bestätigung führt aus. Ergebnis: bewusst bestätigte, wiederholungssichere Änderung. <!-- q: code:apps/mcp-server/src/domain-runtime.ts#impactFor; code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; code:apps/mcp-server/src/domain-state-store.ts#sealJson; comvenio-ai-connector-14; comvenio-ai-connector-20 -->
+
+**UC-5 Widgets im Chat bedienen.** Akteur: Mitglieder und Verwalter. Auslöser: Widget-Werkzeuge für Event und Kalender, Mitgliederverwaltung, Buchung und Objekt, News sowie das Vorschau- und Bestätigungs-Widget. Ablauf: Das Werkzeug liefert ein auf das Nötige reduziertes Modell, das Widget zeigt es mobil-first an; ohne Vereinsbindung hängt kein Widget-Modell an der Antwort. Ergebnis: bedienbare Oberflächen in ChatGPT und Claude. <!-- q: code:apps/mcp-server/src/widget-runtime.ts#registerFullWidgetRuntime; code:apps/mcp-server/src/runtime-tools.ts#projectPublicWidgetModel; comvenio-ai-connector-16; comvenio-ai-connector-17; comvenio-ai-connector-18; comvenio-ai-connector-19; comvenio-ai-connector-20 -->
+
+**UC-6 Lange Läufe und Dateien.** Akteur: Verwalter. Auslöser: Werkzeuge für Uploads und Jobs, etwa Daten-Upload oder Schrift-Upload des Vereins. Ablauf: Nur wenn die Konfigurationsgruppe für Uploads und Jobs vollständig gesetzt ist, erscheinen die Plattformwerkzeuge. Eine hochgeladene Datei landet in Quarantäne, wird auf Typ (Magic Bytes), Größe, ZIP-Inhalt und Schadcode geprüft und genau einmal verbraucht; der Job speichert seine Eingabe verschlüsselt, ohne Token, und ist idempotent; das Ergebnis liest nur der Auftraggeber. Ergebnis: geprüfte Datei und Jobergebnis. <!-- q: code:apps/mcp-server/src/job-file-tools.ts#registerJobFileTools; code:apps/mcp-server/src/files/object-inspection.ts#inspectStoredObject; code:apps/mcp-server/src/files/validation.ts#validateStoredObject; code:apps/mcp-server/src/files/zip-inspection.ts#inspectZipDirectory; code:apps/mcp-server/src/files/clamd-scanner.ts#parseClamdResponse; code:apps/mcp-server/src/files/sigv4-presign.ts#presignSigV4; comvenio-ai-connector-15 -->
+
+**UC-7 Hilfe nachschlagen.** Akteur: jeder, auch ohne Anmeldung. Auslöser: das Hilfe-Werkzeug mit Suchbegriff oder Artikelkennung. Ablauf: Es durchsucht die Hilfeartikel (deutsch und englisch, auch Fehlerartikel) unscharf, liefert bei unbekannter Kennung die nächsten Treffer und listet jeden Artikel als Ressource; die öffentliche Liste öffnet nie ein geschütztes Werkzeug. Ergebnis: Antwort aus der Hilfe. <!-- q: code:apps/mcp-server/src/help-tool.ts#registerHelpTool; code:apps/mcp-server/src/help-tool.ts#answerHelp -->
 
 ## Funktionsweise
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+**Katalog und Freigabe.** Der Werkzeugkatalog entsteht aus geprüften Operationsverträgen; veröffentlicht werden nur extern freigegebene Werkzeuge. Der kanonische Review-Katalog bleibt stabil, weil Clients Werkzeuglisten zwischenspeichern; Sichtbarkeit je Nutzer entsteht durch Filtern. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeToolCatalog; code:apps/mcp-server/src/domain-runtime.ts#fullDomainOperationContracts; comvenio-ai-connector-02; comvenio-ai-connector-04 -->
+
+**Rechte und Mandant.** Der Server ermittelt Vereine, Scopes und Rechte-Version; nach der Vereinswahl lädt er die wirksamen Rechte und filtert Werkzeuge und Widget-Aktionen. Ein Nutzer mit mehreren Vereinen muss vor der privaten Werkzeugsuche einen Verein nennen; fremde Mandanten und unbekannte Werkzeuge werden abgewiesen, bevor ein Handler aufgelöst wird; auch zwischengespeicherte Aufrufe werden erneut geprüft. Die native CLI-Route ist von der Anbieter-Identität getrennt. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeAccessPolicy; code:apps/mcp-server/src/http/context.ts#requestRisk; comvenio-ai-connector-04 -->
+
+**Schreibklassen.** Lesen läuft direkt, umkehrbares Schreiben auf ausdrücklichen Auftrag mit Ergebnisbeleg, kritisches Schreiben mit Vorschau und zweiter Bestätigung, lange Läufe als Job mit Statusabfrage. Bestätigungen und abgeschlossene Schreibvorgänge liegen verschlüsselt im Zustandsspeicher; eine Bestätigung wird genau einmal verbraucht, ein wiederholter Schreibvorgang liefert das frühere Ergebnis, eine geänderte Payload wird abgewiesen. <!-- q: code:apps/mcp-server/src/domain-state-store.ts#sealJson; code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; code:apps/mcp-server/src/domain-runtime.ts#impactFor; comvenio-ai-connector-14 -->
+
+**Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. <!-- q: code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult -->
+
+**Betrieb.** Der Server startet als Deployment-Kandidat mit geprüfter Prozesskonfiguration und schreibt beim Fehlstart einen Diagnose-Datensatz. <!-- q: code:apps/mcp-server/src/bootstrap.ts#startMcpDeploymentCandidate; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; code:apps/mcp-server/src/startup-diagnostics.ts#mcpStartupFailureRecord; comvenio-ai-connector-05 -->
 
 <!-- techdoc:erzeugt zustaende -->
 _Keine Einträge._
@@ -72,7 +112,7 @@ _Keine Einträge._
 
 ## Abhängigkeiten
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+Der MCP-Server ruft die öffentlichen APIs der Comvenio-Dienste über den gemeinsamen Comvenio-Client, den role-service für wirksame Rechte, den Comvenio-OAuth-Autorisierungsserver, Redis für Bestätigungen, Jobs und Dateizustände, einen S3-kompatiblen Speicher für die Quarantäne und einen ClamAV-Dienst für die Schadcodeprüfung. Aufgerufen wird er von ChatGPT und Claude als Remote-MCP sowie vom lokalen comvenio-CLI über die native Route. <!-- q: code:apps/mcp-server/src/domain-runtime.ts#registerFullDomainRuntime; code:apps/mcp-server/src/files/s3-quarantine.ts#createBunS3Backend; code:apps/mcp-server/src/files/clamd-scanner.ts#parseClamdResponse; code:apps/mcp-server/src/domain-state-store.ts#sealJson; comvenio-ai-connector-01; comvenio-ai-connector-05; comvenio-ai-connector-15 -->
 
 <!-- techdoc:erzeugt abhaengigkeiten -->
 Nutzt: cli, pakete-und-integrationen
@@ -83,11 +123,21 @@ Genutzt von: cli, pakete-und-integrationen
 
 ## Regeln
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+- Jeder private oder schreibende Werkzeugaufruf trägt `club_id` ausdrücklich; der Dienst prüft Mandant, Rolle, Fachobjekt und Recht bei jedem Aufruf erneut. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeAccessPolicy; comvenio-ai-connector §1; comvenio-ai-connector §4 -->
+- Scopes erteilen nie mehr Rechte als der Backend-RBAC; Schreibrechte brauchen einen schreibenden Scope. <!-- q: code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; comvenio-ai-connector §5 -->
+- Bestätigungstokens sind kurzlebig und an Nutzer, Verein, Payload-Hash und Aktion gebunden; eine Bestätigung wird genau einmal verbraucht. <!-- q: code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; comvenio-ai-connector §6; comvenio-ai-connector-14 -->
+- Die Vorschau zählt die Wirkung je Operation, nicht aus der ganzen Operationsliste der Aktion. <!-- q: code:apps/mcp-server/src/domain-runtime.ts#impactFor; commit:cd7a02b -->
+- Plattformwerkzeuge für Uploads und Jobs erscheinen nur bei vollständiger Konfiguration; fehlende Werte werden benannt, fehlerhafte nicht ausgegeben. <!-- q: code:apps/mcp-server/src/job-file-tools.ts#registerJobFileTools; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; comvenio-ai-connector-15 -->
+- Dateien über der harten Größengrenze werden weder gehasht noch geparst; erlaubt sind nur erkannte Typen, deren Bytes zur Angabe passen, und SVG oder HTML nur ohne aktive Inhalte. <!-- q: code:apps/mcp-server/src/files/object-inspection.ts#inspectStoredObject; code:apps/mcp-server/src/files/validation.ts#validateStoredObject -->
+- Der Connector erzeugt nur minimale technische Telemetrie ohne Inhalts- und Personendaten; Detailfelder zu Personen brauchen `view_members_details`, Vorschauen maskieren. <!-- q: comvenio-ai-connector §1 -->
 
 ## Fehlerbilder
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+- **Serien-Materialisierung zeigte in der Vorschau Löschungen statt Anlagen** → die Wirkung wurde aus der Aktion samt Liste aller Operationen gelesen, 177 von 801 Operationen waren falsch eingeordnet → Wirkung je Operation. <!-- q: commit:cd7a02b; bug:b956d7dd -->
+- **Homepage-Umwandlung verlor Abschnitte und Widgets** → die Reiter-Route des club-service ist flach, die Umwandlung erwartete verschachtelte Reiter und gab leere Abschnitte zurück → Abschnitte und Widgets je Reiter lesen, fremde Vereinsabschnitte brechen ab. <!-- q: commit:58791ad; bug:ddc0a35a -->
+- **Jede Terminserie scheiterte mit 422** → die Aktion schickte `name` statt `title` und keine Vorlage → Felder nach dem Vertrag des event-service, `materialize_next` sendet den nächsten Start. <!-- q: commit:089b8bf -->
+- **Konflikte kamen ohne Grund beim Nutzer an** → die öffentliche Fehlerantwort verwarf den Grund des Dienstes → Konflikt und Validierungsfehler tragen den Grund (etwa die aktuelle Version). <!-- q: commit:89a3fe9 -->
+- **Gleichzeitige Schrift-Uploads konnten sich überschreiben** → Lesen, Liste ersetzen und Nachlesen liefen getrennt → Registrierung in einem gesperrten Aufruf des club-service, ein unbestätigter Aufruf zählt nicht als Erfolg. <!-- q: commit:ab2d4a3 -->
 
 ## Code-Anker
 
@@ -1117,4 +1167,17 @@ Genutzt von: cli, pakete-und-integrationen
 
 ## Gebaut und geplant
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+| Fähigkeit | stand | Quelle |
+|---|---|---|
+| Kanonischer Werkzeugkatalog aus Operationsverträgen | gebaut | <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeToolCatalog; comvenio-ai-connector-02 --> |
+| Öffentliche Werkzeuge ohne Login, Redaktion | gebaut | <!-- q: code:apps/mcp-server/src/public/redaction.ts#eventRecord; code:apps/mcp-server/src/public/redaction.ts#newsRecord; comvenio-ai-connector-06 --> |
+| OAuth-Challenge mit Scopes, Lazy Auth | gebaut | <!-- q: code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; comvenio-ai-connector-03 --> |
+| Rechte-Filter und Mandantentrennung | gebaut | <!-- q: code:apps/mcp-server/src/runtime-tools.ts#createRuntimeAccessPolicy; comvenio-ai-connector-04 --> |
+| Fachwerkzeuge der acht Domänengruppen | gebaut | <!-- q: code:apps/mcp-server/src/domain-runtime.ts#registerFullDomainRuntime; comvenio-ai-connector-07; comvenio-ai-connector-13 --> |
+| Vorschau, Bestätigung, Idempotenz | gebaut | <!-- q: code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; comvenio-ai-connector-14 --> |
+| Widgets Event und Kalender, Mitglieder, Buchung und Objekt, News, Bestätigung | gebaut | <!-- q: code:apps/mcp-server/src/widget-runtime.ts#registerFullWidgetRuntime; comvenio-ai-connector-16; comvenio-ai-connector-20 --> |
+| Jobs, Dateiquarantäne und -prüfung | gebaut | <!-- q: code:apps/mcp-server/src/job-file-tools.ts#registerJobFileTools; comvenio-ai-connector-15 --> |
+| Hilfe-Werkzeug | gebaut | <!-- q: code:apps/mcp-server/src/help-tool.ts#registerHelpTool --> |
+| Einreichung bei ChatGPT und im Claude-Connector-Verzeichnis | geplant | <!-- q: comvenio-ai-connector-21; comvenio-ai-connector-22 --> |
+| Qualität, Datenschutz, Pilot und Release-Gates | geplant | <!-- q: comvenio-ai-connector-23 --> |
+| Drei Ebenen, Club-Agent-API und ausführbarer Capability-Vertrag | geplant | <!-- q: comvenio-ai-connector-24 --> |
