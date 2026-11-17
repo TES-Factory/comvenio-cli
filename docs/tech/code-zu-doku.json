@@ -1,0 +1,14 @@
+{
+  "*.js": "teilsysteme/cli.md",
+  "*.mjs": "teilsysteme/cli.md",
+  "*.py": "teilsysteme/cli.md",
+  "*.ts": "teilsysteme/cli.md",
+  "apps/cli/**": "teilsysteme/cli.md",
+  "apps/mcp-server/**": "teilsysteme/mcp-server.md",
+  "integrations/**": "teilsysteme/pakete-und-integrationen.md",
+  "packages/**": "teilsysteme/pakete-und-integrationen.md",
+  "remotion/**": "teilsysteme/pakete-und-integrationen.md",
+  "scripts/**": "teilsysteme/cli.md",
+  "src/**": "teilsysteme/cli.md",
+  "tests/**": "teilsysteme/cli.md"
+}
