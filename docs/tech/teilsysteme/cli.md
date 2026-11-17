@@ -37,15 +37,41 @@ letzte_beschreibung:
 
 ## Zweck
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+Das comvenio-CLI ist das Kommandozeilenwerkzeug für Vereinsverantwortliche und ihre KI-Assistenten: Es meldet sich per OAuth im Browser an und führt dieselben typisierten Connector-Aktionen aus wie ChatGPT und Claude — mit denselben Rechten aus dem Grant, derselben Vorschau und Bestätigung bei kritischen Schreibaktionen und demselben Fehlermodell. Seit dem Geräte-Token-Abbau ist die OAuth-Anmeldung der einzige Anmeldeweg; daneben gibt es den Maschinen-Grant für Automatisierung. Zum Teilsystem gehören außerdem die Bau-, Prüf- und Generatorskripte unter `scripts/`. <!-- q: code:src/oauth/client.ts#loginWithOAuth; code:src/commands/action.ts#registerActionCommands; code:src/auth.ts#machineGrantFromEnv; geraetetoken-abbau; geraetetoken-abbau-04; comvenio-cli-doku-05 -->
 
 ## Use Cases
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+**UC-1 Anmelden und abmelden.** Akteur: Vereinsverantwortliche. Auslöser: `comvenio login [--env prod|dev] [--scopes …]`, `comvenio logout`. Ablauf: Das CLI startet einen Rückruf-Server auf `127.0.0.1` mit zufälligem Port, öffnet den Browser zum Comvenio-Consent, in dem der Nutzer den Verein wählt (`--club` ist nicht zulässig), und tauscht den Code gegen Tokens; ohne `--scopes` fordert es alle Scopes an, die Vereinsrollen begrenzen. Abmelden widerruft das Refresh-Token und löscht die lokale Anmeldung. Ergebnis: eine OAuth-Verbindung für genau einen Verein. <!-- q: code:src/oauth/client.ts#loginWithOAuth; code:src/oauth/client.ts#waitForAuthorizationCode; code:src/oauth/client.ts#revokeOAuthCredentials; code:src/auth.ts#writeConnectorLogin; geraetetoken-abbau-04 -->
+
+**UC-2 Anmeldung prüfen.** Akteur: Nutzer oder Assistent. Auslöser: `comvenio whoami [--json]`. Ablauf: Das CLI zeigt Verein, Umgebung und Scopes der OAuth-Verbindung bzw. des Maschinen-Grants; Name und E-Mail kennt der Connector nicht und werden nicht erfunden. Ergebnis: wessen Anmeldung es ist und was sie darf. <!-- q: code:src/commands/whoami.ts#registerWhoamiCommand; comvenio-cli-doku-05 -->
+
+**UC-3 Eine Aktion finden und ausführen.** Akteur: Nutzer oder KI-Assistent. Auslöser: `comvenio action list|show|call|confirm`. Ablauf: `list` zeigt die Aktionen, `show` die Eingabefelder je Teilaktion, `call` ruft die Aktion mit einer streng typisierten JSON-Eingabe über den MCP-Connector; eine kritische Schreibaktion antwortet mit einer Vorschau, und die Textausgabe nennt den fertigen `confirm`-Befehl mit demselben Idempotenzschlüssel. Ergebnis: das Ergebnis der Aktion oder eine bestätigte Ausführung. <!-- q: code:src/commands/action.ts#registerActionCommands; code:src/commands/action.ts#parseInput; code:src/commands/action-output.ts#formatActionDescription; code:src/commands/action-output.ts#formatCallText; code:src/mcp/client.ts#connectorActionToolName; commit:ba6b779 -->
+
+**UC-4 Eine Datei hochladen.** Akteur: Nutzer. Auslöser: `comvenio action call <Upload-Aktion> --file <Pfad>`. Ablauf: Das CLI liest und hasht die Datei lokal, startet den Upload über die Datei-Werkzeuge des Connectors, lädt die Bytes an die einmalige Upload-Adresse, schließt mit Größe, SHA-256 und Typ ab und wartet auf den Virenscan, bevor es die Aktion mit der Datei-ID ruft. Ergebnis: die Datei im Verein bzw. ein Hintergrund-Job. <!-- q: code:src/commands/action-file-upload.ts#runFileUpload; code:src/commands/action-file-upload.ts#readUploadFile; code:src/commands/action-file-upload.ts#sha256Hex; code:src/commands/action-file-upload.ts#pollDelayMs; comvenio-ai-connector-15 -->
+
+**UC-5 Mit dem Club-Agenten sprechen.** Akteur: Vereinsverantwortliche. Auslöser: `comvenio agent chat`. Ablauf: Das CLI ruft das Connector-Werkzeug `cv_club_agent_converse`; Verein und Nutzer kommen aus dem Grant, nie vom CLI; Freigabeanfragen des Agenten werden angezeigt, entschieden werden sie nur in Web oder App. Ergebnis: Antwort des Agenten mit angestoßenen Läufen und offenen Freigaben. <!-- q: code:src/commands/agent.ts#runAgentChat; code:src/commands/agent.ts#buildClubAgentConverseArguments; code:src/commands/agent.ts#formatChatResponse; geraetetoken-abbau-02 -->
+
+**UC-6 Buchhaltung führen.** Akteur: Kassier. Auslöser: `comvenio finance …`. Ablauf: Die Befehle laufen über die typisierten Finanz-Aktionen des Connectors mit denselben Prüfungen wie für einen KI-Agenten: Verein und Abteilung aus dem Grant, Vorprüfung fremder Kennungen, Bestätigung. Ergebnis: Jahresplan, Posten und Buchungen im finance-service. <!-- q: code:src/commands/finance-connector.ts#callFinance; code:src/commands/finance-connector.ts#checkClubChoice; code:src/commands/finance.ts#registerFinanceCommands; geraetetoken-abbau-04 -->
+
+**UC-7 Automatisiert arbeiten.** Akteur: ein Skript oder Dienst mit Maschinen-Grant. Auslöser: `COMVENIO_CLIENT_ID` und `COMVENIO_CLIENT_SECRET` (optional `COMVENIO_ENV`) sind gesetzt. Ablauf: Das CLI holt ein Token per `client_credentials`; es lebt nur im Prozess, nichts wird in Zustandsdatei oder Schlüsselbund geschrieben. Ergebnis: Aktionen ohne Browser-Anmeldung. <!-- q: code:src/auth.ts#machineGrantFromEnv; code:src/oauth/client.ts#fetchMachineAccessToken; geraetetoken-abbau-03 -->
+
+**UC-8 Hilfe lesen.** Akteur: Nutzer. Auslöser: `comvenio help [<Thema>|fehler <Code>]`. Ablauf: Die Kundendoku ist beim Bau eingebettet und offline auf Deutsch und Englisch lesbar. Ergebnis: Hilfeartikel oder Exit-Code 1 bei unbekanntem Thema. <!-- q: code:src/commands/help.ts#registerHelpCommand; comvenio-cli-doku-03 -->
 
 ## Funktionsweise
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+**Umgebung und Ziele.** `--env` wählt das Gateway (`api.comvenio.app` bzw. `apidev.comvenio.app`); der MCP-Connector liegt daneben (`mcp.comvenio.app` für Produktion), beide lassen sich mit `--gateway` und `--connector` überschreiben, nur über HTTPS. OAuth hat eine eigene CLI-Ressource und nutzt nie die Audience des MCP-Servers. <!-- q: code:src/oauth/client.ts#oauthRuntime; code:src/oauth/client.ts#canonicalHttpsOrigin; geraetetoken-abbau-04 -->
+
+**Zugangsdaten.** Access- und Refresh-Token liegen im Schlüsselspeicher des Betriebssystems: unter Windows per DPAPI geschützt, unter macOS im Schlüsselbund (bei Bedarf in Teilen), unter Linux im Secret Service; die Zustandsdatei hält nur die Verbindung (Client, Ressource, Scopes, Verein). Läuft das Access-Token ab, wird es mit dem Refresh-Token erneuert. <!-- q: code:src/oauth/credential-store.ts#saveOAuthCredentials; code:src/oauth/credential-store.ts#macosCredentialCommand; code:src/oauth/client.ts#refreshOAuthCredentials; code:src/auth.ts#loadState -->
+
+**Profile.** `COMVENIO_CLI_PROFILE` erlaubt eine zweite Anmeldung neben der ersten, etwa für das Vier-Augen-Prinzip; jedes Profil hat eigene Zustandsdatei und eigenen Eintrag im Schlüsselspeicher. <!-- q: code:src/oauth/credential-store.ts#loadOAuthCredentials; code:src/auth.ts#stateHome; geraetetoken-abbau-04 -->
+
+**Entfernte Befehle.** Befehle, die das CLI seit dem Geräte-Token-Abbau nicht mehr trägt, sind nicht registriert; ein Aufruf endet mit `USAGE_ERROR` und nennt die Stelle in der Web-App, ein alter Geräte-Token-Block in der Zustandsdatei wird entfernt und gemeldet. <!-- q: code:src/commands/removed.ts#removedCommandError; code:src/commands/removed.ts#deviceBlockRemovedNotice; code:src/auth.ts#dropDeviceBlock; geraetetoken-abbau-02 -->
+
+**Fehlerausgabe.** Jeder Fehler erscheint als „Fehler <CODE>: <Meldung> <Ursache>“ mit nächstem Befehl und Hilfeverweis, mit `--json` als ein Objekt; die Texte kommen aus dem Fehlerkatalog. Lehnt das MCP-SDK eine Eingabe vor dem Werkzeug ab, nennt das CLI das abgelehnte Feld. <!-- q: code:src/mcp/client.ts#inputValidationDetail; code:src/commands/removed.ts#unknownCommandError; comvenio-cli-doku-01; commit:ba6b779 -->
+
+**Skripte.** Unter `scripts/` liegen Generatoren für Kundendoku und Schemata, die Prüfungen der Anbieter-Einreichungen und des Connector-Releases und der Probelauf, in dem eine fremde KI-Sitzung nur mit CLI und Hilfe einen festen Aufgabenkatalog löst und die Doku daran gemessen wird. <!-- q: code:scripts/docs-lib.ts#generateDocs; code:scripts/docs-lib.ts#checkDocs; code:scripts/gen-schema.ts#genEvent; code:scripts/probelauf.ts#baueKatalog; code:scripts/probelauf.ts#bewerteLoesung; comvenio-cli-doku-03; comvenio-cli-doku-09 -->
+
+<!-- techdoc:luecke Übrige Skripte (etwa Rechenschaftsberichte, Lageplan, Web-App-Führung) nur im Code, ohne Beschreibung je Skript -->
 
 <!-- techdoc:erzeugt zustaende -->
 _Keine Einträge._
@@ -94,7 +120,7 @@ _Keine Einträge._
 
 ## Abhängigkeiten
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+Das CLI nutzt den Comvenio-OAuth-Server und den MCP-Connector für alle Aktionen, den Schlüsselspeicher des Betriebssystems für Tokens und die gemeinsamen Pakete für Verträge, Fehlermodell und Kundendoku. <!-- q: code:src/oauth/client.ts#loginWithOAuth; code:src/mcp/client.ts#connectorActionToolName; code:src/oauth/credential-store.ts#saveOAuthCredentials -->
 
 <!-- techdoc:erzeugt abhaengigkeiten -->
 Nutzt: mcp-server, pakete-und-integrationen
@@ -105,11 +131,17 @@ Genutzt von: mcp-server
 
 ## Regeln
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+- Den Verein wählt der Nutzer im Comvenio-Consent; `--club` beim Login ist nicht zulässig. <!-- q: code:src/oauth/client.ts#loginWithOAuth; geraetetoken-abbau-04 -->
+- Ein Maschinen-Grant schreibt nichts auf die Platte und gilt für genau eine Umgebung mit öffentlichem HTTPS-Gateway. <!-- q: code:src/auth.ts#machineGrantFromEnv; code:src/auth.ts#loadState; geraetetoken-abbau-03 -->
+- `--file` gilt nur für `action call` mit einer Upload-Aktion; Felder, die aus der Datei abgeleitet werden, dürfen nicht in der Eingabe stehen. <!-- q: code:src/commands/action.ts#registerActionCommands; code:src/commands/action-file-upload.ts#assertNoFileDerivedFields; comvenio-ai-connector-15 -->
+- Eine Bestätigung muss denselben Idempotenzschlüssel tragen wie der Aufruf mit Vorschau. <!-- q: code:src/commands/action-output.ts#formatCallText; commit:ba6b779; comvenio-ai-connector-14 -->
 
 ## Fehlerbilder
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+- **Schema-Fehler vor dem Werkzeug kamen als `UNKNOWN_ERROR` an** → das MCP-SDK lehnt die Eingabe vor jedem Handler ab → das CLI wertet die Meldung aus und antwortet `VALIDATION_FAILED` mit dem Feld (etwa `input.operation`). <!-- q: commit:ba6b779; code:src/mcp/client.ts#inputValidationDetail -->
+- **`action confirm` endete in `CONFIRMATION_MISMATCH`** → der erzeugte Idempotenzschlüssel stand nur in `--json`, ein neuer Schlüssel beim Bestätigen passte nicht → die Textausgabe nennt den fertigen `confirm`-Befehl. <!-- q: commit:ba6b779; code:src/commands/action-output.ts#formatCallText -->
+- **Bilder aus Screenshot-Aktionen gingen verloren** → die Ausgabe verwarf Bildinhalte → sie werden als Dateien gespeichert. <!-- q: commit:ba6b779; code:src/commands/action-output.ts#saveScreenshots -->
+- **Nicht bestätigte Wirkungen einer Freigabe fehlten in der Ausgabe von `agent chat`** → die Ausgabe zeigte nur Bestätigtes → offene Wirkungen werden angezeigt. <!-- q: commit:01e4446; code:src/commands/agent.ts#formatChatResponse -->
 
 ## Code-Anker
 
@@ -518,4 +550,13 @@ Genutzt von: mcp-server
 
 ## Gebaut und geplant
 
-<!-- techdoc:luecke noch nicht beschrieben -->
+| Fähigkeit | stand | Quelle |
+|---|---|---|
+| OAuth-Login mit Browser, Refresh und Widerruf | gebaut | <!-- q: code:src/oauth/client.ts#loginWithOAuth; geraetetoken-abbau-04 --> |
+| Maschinen-Grant über Umgebungsvariablen | gebaut | <!-- q: code:src/auth.ts#machineGrantFromEnv; geraetetoken-abbau-03 --> |
+| Connector-Aktionen mit Vorschau und Bestätigung | gebaut | <!-- q: code:src/commands/action.ts#registerActionCommands; comvenio-ai-connector-14 --> |
+| Datei-Upload mit Virenscan | gebaut | <!-- q: code:src/commands/action-file-upload.ts#runFileUpload; comvenio-ai-connector-15 --> |
+| Club-Agent-Chat über den Connector | gebaut | <!-- q: code:src/commands/agent.ts#runAgentChat; geraetetoken-abbau-02 --> |
+| Buchhaltung über Finanz-Aktionen | gebaut | <!-- q: code:src/commands/finance-connector.ts#callFinance; geraetetoken-abbau-04 --> |
+| Offline-Hilfe und Fehlerkatalog | gebaut | <!-- q: code:src/commands/help.ts#registerHelpCommand; comvenio-cli-doku-01; comvenio-cli-doku-03 --> |
+| Profile für eine zweite Anmeldung | gebaut | <!-- q: code:src/auth.ts#stateHome; geraetetoken-abbau-04 --> |
