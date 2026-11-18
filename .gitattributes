@@ -1,0 +1,16 @@
+# Text files are checked out with LF on every platform, also with
+# core.autocrlf=true on Windows: check:docs, the generated docs index and the
+# CLI tests compare characters and expect LF (G-559, BUG fe4ecbff).
+* text=auto eol=lf
+
+# Binary assets are never converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.exe binary
+*.woff binary
+*.woff2 binary
