@@ -24,6 +24,13 @@ describe("homepage schema", () => {
     expect(homepage.widgets.event_highlight.config_not_read_by_widget ?? []).not.toContain("date_format");
   });
 
+  // BUG d1375112: event_hub_embed hands its whole widget to
+  // SpecialEventPromoWidget, which reads cfg.event_id. The field is live.
+  test("counts fields read by a widget the embed hands its config to", () => {
+    expect(homepage.widgets.event_hub_embed.config).toContainEqual(expect.objectContaining({ name: "event_id" }));
+    expect(homepage.widgets.event_hub_embed.config_not_read_by_widget ?? []).not.toContain("event_id");
+  });
+
   test("mirrors all homepage vocabularies", () => {
     // 78 since community-hub 14: community_calendar, community_news, club_directory.
     expect(homepage.widget_count).toBe(78);
