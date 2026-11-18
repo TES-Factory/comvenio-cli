@@ -17,3 +17,4 @@ apps/mcp-server/dist/
 
 # Probelauf (comvenio-cli-doku 09): transcripts and reports can show club data — never commit them
 probelauf/berichte/
+/docs/tech/inventar.yaml
