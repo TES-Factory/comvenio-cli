@@ -3,9 +3,9 @@
 // the stream-json format of `claude -p`. No session runs here (09 DC-7).
 import { describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import {
   type Aufgabe,
@@ -61,6 +61,22 @@ function transkript(aufrufe: Aufruf[], antwort: string, mcpStatus = "connected")
 }
 
 const bash = (command: string, extra: Partial<Aufruf> = {}): Aufruf => ({ name: "Bash", input: { command }, ...extra });
+
+
+/**
+ * A POSIX sh to run the sandbox wrapper with: from PATH, else (Windows) the
+ * sh.exe Git for Windows ships next to git (<git>/cmd/git.exe -> <git>/usr/bin/sh.exe).
+ */
+function posixShell(): string | null {
+  const direkt = Bun.which("sh");
+  if (direkt) return direkt;
+  if (process.platform !== "win32") return null;
+  const git = Bun.which("git");
+  if (!git) return null;
+  const kandidat = join(dirname(dirname(git)), "usr", "bin", "sh.exe");
+  return existsSync(kandidat) ? kandidat : null;
+}
+const POSIX_SH = posixShell();
 
 describe("Katalog (AK-F-01)", () => {
   test("jeder Bereich hat Bau- und Fachfragen; Web-App fehlt nur, wo 08 keine Führung liefert", () => {
@@ -263,16 +279,27 @@ describe("Messung (09 §4.3)", () => {
     }
   });
 
-  test("DC-3: die CLI-Hülle sperrt --file, bevor das CLI startet", () => {
+  // The wrapper is a POSIX sh script by design (the probelauf sandbox is POSIX).
+  // It is started through an explicit sh so the check also runs on Windows,
+  // where a shebang file cannot be spawned directly (BUG fe4ecbff). Skipped only
+  // when no POSIX sh exists at all: then there is nothing that could run it.
+  test.skipIf(POSIX_SH === null)("DC-3: die CLI-Hülle sperrt --file, bevor das CLI startet", () => {
     const verzeichnis = mkdtempSync(join(tmpdir(), "probelauf-huelle-"));
     try {
       const huelle = join(verzeichnis, "comvenio");
       writeFileSync(huelle, cliHuelle("/bin/echo"), { mode: 0o755 });
-      const gesperrt = spawnSync(huelle, ["action", "call", "cai.data.06.upload", "--file", "/etc/hosts"], { encoding: "utf8" });
+      // Arguments travel through stdin, not the command line: on Windows the
+      // MSYS sh re-parses its command line and would strip the quote in "it's".
+      const zitiere = (wert: string) => `'${wert.replace(/'/gu, `'\\''`)}'`;
+      const starte = (args: string[]) => spawnSync(POSIX_SH!, ["-s"], {
+        input: `set -- ${args.map(zitiere).join(" ")}\n. ${zitiere(huelle.replace(/\\/gu, "/"))}\n`,
+        encoding: "utf8",
+      });
+      const gesperrt = starte(["action", "call", "cai.data.06.upload", "--file", "/etc/hosts"]);
       expect(gesperrt.status).toBe(2);
       expect(gesperrt.stdout).toBe("");
-      expect(spawnSync(huelle, ["action", "call", "x", "--file=/etc/hosts"], { encoding: "utf8" }).status).toBe(2);
-      const frei = spawnSync(huelle, ["help", "it's"], { encoding: "utf8" });
+      expect(starte(["action", "call", "x", "--file=/etc/hosts"]).status).toBe(2);
+      const frei = starte(["help", "it's"]);
       expect(frei.status).toBe(0);
       expect(frei.stdout).toBe("help it's\n");
     } finally {
