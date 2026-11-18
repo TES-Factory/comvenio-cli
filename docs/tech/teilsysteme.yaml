@@ -1,0 +1,28 @@
+# Cut of the Tech Doc (hs59-09 TC-01), decided by the supervisor (decision c14d0126 at feature 6d659a28;
+# LH 59/09 DC-2/3/5, hs57 D-18): domain patterns first, patterns overlapping an earlier subsystem dropped,
+# tests without a name match assigned by their app imports, remaining files listed in the last (core) subsystem.
+extraktoren:
+- typescript
+- javascript
+teilsysteme:
+- kennung: mcp-server
+  titel: MCP-Server — Werkzeuge, Konnektoren, Auth
+  dateien:
+  - apps/mcp-server/**
+- kennung: pakete-und-integrationen
+  titel: Pakete und Integrationen — Auth, Konnektor-Verträge, Werkzeugkatalog, Client, Kundendoku, OpenAI, Anthropic, Release, Remotion
+  dateien:
+  - packages/**
+  - integrations/**
+  - remotion/**
+- kennung: cli
+  titel: CLI — Befehle, Hilfe, OAuth, Schema, Abdeckung, Skripte
+  dateien:
+  - src/**
+  - apps/cli/**
+  - scripts/**
+  - tests/**
+  - '*.ts'
+  - '*.mjs'
+  - '*.js'
+  - '*.py'
