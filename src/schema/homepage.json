@@ -1475,9 +1475,6 @@
           ]
         }
       ],
-      "config_not_read_by_widget": [
-        "event_id"
-      ],
       "beschreibung": {
         "kategorie": "veranstaltungen",
         "zweck": {
@@ -5162,8 +5159,8 @@
   "config_sync": {
     "widgets_checked": 78,
     "fields_checked": 559,
-    "widgets_with_unread_fields": 1,
-    "unread_fields": 1,
+    "widgets_with_unread_fields": 0,
+    "unread_fields": 0,
     "widgets_with_wrong_values": 0,
     "wrong_values": 0,
     "value_sets_checked": 33,

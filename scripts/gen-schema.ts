@@ -435,6 +435,41 @@ function veralteteAusnahmen(
   return tot;
 }
 
+/**
+ * Sources of widgets this widget hands its WHOLE widget to.
+ *
+ * `event_hub_embed` renders `<SpecialEventPromoWidget widget={widget} … />`,
+ * and that one reads `cfg.event_id`. Looking only at the embed's own source,
+ * the check called event_id dead (BUG d1375112, Testbericht 4d50ca2c/06) —
+ * a field the surface needs, flagged for removal.
+ *
+ * Followed only: a component imported from a relative path in the widget
+ * tree AND rendered with `widget={widget}`. One level, no recursion, same
+ * reasoning as importedConfigBodies: small edge space, no module resolver.
+ * Used only for config_not_read_by_widget — the reverse check keeps reading
+ * the widget's own source, otherwise every field of the inner widget would
+ * show up as undocumented on the outer one.
+ */
+function forwardedWidgetSources(source: string, widgetDir: string): string[] {
+  const quellen: string[] = [];
+  const importRe = /import\s+(?:([A-Z][A-Za-z0-9_]*)|\{([^}]+)\})\s+from\s+"(\.\/[^"]+)"/g;
+  for (const imp of source.matchAll(importRe)) {
+    const namen = imp[1]
+      ? [imp[1]]
+      : imp[2].split(",").map((s) => s.trim().split(/\s+as\s+/).pop()!.trim()).filter(Boolean);
+    const weitergereicht = namen.some((name) =>
+      new RegExp(`<${name}\\b[^>]*\\bwidget=\\{\\s*widget\\s*\\}`).test(source),
+    );
+    if (!weitergereicht) continue;
+    try {
+      quellen.push(readSource(`${widgetDir}/${imp[3].replace(/^\.\//, "")}.tsx`));
+    } catch {
+      continue; // Unreadable target -> no statement, as everywhere here.
+    }
+  }
+  return quellen;
+}
+
 function importedConfigBodies(source: string, widgetDir: string): string[] {
   const bodies: string[] = [];
   for (const imp of source.matchAll(/import\s+type\s*\{([^}]+)\}\s*from\s*"(\.[^"]+)"/g)) {
@@ -823,7 +858,10 @@ function genHomepage(): unknown {
     }
     widgetsGeprueft += 1;
     felderGeprueft += fields.length;
-    const fehlend = configFieldsNotInSource(fields, src);
+    const fehlend = configFieldsNotInSource(
+      fields,
+      [src, ...forwardedWidgetSources(src, HOMEPAGE_WIDGET_DIR)].join("\n"),
+    );
     if (fehlend.length > 0) nichtImCode[kind] = fehlend;
 
     // Zweite Haelfte: Der Feldname kann stimmen und die Wertemenge trotzdem
