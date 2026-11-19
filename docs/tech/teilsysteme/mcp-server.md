@@ -1175,6 +1175,7 @@ Genutzt von: cli, pakete-und-integrationen
 | connected | apps/mcp-server/tests/help-tool.test.ts |
 | tab | apps/mcp-server/tests/homepage-convert.contract.test.ts |
 | fakeObjects | apps/mcp-server/tests/jobs-files-runtime.integration.test.ts |
+| listedToolDescriptors | apps/mcp-server/tests/jobs-files-runtime.integration.test.ts |
 | listedTools | apps/mcp-server/tests/jobs-files-runtime.integration.test.ts |
 | runJob | apps/mcp-server/tests/jobs-files-runtime.integration.test.ts |
 | seedCleanFile | apps/mcp-server/tests/jobs-files-runtime.integration.test.ts |
@@ -1213,6 +1214,8 @@ Genutzt von: cli, pakete-und-integrationen
 | isOpen | apps/mcp-server/tests/support/output-schema.ts |
 | isText | apps/mcp-server/tests/support/output-schema.ts |
 | walk | apps/mcp-server/tests/support/output-schema.ts |
+| expectOutputSchemasAdmitPublicErrors | apps/mcp-server/tests/support/public-error-schema.ts |
+| publicErrorForms | apps/mcp-server/tests/support/public-error-schema.ts |
 | postCli | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | postMcp | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | runtimeCapability | apps/mcp-server/tests/tenant-isolation.integration.test.ts |

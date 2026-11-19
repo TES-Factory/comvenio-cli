@@ -6,7 +6,7 @@ import { type Cli, laufen, planen, pruefeGate, schrittSchluessel, type Uebernahm
 // synthetic years 2031/2032, no club data.
 
 const SVM = "9ea9d95a-0c79-4efb-b873-696fc07cfd96";
-const DEV = "476bc619-ddb4-4693-bbe6-45936fa4f47e";
+const DEV = "57eb2f95-238c-4f3f-a932-aa8e20959510"; // DEV club of the gate club-restriction (BUG 72eb48c4)
 
 const JAHR_1: Uebernahme = {
   jahr: 2031,
@@ -237,8 +237,9 @@ describe("Übernahme: Gate", () => {
     expect(() => pruefeGate(SVM, zwei, true)).not.toThrow();
   });
 
-  test("der Comvenio-Verein braucht keine Ausnahme", () => {
+  test("BUG 72eb48c4: der Comvenio-Verein (DEV 57eb2f95) braucht keine Ausnahme, der frühere DEV-Verein schon", () => {
     expect(() => pruefeGate(DEV, "", true)).not.toThrow();
+    expect(() => pruefeGate("476bc619-ddb4-4693-bbe6-45936fa4f47e", "", true)).toThrow(/keine Ausnahme/);
   });
 });
 

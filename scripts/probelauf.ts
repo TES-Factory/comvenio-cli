@@ -326,7 +326,7 @@ export function standardSatz(katalog: Katalog): Aufgabe[] {
 
 export const UMGEBUNGEN = {
   // Club restriction (CLAUDE.md, no exception): the Comvenio club only.
-  dev: { api: "https://apidev.comvenio.app", club: "476bc619-ddb4-4693-bbe6-45936fa4f47e" },
+  dev: { api: "https://apidev.comvenio.app", club: "57eb2f95-238c-4f3f-a932-aa8e20959510" },
   prod: { api: "https://api.comvenio.app", club: "0ec34e70-999a-47c4-a1b1-bdb293110fa5" },
 } as const;
 export type Umgebung = keyof typeof UMGEBUNGEN;
