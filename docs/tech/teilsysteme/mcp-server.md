@@ -131,6 +131,7 @@ Genutzt von: cli, pakete-und-integrationen
 - Die Vorschau zählt die Wirkung je Operation, nicht aus der ganzen Operationsliste der Aktion. <!-- q: code:apps/mcp-server/src/domain-runtime.ts#impactFor; commit:cd7a02b -->
 - Plattformwerkzeuge für Uploads und Jobs erscheinen nur bei vollständiger Konfiguration; fehlende Werte werden benannt, fehlerhafte nicht ausgegeben. <!-- q: code:apps/mcp-server/src/job-file-tools.ts#registerJobFileTools; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; comvenio-ai-connector-15 -->
 - Dateien über der harten Größengrenze werden weder gehasht noch geparst; erlaubt sind nur erkannte Typen, deren Bytes zur Angabe passen, und SVG oder HTML nur ohne aktive Inhalte. <!-- q: code:apps/mcp-server/src/files/object-inspection.ts#inspectStoredObject; code:apps/mcp-server/src/files/validation.ts#validateStoredObject -->
+- Eine offene Ausgabe (etwa `z.json`), die die Antwort des Dienstes ungeprüft weitergibt, kommt nicht neu hinzu: Der heutige Bestand steht als eingefrorene Liste mit Zählerstand im Repository, ein neuer offener Knoten macht den Mustertest rot, und ein Eintrag, der nicht mehr offen ist, muss aus der Liste. Die Liste wird nur kürzer. <!-- q: code:apps/mcp-server/tests/open-output-ratchet.pattern.test.ts#ratchet; code:apps/mcp-server/tests/support/output-schema.ts#isOpen; bug:da6abb50 -->
 - Der Connector erzeugt nur minimale technische Telemetrie ohne Inhalts- und Personendaten; Detailfelder zu Personen brauchen `view_members_details`, Vorschauen maskieren. <!-- q: comvenio-ai-connector §1 -->
 
 ## Fehlerbilder
@@ -1186,6 +1187,9 @@ Genutzt von: cli, pakete-und-integrationen
 | testedConnectorEvalReport | apps/mcp-server/tests/mobile-widgets.visual.test.ts |
 | testedResponseQualityReport | apps/mcp-server/tests/mobile-widgets.visual.test.ts |
 | testedTenantIsolationReport | apps/mcp-server/tests/mobile-widgets.visual.test.ts |
+| entries | apps/mcp-server/tests/open-output-ratchet.pattern.test.ts |
+| openNodes | apps/mcp-server/tests/open-output-ratchet.pattern.test.ts |
+| ratchet | apps/mcp-server/tests/open-output-ratchet.pattern.test.ts |
 | evidence | apps/mcp-server/tests/provider-anthropic.e2e.test.ts |
 | operation | apps/mcp-server/tests/provider-anthropic.e2e.test.ts |
 | tool | apps/mcp-server/tests/provider-anthropic.e2e.test.ts |
@@ -1194,17 +1198,18 @@ Genutzt von: cli, pakete-und-integrationen
 | pngDimensions | apps/mcp-server/tests/provider-openai.e2e.test.ts |
 | tool | apps/mcp-server/tests/provider-openai.e2e.test.ts |
 | collect | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
-| display | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | expectNoLeak | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | fieldsOf | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
-| isOpen | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
-| isText | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | output | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | setAt | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | stale | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | textFields | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
 | unclassified | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
-| walk | apps/mcp-server/tests/run-report-boundary.pattern.test.ts |
+| collect | apps/mcp-server/tests/support/output-schema.ts |
+| display | apps/mcp-server/tests/support/output-schema.ts |
+| isOpen | apps/mcp-server/tests/support/output-schema.ts |
+| isText | apps/mcp-server/tests/support/output-schema.ts |
+| walk | apps/mcp-server/tests/support/output-schema.ts |
 | postCli | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | postMcp | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | runtimeCapability | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
