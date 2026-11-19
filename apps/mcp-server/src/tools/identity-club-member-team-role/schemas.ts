@@ -8,7 +8,7 @@ import {
   publicSyncRun,
   publicWeeklyPreviewEntry,
   publicWeeklyPreviewRun,
-} from "./run-reports.ts";
+} from "../../run-reports.ts";
 import type { K7ActionId, K7ActionSchemaContract } from "./types.ts";
 
 const uuid = z.string().uuid();

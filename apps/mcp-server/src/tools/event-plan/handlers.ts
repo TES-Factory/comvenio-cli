@@ -1,6 +1,7 @@
 import type { ComvenioApiClient, ComvenioHttpMethod } from "@comvenio/comvenio-client";
 import type { JsonValue, RequestContext } from "@comvenio/connector-contracts";
 
+import { publicExternalSyncConfig, publicExternalSyncResult } from "../../run-reports.ts";
 import { privateCalendarEvent, privateCalendarEvents, redactEventPlanValue } from "./privacy.ts";
 import { rangeQuery, type LocalDateRange } from "./calendar.ts";
 import type { K8ActionId } from "./types.ts";
@@ -254,15 +255,18 @@ simple(dj, "request_status", "PATCH", by("/events/dj/requests/", "request_id", "
 simple(dj, "reset", "POST", by("/events/", "event_id", "/dj/requests/reset"));
 
 const sync = "cai.event.25.external_sync_workflows" as const;
-simple(sync, "list", "GET", by("/external-team-syncs/by-club/", "club_id"));
-simple(sync, "add", "POST", fixed("/external-team-syncs/"), { body: nested("sync", (i) => ({ club_id: i.club_id! })) });
-simple(sync, "show", "GET", by("/external-team-syncs/", "sync_id"));
-simple(sync, "update", "PATCH", by("/external-team-syncs/", "sync_id"), { body: nested("changes") });
+// BUG 7b331d46: a sync run reports exception texts in errors, only their number passes.
+const syncConfig = { response: (value: JsonValue) => publicExternalSyncConfig(redactEventPlanValue(value)) };
+const syncResult = { response: (value: JsonValue) => publicExternalSyncResult(redactEventPlanValue(value)) };
+simple(sync, "list", "GET", by("/external-team-syncs/by-club/", "club_id"), syncConfig);
+simple(sync, "add", "POST", fixed("/external-team-syncs/"), { body: nested("sync", (i) => ({ club_id: i.club_id! })), ...syncConfig });
+simple(sync, "show", "GET", by("/external-team-syncs/", "sync_id"), syncConfig);
+simple(sync, "update", "PATCH", by("/external-team-syncs/", "sync_id"), { body: nested("changes"), ...syncConfig });
 simple(sync, "delete", "DELETE", by("/external-team-syncs/", "sync_id"), { deleted_id: "sync_id" });
 simple(sync, "matches", "GET", by("/external-team-syncs/", "sync_id", "/matches"));
-simple(sync, "run", "POST", by("/external-team-syncs/sync/", "club_id"));
+simple(sync, "run", "POST", by("/external-team-syncs/sync/", "club_id"), syncResult);
 simple(sync, "stats", "GET", by("/external-team-syncs/stats/", "club_id"));
-simple(sync, "provider_run", "POST", by("/external-team-syncs/sync/by-provider/", "provider_id"));
+simple(sync, "provider_run", "POST", by("/external-team-syncs/sync/by-provider/", "provider_id"), syncResult);
 
 const instance = "cai.event.26.instance_previous_next_compare_clone_next" as const;
 simple(instance, "previous", "GET", by("/events/", "event_id", "/previous-instance"));

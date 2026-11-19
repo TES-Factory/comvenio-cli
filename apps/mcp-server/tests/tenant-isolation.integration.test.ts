@@ -752,10 +752,13 @@ describe("Remote MCP runtime", () => {
             run_refs: [
               { run_id: runId, kind: "command_run", state: "awaiting_approval" },
               { run_id: "kein-lauf", kind: "command_run", state: "running" },
+              // BUG 7b331d46: free service text in kind or state leaves as a fixed word.
+              { run_id: approvalId, kind: "Verein B Lauf", state: "Max Mustermann: Fehler" },
             ],
             approval_refs: [
               { approval_id: approvalId, state: "open", approval_url: approvalUrl, decision_requires_app: true },
               { state: "open" },
+              { approval_id: runId, state: "Verein B abgelehnt" },
             ],
           });
         }
@@ -793,9 +796,17 @@ describe("Remote MCP runtime", () => {
       expect(result.result.structuredContent).toEqual({
         session_id: conversationId,
         response: "Die Wochenvorschau ist angelegt und wartet auf deine Freigabe.",
-        run_refs: [{ run_id: runId, kind: "command_run", state: "awaiting_approval" }],
-        approval_refs: [{ approval_id: approvalId, state: "open", approval_url: approvalUrl }],
+        run_refs: [
+          { run_id: runId, kind: "command_run", state: "awaiting_approval" },
+          { run_id: approvalId, kind: "unknown", state: "unknown" },
+        ],
+        approval_refs: [
+          { approval_id: approvalId, state: "open", approval_url: approvalUrl },
+          { approval_id: runId, state: "unknown" },
+        ],
       });
+      expect(JSON.stringify(result)).not.toContain("Verein B");
+      expect(JSON.stringify(result)).not.toContain("Max Mustermann");
       expect(JSON.stringify(result)).not.toContain("internal_trace");
       expect(JSON.stringify(result)).not.toContain("decision_requires_app");
       expect(bodies[0]).toEqual({

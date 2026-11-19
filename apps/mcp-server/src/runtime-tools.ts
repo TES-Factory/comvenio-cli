@@ -39,6 +39,7 @@ import { JOB_FILE_PROTECTED_TOOLS, registerJobFileTools } from "./job-file-tools
 import type { JobFilePlatform } from "./jobs/platform.ts";
 import { PublicAccessPolicy } from "./public/policy.ts";
 import { publicToolError } from "./public-tool-error.ts";
+import { publicAgentApprovalRef, publicAgentRunRef } from "./run-reports.ts";
 import { guardToolErrors } from "./tool-error-boundary.ts";
 import { PublicResponseRedactor } from "./public/redaction.ts";
 import { PUBLIC_INPUT_SCHEMAS } from "./public/schemas.ts";
@@ -165,12 +166,12 @@ const clubAgentRunRefSchema = z.object({
   run_id: uuid,
   kind: z.string().min(1).max(64),
   state: z.string().max(64).nullable().optional(),
-}).strict();
+}).strict().overwrite(publicAgentRunRef); // BUG 7b331d46: only known kinds and states
 const clubAgentApprovalRefSchema = z.object({
   approval_id: uuid,
   state: z.string().min(1).max(64),
   approval_url: z.string().url().max(2048).optional(),
-}).strict();
+}).strict().overwrite(publicAgentApprovalRef);
 const clubAgentConversationOutputSchema = z.object({
   session_id: uuid,
   response: z.string().min(1).max(100_000),

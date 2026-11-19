@@ -1,15 +1,26 @@
 import { describe, expect, test } from "bun:test";
 
+import { ASYNC_JOB_HANDLE_SCHEMA } from "@comvenio/connector-contracts";
+import { z } from "zod";
+
 import { fullDomainOperationContracts } from "../src/domain-runtime.ts";
+import { executeK8Operation } from "../src/tools/event-plan/handlers.ts";
 import { K7_ACTION_SCHEMAS } from "../src/tools/identity-club-member-team-role/index.ts";
 
 // BUG 7b331d46: run and history reports passed free service text on — the reason
 // and result_text of a failed automation run, the error of a calendar sync run,
-// the last error of a subscription, the error message of a weekly preview run.
-// They reached MCP text, structuredContent and the CLI. Only a run that succeeded
-// keeps its text; any other state, reason or error is a fixed public code.
-// Pattern guard: every output field that can carry free text in any domain tool
-// is either guarded (canary test below) or reviewed as the club's own content.
+// the last error of a subscription, the error message of a weekly preview run, the
+// exception texts of an external team sync. They reached MCP text,
+// structuredContent and the CLI. Only a run that succeeded keeps its text; any
+// other state, kind, reason or error is a known word of its service or a fixed code.
+//
+// Pattern guard over every domain tool:
+// 1. every output field with a free-text name is guarded or reviewed as the club's content;
+// 2. every open output (z.json) of a run, sync, history, status, import or export tool is
+//    guarded or reviewed — an open output shows whatever the service sends;
+// 3. a guarded tool gets the canary in EVERY text field of its answer, not only in the
+//    named ones: whatever is not checked and not reviewed content makes the test red.
+// The club agent's run_refs are covered in tenant-isolation.integration.test.ts (TC-02).
 
 const clubId = "41414141-4141-4414-8414-414141414141";
 const automationId = "42424242-4242-4424-8424-424242424242";
@@ -22,13 +33,16 @@ const LEAK = "Verein B: Max Mustermann token=abc";
 const FOREIGN = ["Verein B", "Max Mustermann", "token=abc"];
 
 /** Field names that can carry free text (also the names of later tools). */
-const FREE_TEXT = /^(error|errors|last_error|reason|result_text|result_summary|summary|message|detail|details|failure|failure_reason|error_message|error_detail|log|output_text|note|notes|status_message|paused_reason|stderr|stdout)$/u;
+const FREE_TEXT = /^(error|errors|last_error|reason|result_text|result_summary|summary|message|detail|details|failure|failure_reason|error_message|error_detail|log|output_text|note|notes|status_message|paused_reason|stderr|stdout|sync_log|last_sync_summary)$/u;
 
-/** Guarded: the output schema turns these into a fixed public form (tested below). */
+/** Tools whose answer is a run, sync, history, status, import or export report. */
+const RUN_LIKE = /(run|sync|automation|weekly_preview|ical|clarification|history|_log|status|job|import|export|protocol)/u;
+
+/** Guarded: the answer turns these into a fixed public form (canary tests below). */
 const GUARDED: Record<string, readonly string[]> = {
   "cai.club.11.weekly_preview_create": ["$.error"],
   "cai.club.12.weekly_preview_list": ["[].events[].reason", "[].hidden[].reason"],
-  "cai.club.16.automation_list": ["[].paused_reason", "[].last_run.reason", "[].last_run.result_text"].map((p) => `.items${p}`),
+  "cai.club.16.automation_list": [".items[].paused_reason", ".items[].last_run.reason", ".items[].last_run.result_text"],
   "cai.club.18.automation_show": ["$.paused_reason", ".last_run.reason", ".last_run.result_text"],
   "cai.club.19.automation_runs": [".items[].reason", ".items[].result_text"],
   "cai.club.20.automation_create": ["$.paused_reason", ".last_run.reason", ".last_run.result_text"],
@@ -57,11 +71,57 @@ const CONTENT: Record<string, { fields: readonly string[]; why: string }> = {
   "cai.member.18.period_show": { fields: ["$.reason", "$.note"], why: "membership period entered by the club" },
   "cai.member.19.period_add": { fields: ["$.reason", "$.note"], why: "membership period entered by the club" },
   "cai.member.20.period_update": { fields: ["$.reason", "$.note"], why: "membership period entered by the club" },
+  // event-service utils/calendar_sync.py _open_clarification: detail is one of two fixed sentences
+  // of the service with a start time or a run count ("Ähnlicher Termin einer anderen UID um …",
+  // "Fehlt seit … vollständigen Läufen …") about the club's own season — no exception text.
   "cai.teams.28.clarification_list": { fields: ["[].reason"], why: "the open decision of the club's own season sync" },
   "cai.teams.29.clarification_resolve": { fields: [".clarification.reason"], why: "the decided clarification of the club's own season" },
   "cai.teams.31.termin_create": { fields: ["$.note"], why: "the team appointment's note entered by the club" },
   "cai.teams.32.termin_update": { fields: ["$.note"], why: "the team appointment's note entered by the club" },
 };
+
+/** Open outputs of run-like tools that are guarded in their handler (canary test below). */
+const OPEN_GUARDED: Record<string, readonly string[]> = {
+  "cai.event.25.external_sync_workflows": ["$", "[]"],
+  // trigger_event: only known kinds, ids and time pass (publicTriggerEvent).
+  "cai.club.16.automation_list": [".items[].last_run.trigger_event"],
+  "cai.club.18.automation_show": [".last_run.trigger_event"],
+  "cai.club.19.automation_runs": [".items[].trigger_event"],
+  "cai.club.20.automation_create": [".last_run.trigger_event"],
+  "cai.club.21.automation_update": [".last_run.trigger_event"],
+  "cai.club.22.automation_pause": [".last_run.trigger_event"],
+  "cai.club.23.automation_resume": [".last_run.trigger_event"],
+  "cai.club.24.automation_run": ["$.trigger_event"],
+};
+
+/** Open outputs of run-like tools that carry the club's own content or a job handle. */
+const AUTOMATION_CONFIG = { fields: ["$.args", "$.trigger", "$.output"], why: "the automation's own configuration as the club set it" };
+const OPEN_CONTENT: Record<string, { fields: readonly string[]; why: string }> = {
+  "cai.club.16.automation_list": { fields: AUTOMATION_CONFIG.fields.map((f) => `.items[]${f.slice(1)}`), why: AUTOMATION_CONFIG.why },
+  "cai.club.18.automation_show": AUTOMATION_CONFIG,
+  "cai.club.20.automation_create": AUTOMATION_CONFIG,
+  "cai.club.21.automation_update": AUTOMATION_CONFIG,
+  "cai.club.22.automation_pause": AUTOMATION_CONFIG,
+  "cai.club.23.automation_resume": AUTOMATION_CONFIG,
+  "cai.club.17.automation_options": { fields: [".functions[]"], why: "the released function catalogue of the club" },
+  "cai.data.35.export_members_bookings": { fields: ["$", "[]"], why: "job handle of an export; status through cv_job_status_read (enum-typed)" },
+  "cai.menu.10.export": { fields: ["$", "[]"], why: "job handle of an export; status through cv_job_status_read (enum-typed)" },
+  "cai.plan.11.export": { fields: ["$", "[]"], why: "job handle of an export; status through cv_job_status_read (enum-typed)" },
+  "cai.finance.30.audit_export": { fields: ["$", "[]"], why: "the club's own audit records as export content" },
+  "cai.finance.13.position_import_shopping": { fields: ["$", "[]"], why: "the budget position after the import, the club's own data" },
+  "cai.tournament.12.status": { fields: ["$", "[]"], why: "the tournament after its status change, the club's own data" },
+  "cai.meeting.02.protocol_list_show_create_update_delete_advance_revert_updates_validat": { fields: ["$", "[]"], why: "the club's own meeting protocol" },
+  "cai.meeting.04.note_list_list_protocol_create_update_delete": { fields: ["$", "[]"], why: "the club's own meeting notes" },
+  "cai.meeting.09.resolution_list_list_protocol_show_history_create_update_approve_decli": { fields: ["$", "[]"], why: "the club's own resolutions and their history" },
+};
+
+/** Text fields of guarded answers that are the club's content, ids or times — no service report. */
+const REVIEWED_TEXT = new Set([
+  "name", "title", "location", "masked_url", "capability_id", "event_id", "delivered_message_id",
+  "created_at", "updated_at", "started_at", "finished_at", "scheduled_for", "next_run_at", "last_run_at",
+  "last_success_at", "last_error_at", "next_sync_at", "range_start", "range_end", "start_time", "end_time",
+  "publish_at", "published_at",
+]);
 
 type JsonSchemaNode = {
   properties?: Record<string, JsonSchemaNode>;
@@ -73,27 +133,74 @@ type JsonSchemaNode = {
   [keyword: string]: unknown;
 };
 
-/** Paths as walked: "$.x" for a top-level field, otherwise ".items[].reason" or "[].error". */
-function freeTextFields(node: JsonSchemaNode | undefined, path: string, found: Set<string>): void {
+function walk(
+  node: JsonSchemaNode | undefined,
+  path: string,
+  visit: (node: JsonSchemaNode, path: string, key: string | null) => void,
+  key: string | null = null,
+): void {
   if (!node || typeof node !== "object") return;
-  for (const [key, child] of Object.entries(node.properties ?? {})) {
-    if (FREE_TEXT.test(key)) found.add(`${path || "$"}.${key}`);
-    freeTextFields(child, `${path}.${key}`, found);
-  }
-  if (node.items) freeTextFields(node.items, `${path}[]`, found);
-  for (const branch of [...(node.anyOf ?? []), ...(node.oneOf ?? []), ...(node.allOf ?? [])]) freeTextFields(branch, path, found);
-  if (node.additionalProperties && typeof node.additionalProperties === "object") freeTextFields(node.additionalProperties, `${path}{}`, found);
+  visit(node, path, key);
+  for (const [name, child] of Object.entries(node.properties ?? {})) walk(child, path ? `${path}.${name}` : `$.${name}`, visit, name);
+  if (node.items) walk(node.items, `${path === "$" || path === "" ? "" : path}[]`, visit, null);
+  for (const branch of [...(node.anyOf ?? []), ...(node.oneOf ?? []), ...(node.allOf ?? [])]) walk(branch, path, visit, key);
 }
 
-function discovered(): Map<string, Set<string>> {
+/** "$.a.b" → ".a.b" for nested paths, "$.a" stays for a top-level field. */
+function display(path: string): string {
+  if (path === "" || path === "$") return "$";
+  const nested = path.startsWith("$.") && path.slice(2).includes(".") ? path.slice(1) : path;
+  return nested.replace(/^\$\.(\w+)\[\]/u, ".$1[]");
+}
+
+function isOpen(node: JsonSchemaNode): boolean {
+  if (node.properties || node.items || node.anyOf || node.oneOf || node.allOf || node.enum || node.const !== undefined) return false;
+  const type = node.type;
+  return type === undefined || type === "object";
+}
+
+function isText(node: JsonSchemaNode): boolean {
+  const types = Array.isArray(node.type) ? node.type : [node.type];
+  return types.includes("string") && node.format === undefined && node.enum === undefined && node.const === undefined
+    && node.pattern === undefined;
+}
+
+const contracts = fullDomainOperationContracts();
+
+function collect(select: (node: JsonSchemaNode, key: string | null) => boolean, filter: (actionId: string) => boolean = () => true) {
   const result = new Map<string, Set<string>>();
-  for (const row of fullDomainOperationContracts()) {
+  for (const row of contracts) {
+    if (!filter(row.action_id)) continue;
     const found = result.get(row.action_id) ?? new Set<string>();
-    freeTextFields(row.output_schema as JsonSchemaNode, "", found);
+    walk(row.output_schema as JsonSchemaNode, "", (node, path, key) => {
+      if (select(node, key)) found.add(display(path));
+    });
     if (found.size > 0) result.set(row.action_id, found);
   }
   return result;
 }
+
+function unclassified(found: Map<string, Set<string>>, ...lists: Array<Record<string, readonly string[]>>): string[] {
+  const missing: string[] = [];
+  for (const [actionId, fields] of found) {
+    const known = new Set(lists.flatMap((list) => list[actionId] ?? []));
+    for (const field of fields) if (!known.has(field)) missing.push(`${actionId} ${field}`);
+  }
+  return missing.sort();
+}
+
+function stale(found: Map<string, Set<string>>, ...lists: Array<Record<string, readonly string[]>>): string[] {
+  const missing: string[] = [];
+  for (const list of lists) {
+    for (const [actionId, fields] of Object.entries(list)) {
+      for (const field of fields) if (!found.get(actionId)?.has(field)) missing.push(`${actionId} ${field}`);
+    }
+  }
+  return missing.sort();
+}
+
+const fieldsOf = (list: Record<string, { fields: readonly string[] }>) =>
+  Object.fromEntries(Object.entries(list).map(([id, entry]) => [id, entry.fields]));
 
 function expectNoLeak(value: unknown): void {
   const text = JSON.stringify(value);
@@ -101,25 +208,29 @@ function expectNoLeak(value: unknown): void {
 }
 
 const failedRun = {
-  id: runId, automation_id: automationId, trigger_type: "schedule", state: "failed",
-  reason: LEAK, result_text: LEAK, created_at: "2026-11-19T10:00:00+00:00",
+  id: runId, automation_id: automationId, trigger_type: "event", scheduled_for: null, state: "failed",
+  reason: LEAK, function_run_id: runId, result_text: LEAK, approval_request_id: null, delivery_state: "failed",
+  delivered_message_id: null,
+  trigger_event: { event_type: "event.upcoming", event_key: LEAK, subject_type: "event", subject_id: planId, actor_user_id: null, occurred_at: "2026-11-19T09:00:00+00:00", note: LEAK },
+  started_at: null, finished_at: null, created_at: "2026-11-19T10:00:00+00:00",
 };
 const automation = {
   id: automationId, club_id: clubId, kind: "club", department_id: null, owner_user_id: null,
   name: "Wochenvorschau", capability_id: "weekly_preview.create", args: {}, trigger: { type: "manual" },
   output: { type: "channel", department_id: null }, approval_mode: "click", objection_hours: null,
-  enabled: false, paused_reason: LEAK, failure_streak: 3, last_run: failedRun, version: 2,
-  created_at: "2026-11-01T10:00:00+00:00", updated_at: "2026-11-19T10:00:00+00:00",
+  enabled: false, paused_reason: LEAK, failure_streak: 3, next_run_at: null, last_run_at: null, runs_today: 0,
+  last_run: failedRun, version: 2, created_at: "2026-11-01T10:00:00+00:00", updated_at: "2026-11-19T10:00:00+00:00",
 };
 const failedSync = {
   id: runId, subscription_id: subscriptionId, trigger: "MANUAL", status: "FAILED",
-  created: 0, updated: 0, cancelled: 0, unchanged: 0, failed: 1, clarifications: 0, error: LEAK,
+  created: 0, updated: 0, cancelled: 0, unchanged: 0, failed: 1, clarifications: 0,
+  started_at: null, finished_at: null, error: LEAK,
 };
 const subscription = {
   id: subscriptionId, team_season_id: seasonId, masked_url: "https://example.org/***", status: "ACTIVE",
-  last_error: LEAK, latest_run: failedSync,
+  last_success_at: null, last_error: LEAK, last_error_at: null, next_sync_at: null, latest_run: failedSync,
 };
-const entry = { event_id: "e-1", title: "Training", start_time: "2026-11-20T18:00:00+00:00", reason: LEAK.slice(0, 40) };
+const entry = { event_id: "e-1", title: "Training", start_time: "2026-11-20T18:00:00+00:00", end_time: null, location: null, reason: LEAK };
 
 /** One failing answer per guarded tool, as the service could send it. */
 const FAILING: Record<string, unknown> = {
@@ -148,29 +259,68 @@ function output(actionId: string, value: unknown): unknown {
   return K7_ACTION_SCHEMAS[actionId as keyof typeof K7_ACTION_SCHEMAS].output.parse(structuredClone(value));
 }
 
+/** Writes the canary into every element the path reaches; false when a step is missing. */
+function setAt(target: unknown, path: string, value: unknown): boolean {
+  const steps = path.replace(/^\$/u, "").split(/(?=\.)|(?=\[\])/u).filter(Boolean);
+  const go = (node: unknown, rest: string[]): boolean => {
+    const [step, ...tail] = rest;
+    if (step === undefined) return true;
+    if (step === "[]") return Array.isArray(node) && node.length > 0 && node.every((item) => go(item, tail));
+    const name = step.slice(1);
+    if (node === null || typeof node !== "object" || Array.isArray(node)) return false;
+    const record = node as Record<string, unknown>;
+    if (tail.length === 0) { record[name] = value; return true; }
+    return go(record[name], tail);
+  };
+  return go(target, steps);
+}
+
+function textFields(actionId: string): string[] {
+  const row = contracts.find((contract) => contract.action_id === actionId);
+  const found = new Set<string>();
+  walk(row?.output_schema as JsonSchemaNode, "", (node, path, key) => {
+    if (key !== null && isText(node) && !REVIEWED_TEXT.has(key)) found.add(path);
+  });
+  return [...found].sort();
+}
+
 describe("run and history reports carry no free service text (BUG 7b331d46)", () => {
   test("every free-text field of every domain tool is guarded or reviewed as content", () => {
-    const unclassified: string[] = [];
-    const stale: string[] = [];
-    const found = discovered();
-    for (const [actionId, fields] of found) {
-      const known = new Set([...(GUARDED[actionId] ?? []), ...(CONTENT[actionId]?.fields ?? [])]);
-      for (const field of fields) if (!known.has(field)) unclassified.push(`${actionId} ${field}`);
-    }
-    for (const [actionId, fields] of [...Object.entries(GUARDED), ...Object.entries(CONTENT).map(([id, c]) => [id, c.fields] as const)]) {
-      for (const field of fields) if (!found.get(actionId)?.has(field)) stale.push(`${actionId} ${field}`);
-    }
-    expect(unclassified).toEqual([]);
-    expect(stale).toEqual([]);
+    const found = collect((_node, key) => key !== null && FREE_TEXT.test(key));
+    expect(unclassified(found, GUARDED, fieldsOf(CONTENT))).toEqual([]);
+    expect(stale(found, GUARDED, fieldsOf(CONTENT))).toEqual([]);
+  });
+
+  test("every open output of a run-like tool is guarded or reviewed", () => {
+    const found = collect((node) => isOpen(node), (actionId) => RUN_LIKE.test(actionId));
+    expect(unclassified(found, OPEN_GUARDED, fieldsOf(OPEN_CONTENT))).toEqual([]);
+    expect(stale(found, OPEN_GUARDED, fieldsOf(OPEN_CONTENT))).toEqual([]);
   });
 
   test("every guarded tool has a failing answer in this test", () => {
-    expect(Object.keys(FAILING).sort()).toEqual(Object.keys(GUARDED).sort());
+    const k7 = Object.keys(GUARDED).sort();
+    expect(Object.keys(FAILING).sort()).toEqual(k7);
   });
 
   for (const actionId of Object.keys(GUARDED)) {
     test(`${actionId}: a failed run shows no service text`, () => {
       expectNoLeak(output(actionId, FAILING[actionId]));
+    });
+
+    test(`${actionId}: the canary in every unchecked text field never reaches the answer`, () => {
+      const fields = textFields(actionId);
+      expect(fields.length).toBeGreaterThan(0);
+      const missing: string[] = [];
+      const leaking: string[] = [];
+      for (const field of fields) {
+        const answer = structuredClone(FAILING[actionId]);
+        if (!setAt(answer, field, LEAK)) { missing.push(field); continue; }
+        let parsed: unknown;
+        try { parsed = output(actionId, answer); } catch { continue; } // refused answer: nothing reaches the client
+        if (FOREIGN.some((fragment) => JSON.stringify(parsed).includes(fragment))) leaking.push(field);
+      }
+      expect(missing).toEqual([]);
+      expect(leaking).toEqual([]);
     });
   }
 
@@ -178,40 +328,44 @@ describe("run and history reports carry no free service text (BUG 7b331d46)", ()
     const runs = output("cai.club.19.automation_runs", {
       items: [
         failedRun,
-        { ...failedRun, state: "succeeded", reason: null, result_text: "3 Termine in der Vorschau" },
+        { ...failedRun, state: "succeeded", reason: null, result_text: "3 Termine in der Vorschau", delivery_state: "delivered" },
         { ...failedRun, state: "skipped", reason: "daily_limit", result_text: null },
-        { ...failedRun, state: "awaiting_approval", reason: null, result_text: LEAK },
-        { ...failedRun, state: "exploded: Verein B", reason: "approval_superseded" },
+        { ...failedRun, state: "awaiting_approval", reason: null, result_text: LEAK, delivery_state: null },
+        { ...failedRun, state: "exploded: Verein B", reason: "approval_superseded", trigger_type: "cron", delivery_state: "lost" },
       ],
     }) as { items: Array<Record<string, unknown>> };
-    expect(runs.items.map((run) => [run.state, run.reason, run.result_text])).toEqual([
-      ["failed", "run_failed", null],
-      ["succeeded", null, "3 Termine in der Vorschau"],
-      ["skipped", "daily_limit", null],
-      ["awaiting_approval", null, null],
-      ["unknown", "approval_superseded", null],
+    expect(runs.items.map((run) => [run.state, run.reason, run.result_text, run.trigger_type, run.delivery_state])).toEqual([
+      ["failed", "run_failed", null, "event", "failed"],
+      ["succeeded", null, "3 Termine in der Vorschau", "event", "delivered"],
+      ["skipped", "daily_limit", null, "event", "failed"],
+      ["awaiting_approval", null, null, "event", null],
+      ["unknown", "approval_superseded", null, "unknown", "unknown"],
     ]);
+    expect(runs.items[0]?.trigger_event).toEqual({
+      event_type: "event.upcoming", subject_type: "event", subject_id: planId, actor_user_id: null, occurred_at: "2026-11-19T09:00:00+00:00",
+    });
   });
 
   test("automation: a pause reason outside the known codes is reported as unknown", () => {
-    expect((output("cai.club.18.automation_show", automation) as Record<string, unknown>).paused_reason).toBe("unknown");
-    expect((output("cai.club.18.automation_show", { ...automation, paused_reason: "repeated_failures" }) as Record<string, unknown>).paused_reason)
-      .toBe("repeated_failures");
-    expect((output("cai.club.18.automation_show", { ...automation, paused_reason: null }) as Record<string, unknown>).paused_reason).toBeNull();
+    const show = (changes: Record<string, unknown>) => output("cai.club.18.automation_show", { ...automation, ...changes }) as Record<string, unknown>;
+    expect(show({}).paused_reason).toBe("unknown");
+    expect(show({ paused_reason: "repeated_failures" }).paused_reason).toBe("repeated_failures");
+    expect(show({ paused_reason: null }).paused_reason).toBeNull();
+    expect(show({ kind: "Verein B", approval_mode: "Max Mustermann" })).toMatchObject({ kind: "unknown", approval_mode: "unknown" });
   });
 
   test("sync runs: a succeeded run has no error, a failed one a known code or SYNC_FAILED", () => {
     const runs = output("cai.teams.27.sync_runs", [
       failedSync,
       { ...failedSync, error: "FETCH_TIMEOUT" },
-      { ...failedSync, status: "SUCCEEDED", error: "EMPTY_FEED" },
-      { ...failedSync, status: "EXPLODED", error: null },
+      { ...failedSync, status: "SUCCEEDED", error: "EMPTY_FEED", trigger: "SCHEDULED" },
+      { ...failedSync, status: "EXPLODED", error: null, trigger: "cron" },
     ]) as Array<Record<string, unknown>>;
-    expect(runs.map((run) => [run.status, run.error])).toEqual([
-      ["FAILED", "SYNC_FAILED"],
-      ["FAILED", "FETCH_TIMEOUT"],
-      ["SUCCEEDED", null],
-      ["unknown", null],
+    expect(runs.map((run) => [run.status, run.error, run.trigger])).toEqual([
+      ["FAILED", "SYNC_FAILED", "MANUAL"],
+      ["FAILED", "FETCH_TIMEOUT", "MANUAL"],
+      ["SUCCEEDED", null, "SCHEDULED"],
+      ["unknown", null, "unknown"],
     ]);
     const shown = output("cai.teams.21.ical_list", [subscription]) as Array<Record<string, unknown>>;
     expect(shown[0]?.last_error).toBe("SYNC_FAILED");
@@ -228,8 +382,43 @@ describe("run and history reports carry no free service text (BUG 7b331d46)", ()
     expect(snapshots[0]?.hidden.map((item) => item.reason)).toEqual(["not_public", "hidden"]);
   });
 
+  test("external team syncs: exception texts of a run leave only as their number", async () => {
+    const answers: Record<string, unknown> = {
+      list: [{ id: runId, club_id: clubId, team_label: "F-Jugend", last_sync_summary: JSON.stringify({ created: 2, errors: 1 }) },
+        { id: planId, club_id: clubId, team_label: "G-Jugend", last_sync_summary: LEAK }],
+      show: { id: runId, club_id: clubId, team_label: "F-Jugend", last_sync_summary: JSON.stringify({ note: LEAK }) },
+      run: { total_configs: 1, synced: 0, errors: [`API fetch failed: ${LEAK}`], results: [{ sync_config_id: runId, team_label: "F-Jugend", provider: "api_fussball", created: 0, updated: 0, unchanged: 0, errors: [`Booking: ${LEAK}`] }] },
+      provider_run: { total_configs: 1, synced: 0, errors: [LEAK], results: [] },
+    };
+    const inputs: Record<string, Record<string, unknown>> = {
+      list: { operation: "list", club_id: clubId },
+      show: { operation: "show", club_id: clubId, sync_id: runId },
+      run: { operation: "run", club_id: clubId },
+      provider_run: { operation: "provider_run", club_id: clubId, provider_id: "api_fussball" },
+    };
+    const results: Record<string, unknown> = {};
+    for (const [operation, answer] of Object.entries(answers)) {
+      const client = { request: async () => structuredClone(answer) } as never;
+      results[operation] = await executeK8Operation("cai.event.25.external_sync_workflows", operation, inputs[operation] as never, { club_id: clubId } as never, client);
+      expectNoLeak(results[operation]);
+    }
+    expect(results.list).toMatchObject([{ last_sync_summary: JSON.stringify({ created: 2, errors: 1 }) }, { last_sync_summary: null }]);
+    expect(results.show).toMatchObject({ last_sync_summary: null });
+    expect(results.run).toMatchObject({ errors: ["SYNC_FAILED"], results: [{ team_label: "F-Jugend", errors: ["SYNC_FAILED"] }] });
+    expect(results.provider_run).toMatchObject({ errors: ["SYNC_FAILED"] });
+  });
+
+  test("the job status tool reports only typed states and codes", () => {
+    const schema = z.toJSONSchema(ASYNC_JOB_HANDLE_SCHEMA) as JsonSchemaNode;
+    // The font upload result names the file and family the person uploaded — their own input.
+    const reviewed = new Set(["$.result.filename", "$.result.family"]);
+    const texts: string[] = [];
+    walk(schema, "", (node, path, key) => { if (key !== null && isText(node) && !reviewed.has(path)) texts.push(path); });
+    expect(texts).toEqual([]);
+  });
+
   test("the published output schema is unchanged by the guard", () => {
-    const row = fullDomainOperationContracts().find((contract) => contract.action_id === "cai.club.19.automation_runs");
+    const row = contracts.find((contract) => contract.action_id === "cai.club.19.automation_runs");
     const item = ((row?.output_schema as JsonSchemaNode).properties?.items as JsonSchemaNode).items as JsonSchemaNode;
     expect(item.properties?.reason).toEqual({ anyOf: [{ type: "string", maxLength: 2000 }, { type: "null" }] });
     expect(item.properties?.result_text).toEqual({ anyOf: [{ type: "string", maxLength: 20000 }, { type: "null" }] });
