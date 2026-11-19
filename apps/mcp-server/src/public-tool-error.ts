@@ -61,11 +61,16 @@ const COLON_DETAIL_FORMS: ReadonlyMap<string, { texts: ReadonlySet<string>; tabs
 /**
  * The named fields packages/comvenio-client/src/client.ts (detailExtras) puts
  * after a snake_case code, in its order, each value an integer or a code-like word.
+ * The counts are integers only: a version or a limit is never a word (review
+ * 4a98b68e, a name in "live_version: Verein_B").
  */
 const DETAIL_EXTRA_FIELDS: readonly string[] = ["live_version", "limit", "paused_reason", "field"];
+const DETAIL_EXTRA_INTEGER_FIELDS: ReadonlySet<string> = new Set(["live_version", "limit"]);
 const DETAIL_EXTRA_VALUE = /^[A-Za-z0-9_.:-]{1,80}$/u;
+const DETAIL_EXTRA_INTEGER = /^-?[0-9]{1,15}$/u;
 const TAB_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
-/** The client cuts its line to 300 characters with "..." (upstreamBody). */
+/** The client cuts its line to 300 characters, the last three "..." (upstreamBody). */
+const MAX_DETAIL_CHARS = 300;
 const CUT_MARK = "...";
 
 /** " (live_version: 4, limit: 5)" exactly as detailExtras writes it. */
@@ -75,8 +80,10 @@ function reviewedExtras(rest: string): boolean {
   for (const part of rest.slice(2, -1).split(", ")) {
     const separator = part.indexOf(": ");
     if (separator < 0) return false;
-    const index = DETAIL_EXTRA_FIELDS.indexOf(part.slice(0, separator));
-    if (index <= previous || !DETAIL_EXTRA_VALUE.test(part.slice(separator + 2))) return false;
+    const field = part.slice(0, separator);
+    const index = DETAIL_EXTRA_FIELDS.indexOf(field);
+    const value = DETAIL_EXTRA_INTEGER_FIELDS.has(field) ? DETAIL_EXTRA_INTEGER : DETAIL_EXTRA_VALUE;
+    if (index <= previous || !value.test(part.slice(separator + 2))) return false;
     previous = index;
   }
   return true;
@@ -86,11 +93,11 @@ function reviewedExtras(rest: string): boolean {
  * " (Tabs: <uuid>, …)" as the client writes it, rebuilt from the ids alone. A list
  * the client cut at 300 characters keeps its whole ids; null for anything else.
  */
-function reviewedTabs(rest: string): string | null {
+function reviewedTabs(rest: string, cut: boolean): string | null {
   if (!rest.startsWith(" (Tabs: ")) return null;
   let list = rest.slice(" (Tabs: ".length);
-  if (list.endsWith(")")) list = list.slice(0, -1);
-  else if (list.endsWith(CUT_MARK)) list = list.slice(0, -CUT_MARK.length).replace(/(?:^|, ?)[0-9a-f-]*$/iu, "");
+  if (!cut && list.endsWith(")")) list = list.slice(0, -1);
+  else if (cut) list = list.slice(0, -CUT_MARK.length).replace(/(?:^|, ?)[0-9a-f-]*$/iu, "");
   else return null;
   if (list === "") return "";
   const ids = list.split(", ");
@@ -107,21 +114,31 @@ function reviewedTabs(rest: string): string | null {
  */
 function publicDetail(detail: string): string | null {
   const word = detail.split(/[\s(]/u)[0] ?? "";
+  // Longer than the client's line, or cut without its mark: not a form the client wrote.
+  const cut = detail.length === MAX_DETAIL_CHARS && detail.endsWith(CUT_MARK);
+  const shaped = detail.length < MAX_DETAIL_CHARS || cut;
   const colon = word.endsWith(":") ? COLON_DETAIL_FORMS.get(word.slice(0, -1)) : undefined;
   if (colon) {
     const code = word.slice(0, -1);
     const rest = detail.slice(word.length);
     const text = [...colon.texts].find((fixed) => rest === ` ${fixed}` || rest.startsWith(` ${fixed} `));
-    if (text === undefined) return code;
+    if (text === undefined || !shaped) return code;
     const tail = rest.slice(text.length + 1);
-    if (tail === "") return `${code}: ${text}`;
-    const tabs = colon.tabs ? reviewedTabs(tail) : null;
+    if (tail === "") return cut ? code : `${code}: ${text}`;
+    const tabs = colon.tabs ? reviewedTabs(tail, cut) : null;
     return tabs === null ? code : `${code}: ${text}${tabs}`;
   }
   if (!PUBLIC_DETAIL_CODES.has(word)) return null;
   const rest = detail.slice(word.length);
-  if (rest === "") return word;
-  return !COLON_DETAIL_FORMS.has(word) && reviewedExtras(rest) ? detail : word;
+  if (rest === "" || !shaped) return word;
+  // {"code": "TAB_VERSION_CONFLICT", "tabs": […]} without a message: the client
+  // writes the code and the tab ids (review 4a98b68e).
+  const form = COLON_DETAIL_FORMS.get(word);
+  if (form) {
+    const tabs = form.tabs ? reviewedTabs(rest, cut) : null;
+    return tabs ? `${word}${tabs}` : word;
+  }
+  return !cut && reviewedExtras(rest) ? detail : word;
 }
 
 /**

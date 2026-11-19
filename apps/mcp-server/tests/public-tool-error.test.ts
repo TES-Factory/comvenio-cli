@@ -157,6 +157,14 @@ describe("connector customer errors (01-fehlermodell)", () => {
       ["CONFLICT", "TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: Verein B)", "TAB_VERSION_CONFLICT"],
       ["CONFLICT", "DESIGN_VERSION_CONFLICT freier Text", "DESIGN_VERSION_CONFLICT"],
       ["CONFLICT", `DESIGN_VERSION_CONFLICT: das Design wurde inzwischen geändert, bitte neu laden (Tabs: ${uuid})`, "DESIGN_VERSION_CONFLICT"],
+      // Review 4a98b68e: a count is an integer, never a name.
+      ["CONFLICT", "automation_changed (live_version: Verein_B)", "automation_changed"],
+      ["CONFLICT", "automation_limit_reached (limit: Verein_B)", "automation_limit_reached"],
+      // Review 4a98b68e: longer than the client's 300 characters, or "..." without the cut.
+      ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${Array(10).fill(uuid).join(", ")})`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, Verein B...`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `TAB_VERSION_CONFLICT (Tabs: ${uuid}) Verein B`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `DESIGN_VERSION_CONFLICT (Tabs: ${uuid})`, "DESIGN_VERSION_CONFLICT"],
     ];
     for (const [code, detail, kept] of cut) {
       const result = answer(code, detail);
@@ -174,6 +182,8 @@ describe("connector customer errors (01-fehlermodell)", () => {
       "TAB_VERSION_CONFLICT",
       "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden",
       `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, ${uuid})`,
+      // {"code": "TAB_VERSION_CONFLICT", "tabs": […]} without a message (review 4a98b68e).
+      `TAB_VERSION_CONFLICT (Tabs: ${uuid})`,
     ]) {
       expect(answer("CONFLICT", detail).structuredContent).toMatchObject({ detail });
     }
