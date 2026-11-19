@@ -236,6 +236,57 @@ describe("was ein gescheiterter Login aufräumt", () => {
     const { aufraeumenNachFehlschlag } = await modul("x3");
     expect(aufraeumenNachFehlschlag(false, false)).toBe("alles");
   });
+
+  // BUG c6882c0a: a failing removal of the credentials hid the login error and skipped clearState().
+  test("scheitert das Löschen, bleibt der Loginfehler mit dem Löschfehler als Ursache, und der Zustand geht trotzdem", async () => {
+    const { raeumeNachFehlschlagAuf, clearState } = await modul("x4");
+    schreibe(z.heim, { schema: 3, connector: CONNECTOR, gatewayBaseUrl: GATEWAY });
+    expect(existsSync(pfadIn(z.heim))).toBe(true);
+    const loginfehler = new Error("Der OAuth-Grant enthält keinen eindeutig gebundenen Verein.");
+    const loeschfehler = new Error("Remove-Item: Zugriff verweigert");
+    const geworfen = raeumeNachFehlschlagAuf(loginfehler, true, false, {
+      credentials: () => { throw loeschfehler; },
+      zustand: clearState,
+    });
+    expect(geworfen).toBe(loginfehler);
+    expect((geworfen as Error).cause).toBe(loeschfehler);
+    expect(existsSync(pfadIn(z.heim))).toBe(false);
+  });
+
+  test("scheitern beide Schritte, nennt die Ursache beide", async () => {
+    const { raeumeNachFehlschlagAuf } = await modul("x5");
+    const loginfehler = new Error("Login abgebrochen");
+    const geworfen = raeumeNachFehlschlagAuf(loginfehler, true, true, {
+      credentials: () => { throw new Error("credentials"); },
+      zustand: () => { throw new Error("zustand"); },
+    }) as Error;
+    expect(geworfen).toBe(loginfehler);
+    expect(geworfen.cause).toBeInstanceOf(AggregateError);
+    expect((geworfen.cause as AggregateError).errors.map((e: Error) => e.message)).toEqual(["credentials", "zustand"]);
+  });
+
+  test("gelingt das Aufräumen, bleibt der Loginfehler unverändert", async () => {
+    const { raeumeNachFehlschlagAuf } = await modul("x6");
+    const loginfehler = new Error("Login abgebrochen");
+    const schritte: string[] = [];
+    const geworfen = raeumeNachFehlschlagAuf(loginfehler, false, false, {
+      credentials: () => { schritte.push("credentials"); },
+      zustand: () => { schritte.push("zustand"); },
+    }) as Error;
+    expect(geworfen).toBe(loginfehler);
+    expect(geworfen.cause).toBeUndefined();
+    expect(schritte).toEqual(["credentials", "zustand"]);
+  });
+
+  test("ein abgebrochener Wiederholungsversuch räumt nichts ab", async () => {
+    const { raeumeNachFehlschlagAuf } = await modul("x7");
+    const loginfehler = new Error("Login abgebrochen");
+    const geworfen = raeumeNachFehlschlagAuf(loginfehler, false, true, {
+      credentials: () => { throw new Error("darf nicht laufen"); },
+      zustand: () => { throw new Error("darf nicht laufen"); },
+    });
+    expect(geworfen).toBe(loginfehler);
+  });
 });
 
 // ── Die Isolation selbst (Bug 7aad5852, 2026-09-27) ─────────────────────────
