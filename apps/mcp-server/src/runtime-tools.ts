@@ -38,6 +38,7 @@ import { HELP_TOOL_COPY, HELP_TOOL_HINT, HELP_TOOL_NAME, registerHelpTool } from
 import { JOB_FILE_PROTECTED_TOOLS, registerJobFileTools } from "./job-file-tools.ts";
 import type { JobFilePlatform } from "./jobs/platform.ts";
 import { PublicAccessPolicy } from "./public/policy.ts";
+import { guardToolErrors } from "./tool-error-boundary.ts";
 import { PublicResponseRedactor } from "./public/redaction.ts";
 import { PUBLIC_INPUT_SCHEMAS } from "./public/schemas.ts";
 import { PublicToolSubset } from "./public/subset.ts";
@@ -872,6 +873,8 @@ export function createRuntimeServer(input: {
   job_files?: JobFilePlatform | null;
 }): McpServer {
   const server = new McpServer({ name: "comvenio-mcp-server", version: "1.0.0" });
+  // Before the first tool: no tool error passes by the reviewed boundary (BUG b1c53c74).
+  guardToolErrors(server, { context: input.context.request, public_origin: input.public_origin });
   const advertisedSecuritySchemes = new Map<string, readonly ToolSecurityScheme[]>();
   registerEventCalendarWidgetResource(server, input.environment);
   registerNewsWidgetResource(server, input.environment);
