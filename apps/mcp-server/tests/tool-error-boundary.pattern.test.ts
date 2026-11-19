@@ -75,6 +75,21 @@ function runtimeServer(): McpServer {
     context: transportContext,
     domain_state_store: new InMemoryDomainStateStore(),
     release_scope: "full_connector_v1",
+    club_agent_functions: [{
+      capability_id: "club.faq.answer",
+      title: "Vereins-FAQ beantworten",
+      description: "Beantwortet eine Frage aus der Vereins-FAQ.",
+      risk_level: 0,
+      approval_required: false,
+      input_schema: {
+        type: "object",
+        properties: { question: { type: "string", minLength: 1, maxLength: 500 } },
+        required: ["question"],
+        additionalProperties: false,
+      },
+      capability_version: 1,
+      input_schema_hash: "sha256:a",
+    }],
   });
 }
 
@@ -138,6 +153,59 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
         .then((result) => ({ result }), (error: unknown) => ({ thrown: error }));
       expect({ name, thrown: "thrown" in outcome }).toEqual({ name, thrown: false });
       expectNoForeignText((outcome as { result: unknown }).result);
+    }
+  });
+
+  test("ein fehlgeschlagener Lauf einer Agent-Funktion trägt keinen freien Dienst-Text (Prüfung b729144d)", async () => {
+    globalThis.fetch = (async () => Response.json({ id: taskId, state: "failed", error: LEAK, result_summary: LEAK })) as unknown as typeof fetch;
+    const client = await connect(runtimeServer());
+    try {
+      const result = await client.callTool({ name: "cv_fn_club_faq_answer", arguments: { question: "Wo ist die Satzung?" } });
+      expectNoForeignText(result);
+      expect(result.structuredContent).toMatchObject({ state: "failed", error: "run_failed", result_summary: null });
+      expect((result.content as { text: string }[])[0]!.text).toContain("am Lauf in Web oder App");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("list der Erinnerungen liest nur: ein unbeantwortetes list ist kein unbekannter Schreibvorgang (Prüfung b729144d)", async () => {
+    globalThis.fetch = (async () => new Response("", { status: 503 })) as unknown as typeof fetch;
+    const client = await connect(runtimeServer());
+    try {
+      const list = await client.callTool({ name: "cv_my_task_reminder_write", arguments: { operation: "list", task_id: taskId } });
+      expect(list.isError).toBe(true);
+      expect((list.structuredContent as { code: string }).code).not.toBe("OUTCOME_UNKNOWN");
+      const set = await client.callTool({ name: "cv_my_task_reminder_write", arguments: { operation: "delete", task_id: taskId } });
+      expect((set.structuredContent as { code: string }).code).toBe("OUTCOME_UNKNOWN");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("der Rückfall des SDK nennt nur den eigenen Aufruf; eine ungültige Ausgabe wird UNKNOWN_ERROR (Prüfung b729144d)", async () => {
+    const server = new McpServer({ name: "probe", version: "1.0.0" });
+    guardToolErrors(server, { context, public_origin: "https://mcpdev.comvenio.app" });
+    registerAppTool(server, "probe_read", {
+      title: "Probe",
+      description: "Probe",
+      inputSchema: z.object({ count: z.number().int() }).strict(),
+      outputSchema: z.object({ ok: z.boolean() }).strict(),
+      annotations: { readOnlyHint: true },
+      _meta: {},
+    }, async () => ({ content: [{ type: "text", text: "x" }], structuredContent: { ok: true, mitglied_max_mustermann: "Verein B" } }));
+    const client = await connect(server);
+    try {
+      const invalidOutput = await client.callTool({ name: "probe_read", arguments: { count: 1 } });
+      expect(invalidOutput.isError).toBe(true);
+      expectNoForeignText(invalidOutput);
+      expect(JSON.stringify(invalidOutput)).not.toContain("mitglied_max_mustermann");
+      expect(invalidOutput.structuredContent).toMatchObject({ code: "UNKNOWN_ERROR", request_id: context.request_id });
+      // The input check repeats only the caller's own call; the CLI reads its field from it (K16).
+      const invalidInput = await client.callTool({ name: "probe_read", arguments: { count: "eins" } });
+      expect((invalidInput.content as { text: string }[])[0]!.text).toStartWith("MCP error -32602: Input validation error");
+    } finally {
+      await client.close();
     }
   });
 

@@ -38,6 +38,7 @@ import { HELP_TOOL_COPY, HELP_TOOL_HINT, HELP_TOOL_NAME, registerHelpTool } from
 import { JOB_FILE_PROTECTED_TOOLS, registerJobFileTools } from "./job-file-tools.ts";
 import type { JobFilePlatform } from "./jobs/platform.ts";
 import { PublicAccessPolicy } from "./public/policy.ts";
+import { publicToolError } from "./public-tool-error.ts";
 import { guardToolErrors } from "./tool-error-boundary.ts";
 import { PublicResponseRedactor } from "./public/redaction.ts";
 import { PUBLIC_INPUT_SCHEMAS } from "./public/schemas.ts";
@@ -825,13 +826,17 @@ function registerAgentFunctionTools(input: {
         const output = {
           run_id: typeof run?.id === "string" ? run.id : null,
           state,
-          result_summary: summary,
+          result_summary: state === "failed" ? null : summary,
           approval_url: approvalUrl,
-          error: typeof run?.error === "string" ? run.error : null,
+          // A failed run keeps no free service text — neither its error nor a summary
+          // written about the failure (review b729144d): the reason is in the run in Web or App.
+          error: typeof run?.error === "string" || state === "failed" ? "run_failed" : null,
         };
         const text = approvalUrl
           ? `Die Funktion braucht eine Freigabe. Entscheide in Web oder App: ${approvalUrl}`
-          : summary ?? (state === "succeeded" ? "Erledigt." : `Stand: ${state}`);
+          : state === "failed"
+            ? "Die Funktion ist fehlgeschlagen. Den Grund siehst du am Lauf in Web oder App."
+            : summary ?? (state === "succeeded" ? "Erledigt." : `Stand: ${state}`);
         return toMcpResult(createProviderNeutralResult(input.context, output, [{ type: "text", text }]));
       } catch (error) {
         if (isConnectorError(error)) {
@@ -1421,7 +1426,8 @@ export function createRuntimeServer(input: {
                 "Die Aufgabe oder Erinnerung wurde nicht gefunden.",
               );
             }
-            throw error;
+            // list only reads: an unanswered list is a read error, not an unknown write (review b729144d).
+            return publicToolError(input.context.request, input.public_origin, error, parsed.operation === "list" ? "read" : "write");
           }
         });
       }

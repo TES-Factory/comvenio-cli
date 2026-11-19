@@ -37,4 +37,24 @@ export function guardToolErrors(server: McpServer, input: {
     return register(name, config, handler as unknown as ToolCallback);
   };
   server.registerTool = guarded as RegisterTool;
+  guardSdkFallback(server, input);
 }
+
+/**
+ * The SDK's own fallback (createToolError) for what fails outside a callback:
+ * input and output validation, unknown or disabled tools. Only the answers about
+ * the caller's own call keep their text — the input check, which the CLI turns
+ * into its field message (K16), and the tool name. Everything else, e.g. an
+ * output check that names keys of the structured content, becomes the public
+ * UNKNOWN_ERROR with its request ID (review b729144d).
+ */
+function guardSdkFallback(server: McpServer, input: { context: RequestContext; public_origin: string }): void {
+  const sdk = server as unknown as { createToolError: (message: string) => CallToolResult };
+  const original = sdk.createToolError.bind(server);
+  sdk.createToolError = (message: string) => CALLER_OWN_SDK_ERROR.test(message)
+    ? original(message)
+    : publicToolError(input.context, input.public_origin, new Error("sdk fallback"), "read");
+}
+
+/** Texts of @modelcontextprotocol/sdk server/mcp.js that only repeat the caller's own call. */
+const CALLER_OWN_SDK_ERROR = /^MCP error -?\d+: (?:Input validation error: |Tool \S+ (?:not found|disabled)$)/u;
