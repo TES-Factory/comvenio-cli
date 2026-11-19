@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -986,227 +986,251 @@ describe("Remote MCP runtime", () => {
     }
   });
 
-  test("full connector exposes the same RBAC-filtered domain tools to OpenAI and Anthropic", async () => {
+  describe("full connector exposes the same RBAC-filtered domain tools to OpenAI and Anthropic", () => {
+    // Each MCP request builds a fresh full-connector server (~100 ms) and each
+    // tools/list serializes the whole catalog (~600 ms). Nineteen requests in a
+    // single test took ~4.5 s alone and 5.4 s under suite load against the 5 s
+    // limit (BUG a5865a00), so the scenario runs as independent steps over one
+    // shared fixture; every assertion of the former single test is kept.
     let actorTokenSeen = false;
     let deletedMembers = 0;
     let createdBookings = 0;
     let memberManagementAllowed = true;
-    const api = Bun.serve({
-      hostname: "127.0.0.1",
-      port: 0,
-      async fetch(request) {
-        const url = new URL(request.url);
-        if (
-          request.method === "GET"
-          && url.pathname === `/member/members/by_club/${clubId}`
-        ) {
-          actorTokenSeen =
-            request.headers.get("authorization") === "Bearer backend-actor-token";
-          return actorTokenSeen
-            ? Response.json([{
-                id: runtimeMemberId,
-                club_id: clubId,
-                first_name: "Erika",
-                last_name: "Musterfrau",
-                status: "active",
-              }])
-            : Response.json({ error: "missing_actor_token" }, { status: 401 });
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === `/event/events/club/${clubId}`
-        ) {
-          return Response.json([{
-            id: "acacacac-acac-4cac-8cac-acacacacacac",
-            club_id: clubId,
-            title: "Vereinsabend",
-            description: "Interner Termin",
-            start_time: "2026-07-25T18:00:00+02:00",
-            end_time: "2026-07-25T20:00:00+02:00",
-            status: "confirmed",
-            visibility_scope: "member",
-          }]);
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === `/content/news/club/${clubId}`
-        ) {
-          return Response.json([{
-            id: "adadadad-adad-4dad-8dad-adadadadadad",
-            club_id: clubId,
-            title: "Interne Vereinsnews",
-            teaser: "Nur für Berechtigte",
-            content: "<p>Interner Inhalt</p>",
-            is_draft: false,
-            published_at: "2026-07-23T10:00:00+02:00",
-          }]);
-        }
-        if (
-          request.method === "GET"
-          && url.pathname
-            === "/content/news/adadadad-adad-4dad-8dad-adadadadadad"
-        ) {
-          return Response.json({
-            id: "adadadad-adad-4dad-8dad-adadadadadad",
-            club_id: clubId,
-            title: "Interne Vereinsnews",
-            teaser: "Nur für Berechtigte",
-            content: "<p>Interner Inhalt</p>",
-            is_draft: false,
-            published_at: "2026-07-23T10:00:00+02:00",
-          });
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === `/member/members/${runtimeMemberId}`
-        ) {
-          return Response.json({
-            id: runtimeMemberId,
-            club_id: clubId,
-            first_name: "Erika",
-            last_name: "Musterfrau",
-            email: "erika@example.test",
-            phone_number: null,
-            birthdate: null,
-            address: null,
-            postal_code: null,
-            city: null,
-            state: null,
-            country: null,
-            joined_at: null,
-            left_at: null,
-          });
-        }
-        if (
-          request.method === "DELETE"
-          && url.pathname === `/member/members/${runtimeMemberId}`
-        ) {
-          deletedMembers++;
-          return Response.json({ deleted: true });
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === `/object/objects/club/${clubId}`
-        ) {
-          return Response.json([{
-            id: "abababab-abab-4bab-8bab-abababababab",
-            club_id: clubId,
-            name: "Vereinsheim",
-            type: "static",
-            status: "available",
-            is_active: true,
-            booking_granularity: "hourly",
-          }]);
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === "/object/objects/abababab-abab-4bab-8bab-abababababab"
-        ) {
-          return Response.json({
-            id: "abababab-abab-4bab-8bab-abababababab",
-            club_id: clubId,
-            name: "Vereinsheim",
-            type: "static",
-            status: "available",
-            is_active: true,
-            booking_granularity: "hourly",
-          });
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === "/object/object-reservations/object/abababab-abab-4bab-8bab-abababababab"
-        ) {
-          return Response.json([]);
-        }
-        if (
-          request.method === "GET"
-          && url.pathname === "/object/object-booking-rules/object/abababab-abab-4bab-8bab-abababababab"
-        ) {
-          return Response.json([]);
-        }
-        if (
-          request.method === "POST"
-          && url.pathname === "/object/object-reservations/"
-        ) {
-          createdBookings++;
-          const body = await request.json() as Record<string, unknown>;
-          return Response.json({
-            id: "bcbcbcbc-bcbc-4bcb-8bcb-bcbcbcbcbcbc",
-            club_id: clubId,
-            object_id: body.object_id,
-            start_time: body.start_time,
-            end_time: body.end_time,
-            status: body.status,
-            title: body.title,
-          });
-        }
-        if (
-          request.method === "GET"
-          && url.pathname.startsWith(
-            "/object/objects/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
-          )
-        ) {
-          return Response.json({
-            id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
-            club_id: clubId,
-            name: "Nicht freigegebenes Objekt",
-            type: "static",
-            status: "available",
-            is_active: true,
-            booking_granularity: "hourly",
-          });
-        }
-        if (
-          request.method === "GET"
-          && (
-            url.pathname.includes(
-              "/object/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+    const memberListTool = domainToolName("cai.member.01.list");
+    let api: ReturnType<typeof Bun.serve>;
+    let domainStateStore: InMemoryDomainStateStore;
+    let server: McpHttpServer;
+    let baseUrl: string;
+
+    beforeAll(async () => {
+      api = Bun.serve({
+        hostname: "127.0.0.1",
+        port: 0,
+        async fetch(request) {
+          const url = new URL(request.url);
+          if (
+            request.method === "GET"
+            && url.pathname === `/member/members/by_club/${clubId}`
+          ) {
+            actorTokenSeen =
+              request.headers.get("authorization") === "Bearer backend-actor-token";
+            return actorTokenSeen
+              ? Response.json([{
+                  id: runtimeMemberId,
+                  club_id: clubId,
+                  first_name: "Erika",
+                  last_name: "Musterfrau",
+                  status: "active",
+                }])
+              : Response.json({ error: "missing_actor_token" }, { status: 401 });
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === `/event/events/club/${clubId}`
+          ) {
+            return Response.json([{
+              id: "acacacac-acac-4cac-8cac-acacacacacac",
+              club_id: clubId,
+              title: "Vereinsabend",
+              description: "Interner Termin",
+              start_time: "2026-07-25T18:00:00+02:00",
+              end_time: "2026-07-25T20:00:00+02:00",
+              status: "confirmed",
+              visibility_scope: "member",
+            }]);
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === `/content/news/club/${clubId}`
+          ) {
+            return Response.json([{
+              id: "adadadad-adad-4dad-8dad-adadadadadad",
+              club_id: clubId,
+              title: "Interne Vereinsnews",
+              teaser: "Nur für Berechtigte",
+              content: "<p>Interner Inhalt</p>",
+              is_draft: false,
+              published_at: "2026-07-23T10:00:00+02:00",
+            }]);
+          }
+          if (
+            request.method === "GET"
+            && url.pathname
+              === "/content/news/adadadad-adad-4dad-8dad-adadadadadad"
+          ) {
+            return Response.json({
+              id: "adadadad-adad-4dad-8dad-adadadadadad",
+              club_id: clubId,
+              title: "Interne Vereinsnews",
+              teaser: "Nur für Berechtigte",
+              content: "<p>Interner Inhalt</p>",
+              is_draft: false,
+              published_at: "2026-07-23T10:00:00+02:00",
+            });
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === `/member/members/${runtimeMemberId}`
+          ) {
+            return Response.json({
+              id: runtimeMemberId,
+              club_id: clubId,
+              first_name: "Erika",
+              last_name: "Musterfrau",
+              email: "erika@example.test",
+              phone_number: null,
+              birthdate: null,
+              address: null,
+              postal_code: null,
+              city: null,
+              state: null,
+              country: null,
+              joined_at: null,
+              left_at: null,
+            });
+          }
+          if (
+            request.method === "DELETE"
+            && url.pathname === `/member/members/${runtimeMemberId}`
+          ) {
+            deletedMembers++;
+            return Response.json({ deleted: true });
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === `/object/objects/club/${clubId}`
+          ) {
+            return Response.json([{
+              id: "abababab-abab-4bab-8bab-abababababab",
+              club_id: clubId,
+              name: "Vereinsheim",
+              type: "static",
+              status: "available",
+              is_active: true,
+              booking_granularity: "hourly",
+            }]);
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === "/object/objects/abababab-abab-4bab-8bab-abababababab"
+          ) {
+            return Response.json({
+              id: "abababab-abab-4bab-8bab-abababababab",
+              club_id: clubId,
+              name: "Vereinsheim",
+              type: "static",
+              status: "available",
+              is_active: true,
+              booking_granularity: "hourly",
+            });
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === "/object/object-reservations/object/abababab-abab-4bab-8bab-abababababab"
+          ) {
+            return Response.json([]);
+          }
+          if (
+            request.method === "GET"
+            && url.pathname === "/object/object-booking-rules/object/abababab-abab-4bab-8bab-abababababab"
+          ) {
+            return Response.json([]);
+          }
+          if (
+            request.method === "POST"
+            && url.pathname === "/object/object-reservations/"
+          ) {
+            createdBookings++;
+            const body = await request.json() as Record<string, unknown>;
+            return Response.json({
+              id: "bcbcbcbc-bcbc-4bcb-8bcb-bcbcbcbcbcbc",
+              club_id: clubId,
+              object_id: body.object_id,
+              start_time: body.start_time,
+              end_time: body.end_time,
+              status: body.status,
+              title: body.title,
+            });
+          }
+          if (
+            request.method === "GET"
+            && url.pathname.startsWith(
+              "/object/objects/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
             )
-          )
-        ) {
-          return Response.json([]);
-        }
-        return Response.json({ error: "unexpected_request" }, { status: 404 });
-      },
-    });
-    const domainStateStore = new InMemoryDomainStateStore();
-    const fullRuntimeOptions: Partial<McpRuntimeOptions> = {
-      capability_resolver: {
-        async resolve(input) {
-          const snapshot = runtimeCapability(
-            input.context.club_id!,
-            input.context.subject_id!,
-          );
-          return memberManagementAllowed
-            ? snapshot
-            : {
-                ...snapshot,
-                permissions: {
-                  ...snapshot.permissions,
-                  manage_members: false,
-                },
-                capability_version: "D".repeat(43),
-              };
+          ) {
+            return Response.json({
+              id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+              club_id: clubId,
+              name: "Nicht freigegebenes Objekt",
+              type: "static",
+              status: "available",
+              is_active: true,
+              booking_granularity: "hourly",
+            });
+          }
+          if (
+            request.method === "GET"
+            && (
+              url.pathname.includes(
+                "/object/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+              )
+            )
+          ) {
+            return Response.json([]);
+          }
+          return Response.json({ error: "unexpected_request" }, { status: 404 });
         },
-      },
-      access_policy: createRuntimeAccessPolicy(
-        "development",
-        "full_connector_v1",
-      ),
-      server_factory: (requestContext) => createRuntimeServer({
-        domain_state_store: domainStateStore,
-        environment: "development",
-        api_base_url: `http://127.0.0.1:${api.port}`,
-        public_origin: "https://mcpdev.comvenio.app",
-        context: requestContext,
-        club_agent_capabilities: [releasedAgentCapability],
-        release_scope: "full_connector_v1",
-      }),
-    };
-    const server = new McpHttpServer(runtimeOptions(fullRuntimeOptions));
-    const address = await server.listen(0, "127.0.0.1");
-    const baseUrl = `http://127.0.0.1:${address.port}`;
-    try {
+      });
+      domainStateStore = new InMemoryDomainStateStore();
+      const fullRuntimeOptions: Partial<McpRuntimeOptions> = {
+        capability_resolver: {
+          async resolve(input) {
+            const snapshot = runtimeCapability(
+              input.context.club_id!,
+              input.context.subject_id!,
+            );
+            return memberManagementAllowed
+              ? snapshot
+              : {
+                  ...snapshot,
+                  permissions: {
+                    ...snapshot.permissions,
+                    manage_members: false,
+                  },
+                  capability_version: "D".repeat(43),
+                };
+          },
+        },
+        access_policy: createRuntimeAccessPolicy(
+          "development",
+          "full_connector_v1",
+        ),
+        server_factory: (requestContext) => createRuntimeServer({
+          domain_state_store: domainStateStore,
+          environment: "development",
+          api_base_url: `http://127.0.0.1:${api.port}`,
+          public_origin: "https://mcpdev.comvenio.app",
+          context: requestContext,
+          club_agent_capabilities: [releasedAgentCapability],
+          release_scope: "full_connector_v1",
+        }),
+      };
+      server = new McpHttpServer(runtimeOptions(fullRuntimeOptions));
+      const address = await server.listen(0, "127.0.0.1");
+      baseUrl = `http://127.0.0.1:${address.port}`;
+    });
+
+    afterAll(async () => {
+      // Tear down whatever beforeAll managed to start, even after a failure.
+      try {
+        if (server) expect(await server.drain()).toBe(true);
+      } finally {
+        await domainStateStore?.close();
+        await api?.stop(true);
+      }
+    });
+
+    test("lists the same tools for both providers with OAuth descriptors and no club_id", async () => {
       const lists = await Promise.all([
         postMcp(baseUrl, {
           jsonrpc: "2.0",
@@ -1248,7 +1272,6 @@ describe("Remote MCP runtime", () => {
           .not.toContain('"club_id"');
       }
 
-      const memberListTool = domainToolName("cai.member.01.list");
       expect(openAiNames).toContain(memberListTool);
       const descriptor = providerTools[0]
         .find((item: { name: string }) => item.name === memberListTool);
@@ -1262,7 +1285,9 @@ describe("Remote MCP runtime", () => {
       expect(JSON.stringify(descriptor.inputSchema)).not.toContain(
         '"club_id"',
       );
+    });
 
+    test("calls the member list and the widgets with the backend actor token", async () => {
       const call = await postMcp(baseUrl, {
         jsonrpc: "2.0",
         id: 103,
@@ -1371,7 +1396,9 @@ describe("Remote MCP runtime", () => {
       expect(
         newsWidgetResult.result.structuredContent.actions[0].input,
       ).not.toHaveProperty("club_id");
+    });
 
+    test("books a slot only after scope step-up and confirmation", async () => {
       const bookingWidget = await postMcp(baseUrl, {
         jsonrpc: "2.0",
         id: 106,
@@ -1545,7 +1572,9 @@ describe("Remote MCP runtime", () => {
         error: "not_found",
         code: "NOT_FOUND",
       });
+    });
 
+    test("confirms a critical removal once and rejects replay and revoked rights", async () => {
       const criticalToolsResponse = await postMcp(baseUrl, {
         jsonrpc: "2.0",
         id: 107,
@@ -1684,23 +1713,29 @@ describe("Remote MCP runtime", () => {
             .confirmation_token,
       };
       memberManagementAllowed = false;
-      const revokedConfirmationResponse = await postMcp(baseUrl, {
-        jsonrpc: "2.0",
-        id: 112,
-        method: "tools/call",
-        params: {
-          name: "action_confirm",
-          arguments: revokedConfirmationArguments,
-        },
-      }, "token-critical-openai");
-      const revokedConfirmation = await revokedConfirmationResponse.json() as any;
-      expect(
-        revokedConfirmation.error
-        || revokedConfirmation.result?.isError === true,
-      ).toBeTruthy();
-      expect(deletedMembers).toBe(1);
-      memberManagementAllowed = true;
+      try {
+        const revokedConfirmationResponse = await postMcp(baseUrl, {
+          jsonrpc: "2.0",
+          id: 112,
+          method: "tools/call",
+          params: {
+            name: "action_confirm",
+            arguments: revokedConfirmationArguments,
+          },
+        }, "token-critical-openai");
+        const revokedConfirmation = await revokedConfirmationResponse.json() as any;
+        expect(
+          revokedConfirmation.error
+          || revokedConfirmation.result?.isError === true,
+        ).toBeTruthy();
+        expect(deletedMembers).toBe(1);
+      } finally {
+        // Later steps share the fixture and must see the granted right again.
+        memberManagementAllowed = true;
+      }
+    });
 
+    test("rejects a foreign club on a domain tool", async () => {
       const foreignClub = await postMcp(baseUrl, {
         jsonrpc: "2.0",
         id: 104,
@@ -1718,11 +1753,7 @@ describe("Remote MCP runtime", () => {
       }, "token-full-openai");
       expect(foreignClub.status).toBe(200);
       expect((await foreignClub.json() as any).result.isError).toBe(true);
-    } finally {
-      expect(await server.drain()).toBe(true);
-      await domainStateStore.close();
-      await api.stop(true);
-    }
+    });
   });
 
   test("TC-01/TC-02: implements the five entities and handles initialize, list and call", async () => {
