@@ -1221,11 +1221,12 @@ describe("Remote MCP runtime", () => {
     });
 
     afterAll(async () => {
+      // Tear down whatever beforeAll managed to start, even after a failure.
       try {
-        expect(await server.drain()).toBe(true);
+        if (server) expect(await server.drain()).toBe(true);
       } finally {
-        await domainStateStore.close();
-        await api.stop(true);
+        await domainStateStore?.close();
+        await api?.stop(true);
       }
     });
 
@@ -1712,22 +1713,26 @@ describe("Remote MCP runtime", () => {
             .confirmation_token,
       };
       memberManagementAllowed = false;
-      const revokedConfirmationResponse = await postMcp(baseUrl, {
-        jsonrpc: "2.0",
-        id: 112,
-        method: "tools/call",
-        params: {
-          name: "action_confirm",
-          arguments: revokedConfirmationArguments,
-        },
-      }, "token-critical-openai");
-      const revokedConfirmation = await revokedConfirmationResponse.json() as any;
-      expect(
-        revokedConfirmation.error
-        || revokedConfirmation.result?.isError === true,
-      ).toBeTruthy();
-      expect(deletedMembers).toBe(1);
-      memberManagementAllowed = true;
+      try {
+        const revokedConfirmationResponse = await postMcp(baseUrl, {
+          jsonrpc: "2.0",
+          id: 112,
+          method: "tools/call",
+          params: {
+            name: "action_confirm",
+            arguments: revokedConfirmationArguments,
+          },
+        }, "token-critical-openai");
+        const revokedConfirmation = await revokedConfirmationResponse.json() as any;
+        expect(
+          revokedConfirmation.error
+          || revokedConfirmation.result?.isError === true,
+        ).toBeTruthy();
+        expect(deletedMembers).toBe(1);
+      } finally {
+        // Later steps share the fixture and must see the granted right again.
+        memberManagementAllowed = true;
+      }
     });
 
     test("rejects a foreign club on a domain tool", async () => {
