@@ -211,3 +211,34 @@ describe("ComvenioApiClient public error mapping", () => {
     expect(publicErrorCode(read)).toBe("UPSTREAM_TIMEOUT");
   });
 });
+
+describe("requestBytes keeps the service's reason like request (BUG b8327c6d)", () => {
+  const bodies: [number, unknown][] = [
+    [409, { detail: "automation_changed", live_version: 4 }],
+    [422, { detail: [{ loc: ["body", "export_id"], msg: "Field required" }] }],
+    [409, { detail: { code: "TAB_VERSION_CONFLICT", message: "TAB_VERSION_CONFLICT: geändert" } }],
+    [422, { detail: "receipt_invalid: file belongs to another club" }],
+  ];
+  for (const [status, body] of bodies) {
+    test(`${status} ${JSON.stringify(body).slice(0, 60)}: same detail as the JSON path`, async () => {
+      const client = createComvenioApiClient(
+        { gatewayBaseUrl: "https://apidev.comvenio.app" },
+        { fetch: async () => new Response(JSON.stringify(body), { status }) },
+      );
+      const json = await failure(client.request({ method: "GET", service: "finance", path: "/x", context }));
+      const bytes = await failure(client.requestBytes!({ method: "GET", service: "finance", path: "/x", context }));
+      expect(json.detail).toBeString();
+      expect(bytes.detail).toBe(json.detail);
+      expect(bytes.code).toBe(json.code);
+    });
+  }
+
+  test("a download refusal without a reason carries no detail", async () => {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://apidev.comvenio.app" },
+      { fetch: async () => new Response("not json", { status: 409 }) },
+    );
+    const error = await failure(client.requestBytes!({ method: "GET", service: "finance", path: "/x", context }));
+    expect(error.detail).toBeUndefined();
+  });
+});

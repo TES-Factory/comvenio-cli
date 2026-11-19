@@ -371,6 +371,9 @@ export function createComvenioApiClient(
             request_id: context.request_id,
             retryable: mapped.retryable,
             ...(mapped.required_scope ? { required_scope: mapped.required_scope } : {}),
+            // The cleaned reason, as on the JSON path (BUG b8327c6d); publicToolError
+            // lets only reviewed codes through to the customer.
+            ...(body.detail ? { detail: body.detail } : {}),
           });
         }
         return {
