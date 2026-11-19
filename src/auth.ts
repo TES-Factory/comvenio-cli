@@ -511,6 +511,47 @@ export function aufraeumenNachFehlschlag(
   return bestandVorher ? "nichts" : "alles";
 }
 
+type Aufraeumschritte = { credentials: () => void; zustand: () => void };
+
+/**
+ * Cleans up after a failed OAuth login and returns the error the login must throw.
+ *
+ * A failing removal must not replace the login error, and the state file goes even when the
+ * credentials cannot be removed (BUG c6882c0a): every step runs, its failure is collected and
+ * attached to the login error as `cause`. The removal steps are injectable so the failure path
+ * is testable outside the CLI definition.
+ */
+export function raeumeNachFehlschlagAuf(
+  error: unknown,
+  hatNeueCredentials: boolean,
+  bestandVorher: boolean,
+  schritte: Aufraeumschritte = { credentials: clearOAuthCredentials, zustand: clearState },
+): unknown {
+  if (aufraeumenNachFehlschlag(hatNeueCredentials, bestandVorher) === "nichts") {
+    console.error("Die OAuth-Anmeldung ist fehlgeschlagen; die bestehende Verbindung bleibt unverändert.");
+    return error;
+  }
+  const fehler: unknown[] = [];
+  for (const schritt of [schritte.credentials, schritte.zustand]) {
+    try {
+      schritt();
+    } catch (schrittfehler) {
+      fehler.push(schrittfehler);
+    }
+  }
+  if (fehler.length === 0) return error;
+  const ursache = fehler.length === 1
+    ? fehler[0]
+    : new AggregateError(fehler, "Das Aufräumen nach dem gescheiterten Login blieb unvollständig.");
+  if (error instanceof Error && error.cause === undefined) {
+    error.cause = ursache;
+  } else {
+    // The login error keeps its own cause; the clean-up failure is still reported.
+    console.error(`Warnung: Das Aufräumen nach dem gescheiterten Login blieb unvollständig (${String((ursache as Error)?.message ?? ursache)}).`);
+  }
+  return error;
+}
+
 export function clearState(): void {
   if (existsSync(STATE_FILE)) rmSync(STATE_FILE);
 }

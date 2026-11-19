@@ -4,10 +4,9 @@ import type { OAuthScope } from "@comvenio/connector-contracts";
 import {
   AuthError,
   LoginOptionError,
-  aufraeumenNachFehlschlag,
   clearAllAuthState,
-  clearState,
   gleichesGateway,
+  raeumeNachFehlschlagAuf,
   readStoredState,
   removeDeviceBlock,
   STATE_FILE,
@@ -167,13 +166,7 @@ cli
       // abgebrochener WIEDERHOLUNGSversuch darf eine vorher funktionierende
       // Verbindung nicht abmelden. Fremdvalidierung (2026-09-21), Befund 3:
       // "der Login ist nicht transaktional".
-      if (aufraeumenNachFehlschlag(Boolean(oauthCredentials), bestandVorher) === "alles") {
-        clearOAuthCredentials();
-        clearState();
-      } else {
-        console.error("Die OAuth-Anmeldung ist fehlgeschlagen; die bestehende Verbindung bleibt unverändert.");
-      }
-      throw error;
+      throw raeumeNachFehlschlagAuf(error, Boolean(oauthCredentials), bestandVorher);
     }
 
     if (o.json) {
