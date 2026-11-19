@@ -516,9 +516,9 @@ export function clearState(): void {
 }
 
 export function clearAllAuthState(): void {
-  // Ob es etwas zu löschen gibt, entscheidet sich VOR dem Versuch:
-  // `clearOAuthCredentials` wirft auch, wenn nichts da ist — unter Windows
-  // scheitert `Remove-Item` schon am fehlenden Ordner.
+  // Whether there was anything to remove is decided BEFORE the attempt: a missing
+  // entry deletes cleanly on every platform (Windows since BUG cf4e6e8b), so a
+  // failure here means a real one, e.g. a credential store that cannot be read.
   let hatteCredentials: boolean;
   try {
     hatteCredentials = loadOAuthCredentials() !== null;

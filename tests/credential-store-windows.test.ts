@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -29,6 +29,25 @@ const credentials = JSON.stringify({
   accessToken: "a".repeat(64), refreshToken: "r".repeat(64), accessExpiresAt: 1_900_000_000,
 });
 const file = () => join(appData, "Comvenio", `cli-oauth.${PROFILE}.dpapi`);
+
+test.skipIf(!onWindows)("the default profile keeps its file name without a suffix", () => {
+  powershellCredentialCommand("write", credentials, "default");
+  expect(existsSync(join(appData, "Comvenio", "cli-oauth.dpapi"))).toBe(true);
+  expect(powershellCredentialCommand("read", undefined, "default")).toBe(credentials);
+  expect(powershellCredentialCommand("delete", undefined, "default")).toBe("");
+  expect(powershellCredentialCommand("delete", undefined, "default")).toBe("");
+}, 30_000);
+
+test.skipIf(!onWindows)("a path with straight and typographic apostrophes still round-trips", () => {
+  const quoted = join(appData, "O'Brien O’Brien");
+  mkdirSync(quoted);
+  process.env.APPDATA = quoted;
+  powershellCredentialCommand("write", credentials, PROFILE);
+  expect(existsSync(join(quoted, "Comvenio", `cli-oauth.${PROFILE}.dpapi`))).toBe(true);
+  expect(powershellCredentialCommand("read", undefined, PROFILE)).toBe(credentials);
+  expect(powershellCredentialCommand("delete", undefined, PROFILE)).toBe("");
+  expect(powershellCredentialCommand("delete", undefined, PROFILE)).toBe("");
+}, 30_000);
 
 test.skipIf(!onWindows)("deleting a missing DPAPI file in a new profile succeeds", () => {
   expect(existsSync(file())).toBe(false);
