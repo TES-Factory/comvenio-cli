@@ -152,6 +152,10 @@ describe("connector customer errors (01-fehlermodell)", () => {
       ["CONFLICT", "automation_changed (live_version: 4, owner: Verein B)", "automation_changed"],
       ["CONFLICT", "automation_changed(live_version: 4)", "automation_changed"],
       ["CONFLICT", "automation_paused (paused_reason: owner_left, limit: 3)", "automation_paused"],
+      // Review b729144d: field and unknown paused reasons can carry a name; only reviewed values pass.
+      ["VALIDATION_FAILED", "invalid_args (field: Max.Mustermann)", "invalid_args"],
+      ["VALIDATION_FAILED", "invalid_args (field: schedule.cron)", "invalid_args"],
+      ["CONFLICT", "automation_paused (paused_reason: Verein_B)", "automation_paused"],
       ["CONFLICT", "TAB_VERSION_CONFLICT: Verein B hat die Seite geändert", "TAB_VERSION_CONFLICT"],
       ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}) und mehr`, "TAB_VERSION_CONFLICT"],
       ["CONFLICT", "TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: Verein B)", "TAB_VERSION_CONFLICT"],
@@ -178,8 +182,8 @@ describe("connector customer errors (01-fehlermodell)", () => {
     // The reviewed forms pass unchanged: code, extras from client.ts in their order, the fixed texts.
     for (const detail of [
       "automation_limit_reached (limit: 5)",
-      "automation_paused (limit: 3, paused_reason: owner_left)",
-      "invalid_args (field: schedule.cron)",
+      "automation_paused (limit: 3, paused_reason: repeated_failures)",
+      "automation_paused (paused_reason: actor_lost_permission)",
       // Every safe integer passes, also with 16 digits (review b71abf05).
       "automation_changed (live_version: 9007199254740991)",
       "automation_changed (live_version: 0)",

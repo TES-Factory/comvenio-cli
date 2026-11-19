@@ -60,13 +60,16 @@ const COLON_DETAIL_FORMS: ReadonlyMap<string, { texts: ReadonlySet<string>; tabs
 
 /**
  * The named fields packages/comvenio-client/src/client.ts (detailExtras) puts
- * after a snake_case code, in its order, each value an integer or a code-like word.
- * The counts are integers only: a version or a limit is never a word (review
- * 4a98b68e, a name in "live_version: Verein_B").
+ * after a snake_case code, in its order, that may reach the customer. The counts
+ * are integers only (review 4a98b68e, a name in "live_version: Verein_B");
+ * paused_reason only the values the ai-service sets. `field` stays out: the
+ * service fills it from the input or an exception text, and a word pattern does
+ * not tell a field from a name (review b729144d, "field: Max.Mustermann").
  */
-const DETAIL_EXTRA_FIELDS: readonly string[] = ["live_version", "limit", "paused_reason", "field"];
+const DETAIL_EXTRA_FIELDS: readonly string[] = ["live_version", "limit", "paused_reason"];
 const DETAIL_EXTRA_INTEGER_FIELDS: ReadonlySet<string> = new Set(["live_version", "limit"]);
-const DETAIL_EXTRA_VALUE = /^[A-Za-z0-9_.:-]{1,80}$/u;
+/** ai-service: routes/automations.py, services/automations/approval.py, runner.py, delivery.py, migrate.py. */
+const PAUSED_REASONS: ReadonlySet<string> = new Set(["manual", "repeated_failures", "actor_lost_permission", "migrated_paused"]);
 /** A safe integer as detailExtras writes it (Number.isSafeInteger, review b71abf05). */
 const DETAIL_EXTRA_INTEGER = /^-?(?:0|[1-9][0-9]{0,15})$/u;
 const TAB_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
@@ -86,7 +89,7 @@ function reviewedExtras(rest: string): boolean {
     const value = part.slice(separator + 2);
     const reviewed = DETAIL_EXTRA_INTEGER_FIELDS.has(field)
       ? DETAIL_EXTRA_INTEGER.test(value) && Number.isSafeInteger(Number(value))
-      : DETAIL_EXTRA_VALUE.test(value);
+      : PAUSED_REASONS.has(value);
     if (index <= previous || !reviewed) return false;
     previous = index;
   }

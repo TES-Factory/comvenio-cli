@@ -38,6 +38,8 @@ import { HELP_TOOL_COPY, HELP_TOOL_HINT, HELP_TOOL_NAME, registerHelpTool } from
 import { JOB_FILE_PROTECTED_TOOLS, registerJobFileTools } from "./job-file-tools.ts";
 import type { JobFilePlatform } from "./jobs/platform.ts";
 import { PublicAccessPolicy } from "./public/policy.ts";
+import { publicToolError } from "./public-tool-error.ts";
+import { guardToolErrors } from "./tool-error-boundary.ts";
 import { PublicResponseRedactor } from "./public/redaction.ts";
 import { PUBLIC_INPUT_SCHEMAS } from "./public/schemas.ts";
 import { PublicToolSubset } from "./public/subset.ts";
@@ -757,6 +759,12 @@ function protectedToolError(
   };
 }
 
+/**
+ * The run states of the ai-service (models/agent_function_run.py FUNCTION_RUN_STATES);
+ * any other value is reported as "unknown", never repeated (review 1d99d385).
+ */
+const RUN_STATES: ReadonlySet<string> = new Set(["pending", "awaiting_approval", "running", "succeeded", "failed", "rejected", "expired"]);
+
 /** Agent-Funktionen K2 (Strang 02 §11): one MCP tool per released function of the MCP channel.
  *
  * `tools/list` follows GET /functions?channel=mcp at connection time — a new function needs no
@@ -817,20 +825,30 @@ function registerAgentFunctionTools(input: {
       }
       try {
         const run = record(await input.call(fn.capability_id, { args: arguments_ as JsonValue }));
-        const state = typeof run?.state === "string" ? run.state : "unknown";
+        // Only a state word passes, and only a run that succeeded keeps its summary: a
+        // failed, cancelled, blocked or unknown run carries no free service text, neither
+        // as error nor as a summary about it (reviews b729144d, f5c3a812). The reason is
+        // in the run in Web or App.
+        const rawState = typeof run?.state === "string" ? run.state : "unknown";
+        const state = RUN_STATES.has(rawState) ? rawState : "unknown";
+        const succeeded = state === "succeeded";
         const approval = record(run?.approval ?? null);
         const approvalUrl = typeof approval?.approval_url === "string" ? approval.approval_url : null;
-        const summary = typeof run?.result_summary === "string" ? run.result_summary : null;
+        const summary = succeeded && typeof run?.result_summary === "string" ? run.result_summary : null;
         const output = {
           run_id: typeof run?.id === "string" ? run.id : null,
           state,
           result_summary: summary,
           approval_url: approvalUrl,
-          error: typeof run?.error === "string" ? run.error : null,
+          error: typeof run?.error === "string" || state === "failed" ? "run_failed" : null,
         };
         const text = approvalUrl
           ? `Die Funktion braucht eine Freigabe. Entscheide in Web oder App: ${approvalUrl}`
-          : summary ?? (state === "succeeded" ? "Erledigt." : `Stand: ${state}`);
+          : succeeded
+            ? summary ?? "Erledigt."
+            : output.error
+              ? "Die Funktion ist fehlgeschlagen. Den Grund siehst du am Lauf in Web oder App."
+              : `Stand: ${state}`;
         return toMcpResult(createProviderNeutralResult(input.context, output, [{ type: "text", text }]));
       } catch (error) {
         if (isConnectorError(error)) {
@@ -872,6 +890,8 @@ export function createRuntimeServer(input: {
   job_files?: JobFilePlatform | null;
 }): McpServer {
   const server = new McpServer({ name: "comvenio-mcp-server", version: "1.0.0" });
+  // Before the first tool: no tool error passes by the reviewed boundary (BUG b1c53c74).
+  guardToolErrors(server, { context: input.context.request, public_origin: input.public_origin });
   const advertisedSecuritySchemes = new Map<string, readonly ToolSecurityScheme[]>();
   registerEventCalendarWidgetResource(server, input.environment);
   registerNewsWidgetResource(server, input.environment);
@@ -1418,7 +1438,8 @@ export function createRuntimeServer(input: {
                 "Die Aufgabe oder Erinnerung wurde nicht gefunden.",
               );
             }
-            throw error;
+            // list only reads: an unanswered list is a read error, not an unknown write (review b729144d).
+            return publicToolError(input.context.request, input.public_origin, error, parsed.operation === "list" ? "read" : "write");
           }
         });
       }

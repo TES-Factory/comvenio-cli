@@ -69,7 +69,7 @@ Der MCP-Server ist der Comvenio AI Connector: Er macht die Vereinsfunktionen, di
 
 **Schreibklassen.** Lesen läuft direkt, umkehrbares Schreiben auf ausdrücklichen Auftrag mit Ergebnisbeleg, kritisches Schreiben mit Vorschau und zweiter Bestätigung, lange Läufe als Job mit Statusabfrage. Bestätigungen und abgeschlossene Schreibvorgänge liegen verschlüsselt im Zustandsspeicher; eine Bestätigung wird genau einmal verbraucht, ein wiederholter Schreibvorgang liefert das frühere Ergebnis, eine geänderte Payload wird abgewiesen. <!-- q: code:apps/mcp-server/src/domain-state-store.ts#sealJson; code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; code:apps/mcp-server/src/domain-runtime.ts#impactFor; comvenio-ai-connector-14 -->
 
-**Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes, aber nur einen geprüften Code in seinem zugelassenen Aufbau (Code, Zusatzfelder des Clients, bei Versionskonflikten fester Text und Tab-Kennungen); freier Text dahinter wird auf den Code gekürzt; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. <!-- q: code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; bug:8916dcef -->
+**Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes, aber nur einen geprüften Code in seinem zugelassenen Aufbau (Code, Zusatzfelder des Clients, bei Versionskonflikten fester Text und Tab-Kennungen); freier Text dahinter wird auf den Code gekürzt; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. Kein Werkzeug wirft einen Fehler an das SDK durch: Jede Registrierung am Server läuft über dieselbe Fehlergrenze, auch später hinzukommende Werkzeuge; der Rückfall des SDK nennt nur die eigene Eingabe oder den Werkzeugnamen, alles andere wird `UNKNOWN_ERROR`. Ein fehlgeschlagener Lauf einer Agent-Funktion trägt keinen Text des Dienstes, der Grund steht am Lauf in Web oder App. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#registerAgentFunctionTools; code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; code:apps/mcp-server/src/tool-error-boundary.ts#guardToolErrors; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; bug:8916dcef; bug:b1c53c74 -->
 
 **Betrieb.** Der Server startet als Deployment-Kandidat mit geprüfter Prozesskonfiguration und schreibt beim Fehlstart einen Diagnose-Datensatz. <!-- q: code:apps/mcp-server/src/bootstrap.ts#startMcpDeploymentCandidate; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; code:apps/mcp-server/src/startup-diagnostics.ts#mcpStartupFailureRecord; comvenio-ai-connector-05 -->
 
@@ -138,6 +138,7 @@ Genutzt von: cli, pakete-und-integrationen
 - **Jede Terminserie scheiterte mit 422** → die Aktion schickte `name` statt `title` und keine Vorlage → Felder nach dem Vertrag des event-service, `materialize_next` sendet den nächsten Start. <!-- q: commit:089b8bf -->
 - **Konflikte kamen ohne Grund beim Nutzer an** → die öffentliche Fehlerantwort verwarf den Grund des Dienstes → Konflikt und Validierungsfehler tragen den Grund (etwa die aktuelle Version). <!-- q: commit:89a3fe9 -->
 - **Freier Text hinter einem geprüften Grund erreichte den Kunden** → die Fehlergrenze prüfte nur das erste Wort des Grunds und gab danach den ganzen Text weiter → nur der zugelassene Aufbau je Code geht durch, alles andere wird auf den Code gekürzt. <!-- q: commit:83717cb; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; bug:8916dcef -->
+- **Werkzeuge außerhalb der Fehlergrenze zeigten den ganzen Grund des Dienstes** → Aufgaben- und öffentliche Werkzeuge warfen den Fehler weiter, das SDK veröffentlichte seine Meldung samt freiem Dienst-Text → die Registrierung selbst führt jeden geworfenen Fehler über die Fehlergrenze. <!-- q: commit:a81c674; code:apps/mcp-server/src/tool-error-boundary.ts#guardToolErrors; bug:b1c53c74 -->
 - **Gleichzeitige Schrift-Uploads konnten sich überschreiben** → Lesen, Liste ersetzen und Nachlesen liefen getrennt → Registrierung in einem gesperrten Aufruf des club-service, ein unbestätigter Aufruf zählt nicht als Erfolg. <!-- q: commit:ab2d4a3 -->
 
 ## Code-Anker
@@ -400,6 +401,8 @@ Genutzt von: cli, pakete-und-integrationen
 | errorMessage | apps/mcp-server/src/startup-diagnostics.ts |
 | mcpStartupFailureRecord | apps/mcp-server/src/startup-diagnostics.ts |
 | serializeMcpStartupFailure | apps/mcp-server/src/startup-diagnostics.ts |
+| guardSdkFallback | apps/mcp-server/src/tool-error-boundary.ts |
+| guardToolErrors | apps/mcp-server/src/tool-error-boundary.ts |
 | installToolSecuritySchemeProjection | apps/mcp-server/src/tool-security-schemes.ts |
 | isToolListResult | apps/mcp-server/src/tool-security-schemes.ts |
 | availabilityRequestsForMutation | apps/mcp-server/src/tools/booking-object-task/availability.ts |
@@ -1169,6 +1172,10 @@ Genutzt von: cli, pakete-und-integrationen
 | runtimeOptions | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | runtimePrincipal | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
 | visibilityContext | apps/mcp-server/tests/tenant-isolation.integration.test.ts |
+| connect | apps/mcp-server/tests/tool-error-boundary.pattern.test.ts |
+| expectNoForeignText | apps/mcp-server/tests/tool-error-boundary.pattern.test.ts |
+| runtimeServer | apps/mcp-server/tests/tool-error-boundary.pattern.test.ts |
+| snapshot | apps/mcp-server/tests/tool-error-boundary.pattern.test.ts |
 <!-- /techdoc:erzeugt -->
 
 
