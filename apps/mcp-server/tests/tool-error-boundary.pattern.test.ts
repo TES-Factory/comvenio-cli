@@ -6,16 +6,13 @@ import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
 import { z } from "zod";
 
 import { InMemoryDomainStateStore } from "../src/domain-state-store.ts";
 import type { StatelessTransportContext } from "../src/http/types.ts";
-import { insufficientScopeToolResult } from "../src/oauth-tool-challenge.ts";
-import { PUBLIC_TOOL_ERROR_OUTPUT_SCHEMA } from "../src/public-error-output.ts";
-import { publicToolError } from "../src/public-tool-error.ts";
 import { createRuntimeServer } from "../src/runtime-tools.ts";
 import { guardToolErrors } from "../src/tool-error-boundary.ts";
+import { expectOutputSchemasAdmitPublicErrors } from "./support/public-error-schema.ts";
 
 // BUG b1c53c74: a tool that threw reached the SDK fallback, which published
 // error.message — and the client builds it from the whole service detail. Every
@@ -294,39 +291,11 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
   });
 
   test("Muster: jedes Werkzeug mit outputSchema nimmt jede öffentliche Fehlerform an, die Erfolgsform bleibt geprüft (BUG 4fd71f53)", async () => {
-    const errorForms = [
-      publicToolError(context, "https://mcpdev.comvenio.app", createConnectorError({
-        code: "VALIDATION_FAILED", message: "x", request_id: context.request_id, retryable: false, detail: "invalid_args",
-      }), "write"),
-      publicToolError(context, "https://mcpdev.comvenio.app", createConnectorError({
-        code: "NOT_FOUND", message: "x", request_id: context.request_id, retryable: false,
-      }), "read"),
-      publicToolError(context, "https://mcpdev.comvenio.app", new Error("intern"), "read"),
-      insufficientScopeToolResult({ public_origin: "https://mcpdev.comvenio.app", required_scopes: ["task.write"], context }),
-    ].map((result) => {
-      expect(result.isError).toBe(true);
-      return result.structuredContent;
-    });
-    for (const form of errorForms) expect(PUBLIC_TOOL_ERROR_OUTPUT_SCHEMA.safeParse(form).success).toBe(true);
-
     const client = await connect(runtimeServer());
     try {
-      const listed = (await client.listTools()).tools.filter((tool) => tool.outputSchema);
-      // Domain tools, widgets, club agent, own tasks and reminders, action_confirm.
-      expect(listed.length).toBeGreaterThan(20);
-      const validator = new AjvJsonSchemaValidator();
-      for (const tool of listed) {
-        expect({ name: tool.name, type: tool.outputSchema!.type }).toEqual({ name: tool.name, type: "object" });
-        const validate = validator.getValidator(tool.outputSchema!);
-        for (const form of errorForms) {
-          expect({ name: tool.name, form, valid: validate(form).valid }).toEqual({ name: tool.name, form, valid: true });
-        }
-        // The union opens nothing beyond the error form: a foreign answer is judged as by the success form alone.
-        const { anyOf, ...root } = tool.outputSchema as unknown as { anyOf: Record<string, unknown>[] };
-        const success = validator.getValidator({ ...root, ...anyOf[0]! });
-        const foreign = { mitglied: "Verein B" };
-        expect({ name: tool.name, valid: validate(foreign).valid }).toEqual({ name: tool.name, valid: success(foreign).valid });
-      }
+      // Domain tools, widgets, club agent, own tasks and reminders, action_confirm;
+      // the job and file tools with their platform: jobs-files-runtime.integration.test.ts.
+      expect(expectOutputSchemasAdmitPublicErrors((await client.listTools()).tools, context)).toBeGreaterThan(20);
     } finally {
       await client.close();
     }
