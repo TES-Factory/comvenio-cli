@@ -39,7 +39,7 @@ import { JOB_FILE_PROTECTED_TOOLS, registerJobFileTools } from "./job-file-tools
 import type { JobFilePlatform } from "./jobs/platform.ts";
 import { PublicAccessPolicy } from "./public/policy.ts";
 import { publicToolError } from "./public-tool-error.ts";
-import { publicAgentApprovalRef, publicAgentRunRef } from "./run-reports.ts";
+import { publicAgentApprovalRef, publicAgentRunRef, publicApprovalUrl, publicRunId } from "./run-reports.ts";
 import { guardToolErrors } from "./tool-error-boundary.ts";
 import { PublicResponseRedactor } from "./public/redaction.ts";
 import { PUBLIC_INPUT_SCHEMAS } from "./public/schemas.ts";
@@ -834,10 +834,11 @@ function registerAgentFunctionTools(input: {
         const state = RUN_STATES.has(rawState) ? rawState : "unknown";
         const succeeded = state === "succeeded";
         const approval = record(run?.approval ?? null);
-        const approvalUrl = typeof approval?.approval_url === "string" ? approval.approval_url : null;
+        // BUG 7b331d46 (review 4a8506f4): the link only as an https link into Comvenio.
+        const approvalUrl = publicApprovalUrl(approval?.approval_url);
         const summary = succeeded && typeof run?.result_summary === "string" ? run.result_summary : null;
         const output = {
-          run_id: typeof run?.id === "string" ? run.id : null,
+          run_id: publicRunId(run?.id),
           state,
           result_summary: summary,
           approval_url: approvalUrl,

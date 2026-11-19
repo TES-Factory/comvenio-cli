@@ -2,12 +2,15 @@ import { ASYNC_JOB_HANDLE_SCHEMA } from "@comvenio/connector-contracts";
 import { z } from "zod";
 
 import {
+  publicActivationPreview,
   publicAutomation,
   publicAutomationRun,
   publicCalendarSubscription,
+  publicClarification,
   publicSyncRun,
   publicWeeklyPreviewEntry,
   publicWeeklyPreviewRun,
+  publicWeeklyPreviewSnapshot,
 } from "../../run-reports.ts";
 import type { K7ActionId, K7ActionSchemaContract } from "./types.ts";
 
@@ -647,7 +650,7 @@ const activationPreviewOutput = z.object({
     mapping: z.string().nullable().optional(),
   }).strip()),
   warnings: z.array(z.string()),
-}).strip();
+}).strip().overwrite(publicActivationPreview);
 // Mannschaftstermine: GET /team-seasons/{id}/events and POST …/termine (event-service).
 const terminKind = z.enum(["MATCH", "TRAINING", "EXCURSION", "OTHER"]);
 // VisibilityScope of the event-service (app/models/event.py).
@@ -739,7 +742,7 @@ const clarificationOutput = z.object({
   status: z.string(),
   title: z.string(),
   reason: z.string(),
-}).strip();
+}).strip().overwrite(publicClarification);
 const clarificationResolution = z.discriminatedUnion("type", [
   z.object({ type: z.literal("UNKNOWN_COMPETITION"), action: z.enum(["CREATE_COMPETITION", "DISMISS"]) }).strict(),
   z.object({ type: z.literal("AMBIGUOUS_HOME_ROLE"), action: z.enum(["CONFIRM_HOME", "CONFIRM_AWAY"]), trigger_resource_reconcile: z.boolean() }).strict(),
@@ -836,7 +839,7 @@ const weeklyPreviewSnapshotOutput = z.object({
   publish_at: z.string().max(40).nullable(),
   published_at: z.string().max(40).nullable(),
   created_at: z.string().max(40).nullable(),
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewSnapshot);
 
 // Automatisierungen (ai-service, automatisierungen-07): the routes of 01. `args` follow the intent
 // schema of the chosen function, which the service checks; the trigger has a fixed shape.

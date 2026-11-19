@@ -88,8 +88,42 @@ export const AGENT_RUN_REF_STATES: ReadonlySet<string> = new Set([
 /** agent_approval_requests.state. */
 export const AGENT_APPROVAL_STATES: ReadonlySet<string> = new Set(["open", "approved", "rejected", "expired", "superseded"]);
 
+/** event-service SyncClarification kinds and statuses (models/external_team_sync.py, calendar_sync.py). */
+export const CLARIFICATION_TYPES: ReadonlySet<string> = new Set([
+  "UNKNOWN_COMPETITION", "AMBIGUOUS_HOME_ROLE", "POSSIBLE_DUPLICATE", "RESOURCE_CONFLICT", "MISSING_FROM_FEED",
+]);
+export const CLARIFICATION_STATUSES: ReadonlySet<string> = new Set(["OPEN", "RESOLVED", "DISMISSED"]);
+/** event-service ExternalSyncProvider. */
+export const EXTERNAL_SYNC_PROVIDERS: ReadonlySet<string> = new Set(["api_fussball", "nuliga_tennis"]);
+/** utils/external_match_sync.py last_sync_summary counters. */
+const SYNC_SUMMARY_KEYS: ReadonlySet<string> = new Set(["created", "updated", "unchanged", "errors"]);
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
-const INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,9})?)?(Z|[+-]\d{2}:\d{2})?$/u;
+/** A date or an ISO instant as the services serialise them; nothing else. */
+const INSTANT = /^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2}([.,]\d{1,9})?)?(Z|[+-]\d{2}:?\d{2})?)?$/u;
+/** Identifiers that are not UUIDs (message ids, feed event ids, capability ids). */
+const TOKEN = /^[A-Za-z0-9_.:-]{1,120}$/u;
+
+function shaped(value: unknown, pattern: RegExp): unknown {
+  if (value === null || value === undefined) return value;
+  return typeof value === "string" && pattern.test(value) ? value : null;
+}
+
+/**
+ * An approval link leaves only as an https link into Comvenio without credentials;
+ * the agent function and the chat turn build it, never the client (D-AF-16).
+ */
+export function publicApprovalUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !URL.canParse(value)) return null;
+  const url = new URL(value);
+  const comvenio = url.hostname === "comvenio.app" || url.hostname.endsWith(".comvenio.app");
+  return url.protocol === "https:" && comvenio && url.username === "" && url.password === "" ? url.toString() : null;
+}
+
+/** A run id leaves only as a UUID. */
+export function publicRunId(value: unknown): string | null {
+  return typeof value === "string" && UUID.test(value) ? value : null;
+}
 
 function known(value: unknown, words: ReadonlySet<string>, fallback: string): unknown {
   if (value === null || value === undefined) return value;
@@ -103,6 +137,10 @@ function assign(report: Report, key: string, value: unknown): void {
 
 function isRecord(value: unknown): value is Report {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function assignShaped(report: Report, keys: readonly string[], pattern: RegExp): void {
+  for (const key of keys) assign(report, key, shaped(report[key], pattern));
 }
 
 /** Event that started an automation run: only known kinds, ids and the time; the dedupe key stays inside. */
@@ -127,6 +165,8 @@ export function publicAutomationRun<T>(run: T): T {
   assign(report, "reason", known(report.reason, AUTOMATION_RUN_REASONS, state === "failed" ? RUN_FAILED : UNKNOWN));
   assign(report, "result_text", state === "succeeded" ? report.result_text : null);
   assign(report, "trigger_event", publicTriggerEvent(report.trigger_event));
+  assignShaped(report, ["scheduled_for", "started_at", "finished_at", "created_at"], INSTANT);
+  assignShaped(report, ["delivered_message_id"], TOKEN);
   return report as T;
 }
 
@@ -135,6 +175,8 @@ export function publicAutomation<T>(automation: T): T {
   assign(report, "kind", known(report.kind, AUTOMATION_KINDS, UNKNOWN));
   assign(report, "approval_mode", known(report.approval_mode, AUTOMATION_APPROVAL_MODES, UNKNOWN));
   assign(report, "paused_reason", known(report.paused_reason, AUTOMATION_PAUSE_REASONS, UNKNOWN));
+  assignShaped(report, ["next_run_at", "last_run_at", "created_at", "updated_at"], INSTANT);
+  assignShaped(report, ["capability_id"], TOKEN);
   // last_run is guarded by its own schema (publicAutomationRun).
   return report as T;
 }
@@ -167,6 +209,34 @@ export function publicWeeklyPreviewRun<T>(run: T): T {
 export function publicWeeklyPreviewEntry<T>(entry: T): T {
   const report = { ...(entry as Report) };
   assign(report, "reason", known(report.reason, WEEKLY_PREVIEW_HIDDEN_REASONS, "hidden"));
+  assignShaped(report, ["start_time", "end_time"], INSTANT);
+  assignShaped(report, ["event_id"], TOKEN);
+  return report as T;
+}
+
+export function publicWeeklyPreviewSnapshot<T>(snapshot: T): T {
+  const report = { ...(snapshot as Report) };
+  assignShaped(report, ["range_start", "range_end", "publish_at", "published_at", "created_at"], INSTANT);
+  return report as T;
+}
+
+/** A clarification of the season sync: kind and status as known words; title and reason are fixed sentences of the service. */
+export function publicClarification<T>(clarification: T): T {
+  const report = { ...(clarification as Report) };
+  assign(report, "type", known(report.type, CLARIFICATION_TYPES, "UNKNOWN"));
+  assign(report, "status", known(report.status, CLARIFICATION_STATUSES, UNKNOWN));
+  return report as T;
+}
+
+/** utils/ical_parse.py warnings name a feed UID in a fixed sentence; only their kind passes. */
+export function publicActivationPreview<T>(preview: T): T {
+  const report = { ...(preview as Report) };
+  if (Array.isArray(report.warnings)) {
+    report.warnings = report.warnings.map((warning) =>
+      typeof warning === "string" && warning.startsWith("Nicht zuordenbarer Wettbewerb") ? "UNKNOWN_COMPETITION"
+        : typeof warning === "string" && warning.startsWith("Klärungsfall") ? "COMPLEX_TIME_OR_RECURRENCE"
+          : "WARNING");
+  }
   return report as T;
 }
 
@@ -180,48 +250,66 @@ export function publicAgentRunRef<T>(ref: T): T {
 export function publicAgentApprovalRef<T>(ref: T): T {
   const report = { ...(ref as Report) };
   assign(report, "state", known(report.state, AGENT_APPROVAL_STATES, UNKNOWN));
+  if (Object.hasOwn(report, "approval_url")) {
+    const url = publicApprovalUrl(report.approval_url);
+    if (url === null) delete report.approval_url; // optional in the schema: an unchecked link is left out
+    else report.approval_url = url;
+  }
   return report as T;
 }
 
 // ── event-service: external team syncs (routes/external_team_sync.py, utils/external_match_sync.py) ──
 
 /** Error lists of a sync run carry exception texts (f"API fetch failed: {e}"): only their number passes. */
-function errorCodes(value: unknown): unknown {
-  return Array.isArray(value) ? value.map(() => SYNC_FAILED) : value;
+function errorCodes(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(() => SYNC_FAILED);
+  return typeof value === "string" && value !== "" ? [SYNC_FAILED] : [];
 }
 
-/** last_sync_summary is JSON of counters; anything else is not reported. */
+function count(value: unknown): number | null {
+  return Number.isInteger(value) ? value as number : null;
+}
+
+/** last_sync_summary is JSON of the four counters; anything else is not reported. */
 function syncSummary(value: unknown): unknown {
   if (typeof value !== "string") return value === undefined ? value : null;
   try {
     const parsed: unknown = JSON.parse(value);
     if (!isRecord(parsed)) return null;
-    const counts = Object.entries(parsed).filter(([, count]) => Number.isInteger(count));
-    return counts.length === Object.keys(parsed).length ? JSON.stringify(Object.fromEntries(counts)) : null;
+    const entries = Object.entries(parsed);
+    const valid = entries.every(([key, counter]) => SYNC_SUMMARY_KEYS.has(key) && Number.isInteger(counter));
+    return valid ? JSON.stringify(Object.fromEntries(entries)) : null;
   } catch {
     return null;
   }
 }
 
+/** A team sync configuration is the club's own setting; provider and last summary are guarded. */
 export function publicExternalSyncConfig<T>(config: T): T {
   if (Array.isArray(config)) return config.map((entry) => publicExternalSyncConfig(entry)) as T;
   if (!isRecord(config)) return config;
-  const report = { ...config };
+  const report: Report = { ...config };
+  assign(report, "provider", known(report.provider, EXTERNAL_SYNC_PROVIDERS, UNKNOWN));
   assign(report, "last_sync_summary", syncSummary(report.last_sync_summary));
   return report as T;
 }
 
+/** A sync run answer (SyncAllResult) leaves as a fixed projection; unknown fields stay inside. */
 export function publicExternalSyncResult<T>(result: T): T {
-  if (!isRecord(result)) return result;
-  const report: Report = { ...result };
-  assign(report, "errors", errorCodes(report.errors));
-  if (Array.isArray(report.results)) {
-    report.results = report.results.map((team) => {
-      if (!isRecord(team)) return team;
-      const entry = { ...team };
-      assign(entry, "errors", errorCodes(entry.errors));
-      return entry;
-    });
-  }
-  return report as T;
+  if (!isRecord(result)) return { total_configs: null, synced: null, results: [], errors: [SYNC_FAILED] } as T;
+  const results = Array.isArray(result.results) ? result.results.filter(isRecord) : [];
+  return {
+    total_configs: count(result.total_configs),
+    synced: count(result.synced),
+    results: results.map((team) => ({
+      sync_config_id: publicRunId(team.sync_config_id),
+      team_label: typeof team.team_label === "string" ? team.team_label : null, // the club's own team name
+      provider: known(team.provider, EXTERNAL_SYNC_PROVIDERS, UNKNOWN) ?? null,
+      created: count(team.created),
+      updated: count(team.updated),
+      unchanged: count(team.unchanged),
+      errors: errorCodes(team.errors),
+    })),
+    errors: errorCodes(result.errors),
+  } as T;
 }
