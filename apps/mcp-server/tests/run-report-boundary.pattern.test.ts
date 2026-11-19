@@ -6,6 +6,7 @@ import { z } from "zod";
 import { fullDomainOperationContracts } from "../src/domain-runtime.ts";
 import { executeK8Operation } from "../src/tools/event-plan/handlers.ts";
 import { K7_ACTION_SCHEMAS } from "../src/tools/identity-club-member-team-role/index.ts";
+import { collect as collectNodes, display, isOpen, isText, walk, type JsonSchemaNode } from "./support/output-schema.ts";
 
 // BUG 7b331d46: run and history reports passed free service text on — the reason
 // and result_text of a failed automation run, the error of a calendar sync run,
@@ -139,62 +140,11 @@ const REVIEWED_TEXT = new Set([
   "name", "title", "location", "masked_url", "token", "external_id", "mapping", "team_label",
 ]);
 
-type JsonSchemaNode = {
-  properties?: Record<string, JsonSchemaNode>;
-  items?: JsonSchemaNode;
-  anyOf?: JsonSchemaNode[];
-  oneOf?: JsonSchemaNode[];
-  allOf?: JsonSchemaNode[];
-  additionalProperties?: JsonSchemaNode | boolean;
-  [keyword: string]: unknown;
-};
-
-function walk(
-  node: JsonSchemaNode | undefined,
-  path: string,
-  visit: (node: JsonSchemaNode, path: string, key: string | null) => void,
-  key: string | null = null,
-): void {
-  if (!node || typeof node !== "object") return;
-  visit(node, path, key);
-  for (const [name, child] of Object.entries(node.properties ?? {})) walk(child, path ? `${path}.${name}` : `$.${name}`, visit, name);
-  if (node.items) walk(node.items, `${path === "$" || path === "" ? "" : path}[]`, visit, null);
-  for (const branch of [...(node.anyOf ?? []), ...(node.oneOf ?? []), ...(node.allOf ?? [])]) walk(branch, path, visit, key);
-}
-
-/** "$.a.b" → ".a.b" for nested paths, "$.a" stays for a top-level field. */
-function display(path: string): string {
-  if (path === "" || path === "$") return "$";
-  const nested = path.startsWith("$.") && path.slice(2).includes(".") ? path.slice(1) : path;
-  return nested.replace(/^\$\.(\w+)\[\]/u, ".$1[]");
-}
-
-function isOpen(node: JsonSchemaNode): boolean {
-  if (node.properties || node.items || node.anyOf || node.oneOf || node.allOf || node.enum || node.const !== undefined) return false;
-  const type = node.type;
-  return type === undefined || type === "object";
-}
-
-function isText(node: JsonSchemaNode): boolean {
-  const types = Array.isArray(node.type) ? node.type : [node.type];
-  return types.includes("string") && node.format === undefined && node.enum === undefined && node.const === undefined
-    && node.pattern === undefined;
-}
-
 const contracts = fullDomainOperationContracts();
 
 /** filter gets "<action_id> <operation>" of each contract row. */
 function collect(select: (node: JsonSchemaNode, key: string | null) => boolean, filter: (name: string) => boolean = () => true) {
-  const result = new Map<string, Set<string>>();
-  for (const row of contracts) {
-    if (!filter(`${row.action_id} ${row.operation}`)) continue;
-    const found = result.get(row.action_id) ?? new Set<string>();
-    walk(row.output_schema as JsonSchemaNode, "", (node, path, key) => {
-      if (select(node, key)) found.add(display(path));
-    });
-    if (found.size > 0) result.set(row.action_id, found);
-  }
-  return result;
+  return collectNodes(contracts, select, filter);
 }
 
 function unclassified(found: Map<string, Set<string>>, ...lists: Array<Record<string, readonly string[]>>): string[] {
