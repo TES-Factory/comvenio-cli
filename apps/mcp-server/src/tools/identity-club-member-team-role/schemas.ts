@@ -1,6 +1,17 @@
 import { ASYNC_JOB_HANDLE_SCHEMA } from "@comvenio/connector-contracts";
 import { z } from "zod";
 
+import {
+  publicActivationPreview,
+  publicAutomation,
+  publicAutomationRun,
+  publicCalendarSubscription,
+  publicClarification,
+  publicSyncRun,
+  publicWeeklyPreviewEntry,
+  publicWeeklyPreviewRun,
+  publicWeeklyPreviewSnapshot,
+} from "../../run-reports.ts";
 import type { K7ActionId, K7ActionSchemaContract } from "./types.ts";
 
 const uuid = z.string().uuid();
@@ -615,7 +626,7 @@ const syncRunOutput = z.object({
   started_at: isoDateTime.nullable().optional(),
   finished_at: isoDateTime.nullable().optional(),
   error: z.string().nullable().optional(),
-}).strip();
+}).strip().overwrite(publicSyncRun); // BUG 7b331d46: no free service text in a run report
 // AK-N-02: the backend only ever returns the masked source URL.
 const icalSubscriptionOutput = z.object({
   id: uuid,
@@ -627,7 +638,7 @@ const icalSubscriptionOutput = z.object({
   last_error_at: isoDateTime.nullable().optional(),
   next_sync_at: isoDateTime.nullable().optional(),
   latest_run: syncRunOutput.nullable().optional(),
-}).strip();
+}).strip().overwrite(publicCalendarSubscription);
 const activationPreviewOutput = z.object({
   token: z.string(),
   expires_at: isoDateTime,
@@ -639,7 +650,7 @@ const activationPreviewOutput = z.object({
     mapping: z.string().nullable().optional(),
   }).strip()),
   warnings: z.array(z.string()),
-}).strip();
+}).strip().overwrite(publicActivationPreview);
 // Mannschaftstermine: GET /team-seasons/{id}/events and POST …/termine (event-service).
 const terminKind = z.enum(["MATCH", "TRAINING", "EXCURSION", "OTHER"]);
 // VisibilityScope of the event-service (app/models/event.py).
@@ -731,7 +742,7 @@ const clarificationOutput = z.object({
   status: z.string(),
   title: z.string(),
   reason: z.string(),
-}).strip();
+}).strip().overwrite(publicClarification);
 const clarificationResolution = z.discriminatedUnion("type", [
   z.object({ type: z.literal("UNKNOWN_COMPETITION"), action: z.enum(["CREATE_COMPETITION", "DISMISS"]) }).strict(),
   z.object({ type: z.literal("AMBIGUOUS_HOME_ROLE"), action: z.enum(["CONFIRM_HOME", "CONFIRM_AWAY"]), trigger_resource_reconcile: z.boolean() }).strict(),
@@ -807,7 +818,7 @@ const weeklyPreviewRunOutput = z.object({
   status: z.string().max(40),
   error: z.string().max(2_000).nullable(),
   function_run_id: uuid,
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewRun);
 const weeklyPreviewEntry = z.object({
   event_id: z.string().max(80),
   title: z.string().max(500),
@@ -815,7 +826,7 @@ const weeklyPreviewEntry = z.object({
   end_time: z.string().max(40).nullable().optional(),
   location: z.string().max(500).nullable().optional(),
   reason: z.string().max(40).optional(),
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewEntry);
 const weeklyPreviewSnapshotOutput = z.object({
   id: uuid,
   plan_id: uuid.nullable(),
@@ -828,7 +839,7 @@ const weeklyPreviewSnapshotOutput = z.object({
   publish_at: z.string().max(40).nullable(),
   published_at: z.string().max(40).nullable(),
   created_at: z.string().max(40).nullable(),
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewSnapshot);
 
 // Automatisierungen (ai-service, automatisierungen-07): the routes of 01. `args` follow the intent
 // schema of the chosen function, which the service checks; the trigger has a fixed shape.
@@ -861,7 +872,7 @@ const automationRunOutput = z.object({
   started_at: timestamp.nullable().optional(),
   finished_at: timestamp.nullable().optional(),
   created_at: timestamp,
-}).strip();
+}).strip().overwrite(publicAutomationRun);
 const automationOutput = z.object({
   id: uuid,
   club_id: uuid,
@@ -885,7 +896,7 @@ const automationOutput = z.object({
   version: z.number().int(),
   created_at: timestamp,
   updated_at: timestamp,
-}).strip();
+}).strip().overwrite(publicAutomation);
 const automationOptionsOutput = z.object({
   kind: z.string().max(20),
   areas: z.array(z.object({
