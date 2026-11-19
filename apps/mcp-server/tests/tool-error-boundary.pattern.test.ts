@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { createConnectorError, type CapabilitySnapshot, type RequestContext } from "@comvenio/connector-contracts";
+import type { CapabilitySnapshot } from "@comvenio/auth";
+import { createConnectorError, type RequestContext } from "@comvenio/connector-contracts";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
@@ -164,6 +165,30 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
       expectNoForeignText(result);
       expect(result.structuredContent).toMatchObject({ state: "failed", error: "run_failed", result_summary: null });
       expect((result.content as { text: string }[])[0]!.text).toContain("am Lauf in Web oder App");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("jeder nicht erfolgreiche oder unbekannte Laufzustand trägt keine Zusammenfassung (Prüfung f5c3a812)", async () => {
+    for (const state of ["cancelled", "blocked", "expired", "running", "Verein B hat abgebrochen"]) {
+      globalThis.fetch = (async () => Response.json({ id: taskId, state, error: "intern", result_summary: LEAK })) as unknown as typeof fetch;
+      const client = await connect(runtimeServer());
+      try {
+        const result = await client.callTool({ name: "cv_fn_club_faq_answer", arguments: { question: "Wo ist die Satzung?" } });
+        expectNoForeignText(result);
+        expect(JSON.stringify(result)).not.toContain("intern");
+        expect(result.structuredContent).toMatchObject({ result_summary: null, error: "run_failed" });
+      } finally {
+        await client.close();
+      }
+    }
+    // A succeeded run keeps its summary — the answer the function exists for.
+    globalThis.fetch = (async () => Response.json({ id: taskId, state: "succeeded", result_summary: "Die Satzung liegt im Mitgliederbereich." })) as unknown as typeof fetch;
+    const client = await connect(runtimeServer());
+    try {
+      const result = await client.callTool({ name: "cv_fn_club_faq_answer", arguments: { question: "Wo ist die Satzung?" } });
+      expect(result.structuredContent).toMatchObject({ state: "succeeded", result_summary: "Die Satzung liegt im Mitgliederbereich.", error: null });
     } finally {
       await client.close();
     }

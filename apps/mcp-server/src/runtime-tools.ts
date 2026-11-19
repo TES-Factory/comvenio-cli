@@ -759,6 +759,9 @@ function protectedToolError(
   };
 }
 
+/** A run state as the ai-service names it; anything else is reported as "unknown". */
+const RUN_STATE = /^[a-z][a-z_]{0,39}$/u;
+
 /** Agent-Funktionen K2 (Strang 02 §11): one MCP tool per released function of the MCP channel.
  *
  * `tools/list` follows GET /functions?channel=mcp at connection time — a new function needs no
@@ -819,24 +822,30 @@ function registerAgentFunctionTools(input: {
       }
       try {
         const run = record(await input.call(fn.capability_id, { args: arguments_ as JsonValue }));
-        const state = typeof run?.state === "string" ? run.state : "unknown";
+        // Only a state word passes, and only a run that succeeded keeps its summary: a
+        // failed, cancelled, blocked or unknown run carries no free service text, neither
+        // as error nor as a summary about it (reviews b729144d, f5c3a812). The reason is
+        // in the run in Web or App.
+        const rawState = typeof run?.state === "string" ? run.state : "unknown";
+        const state = RUN_STATE.test(rawState) ? rawState : "unknown";
+        const succeeded = state === "succeeded";
         const approval = record(run?.approval ?? null);
         const approvalUrl = typeof approval?.approval_url === "string" ? approval.approval_url : null;
-        const summary = typeof run?.result_summary === "string" ? run.result_summary : null;
+        const summary = succeeded && typeof run?.result_summary === "string" ? run.result_summary : null;
         const output = {
           run_id: typeof run?.id === "string" ? run.id : null,
           state,
-          result_summary: state === "failed" ? null : summary,
+          result_summary: summary,
           approval_url: approvalUrl,
-          // A failed run keeps no free service text — neither its error nor a summary
-          // written about the failure (review b729144d): the reason is in the run in Web or App.
           error: typeof run?.error === "string" || state === "failed" ? "run_failed" : null,
         };
         const text = approvalUrl
           ? `Die Funktion braucht eine Freigabe. Entscheide in Web oder App: ${approvalUrl}`
-          : state === "failed"
-            ? "Die Funktion ist fehlgeschlagen. Den Grund siehst du am Lauf in Web oder App."
-            : summary ?? (state === "succeeded" ? "Erledigt." : `Stand: ${state}`);
+          : succeeded
+            ? summary ?? "Erledigt."
+            : output.error
+              ? "Die Funktion ist fehlgeschlagen. Den Grund siehst du am Lauf in Web oder App."
+              : `Stand: ${state}`;
         return toMcpResult(createProviderNeutralResult(input.context, output, [{ type: "text", text }]));
       } catch (error) {
         if (isConnectorError(error)) {

@@ -4,9 +4,11 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 import { publicToolError } from "./public-tool-error.ts";
 
-type RegisterTool = McpServer["registerTool"];
-type ToolConfig = Parameters<RegisterTool>[1];
-type ToolCallback = Parameters<RegisterTool>[2];
+// registerTool is overloaded; Parameters<> of an overload set does not give a usable
+// config type (TS2339 on annotations). Only the hint is read, the rest passes through.
+type ToolConfig = { annotations?: { readOnlyHint?: boolean } };
+type ToolCallback = (...args: unknown[]) => Promise<CallToolResult> | CallToolResult;
+type RegisterToolLoose = (name: string, config: ToolConfig, callback: ToolCallback) => unknown;
 
 /**
  * Every tool of this server answers a failure through publicToolError (BUG b1c53c74).
@@ -24,19 +26,19 @@ export function guardToolErrors(server: McpServer, input: {
   context: RequestContext;
   public_origin: string;
 }): void {
-  const register: RegisterTool = server.registerTool.bind(server);
-  const guarded = (name: string, config: ToolConfig, callback: ToolCallback) => {
+  const register = server.registerTool.bind(server) as unknown as RegisterToolLoose;
+  const guarded: RegisterToolLoose = (name, config, callback) => {
     const effect = config.annotations?.readOnlyHint === true ? "read" : "write";
-    const handler = async (...args: unknown[]): Promise<CallToolResult> => {
+    const handler: ToolCallback = async (...args) => {
       try {
-        return await (callback as (...values: unknown[]) => Promise<CallToolResult>)(...args);
+        return await callback(...args);
       } catch (error) {
         return publicToolError(input.context, input.public_origin, error, effect);
       }
     };
-    return register(name, config, handler as unknown as ToolCallback);
+    return register(name, config, handler);
   };
-  server.registerTool = guarded as RegisterTool;
+  server.registerTool = guarded as unknown as McpServer["registerTool"];
   guardSdkFallback(server, input);
 }
 
