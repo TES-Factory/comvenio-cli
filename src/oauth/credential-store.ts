@@ -71,9 +71,15 @@ function windowsUnprotect(cipherText: string): string {
   ).trim();
 }
 
-function powershellCredentialCommand(command: "read" | "write" | "delete", value?: string): string {
-  const path = `${process.env.APPDATA ?? process.env.USERPROFILE ?? "."}\\Comvenio\\cli-oauth${profileSuffix(ACCOUNT)}.dpapi`;
-  const escapedPath = path.replace(/'/g, "''");
+export function powershellCredentialCommand(
+  command: "read" | "write" | "delete",
+  value?: string,
+  account: string = ACCOUNT,
+): string {
+  const path = `${process.env.APPDATA ?? process.env.USERPROFILE ?? "."}\\Comvenio\\cli-oauth${profileSuffix(account)}.dpapi`;
+  // PowerShell ends a single-quoted string at any of its single-quote characters, including
+  // the typographic ones (’ in a user name such as O’Brien); each must be doubled.
+  const escapedPath = path.replace(/['‘’‚‛]/gu, "$&$&");
   if (command === "write") {
     const protectedValue = windowsProtect(value ?? "");
     const script = [
@@ -91,7 +97,16 @@ function powershellCredentialCommand(command: "read" | "write" | "delete", value
     return "";
   }
   if (command === "delete") {
-    const script = `Remove-Item -LiteralPath '${escapedPath}' -Force -ErrorAction SilentlyContinue`;
+    // Deleting a missing DPAPI file is idempotent, as on macOS and Linux. `Remove-Item
+    // -ErrorAction SilentlyContinue` on a missing file still leaves `$?` false, and as the
+    // last statement of `-Command` that makes powershell.exe exit 1 (BUG cf4e6e8b: login in a
+    // new profile failed). Remove only an existing file; a file that vanishes between the check
+    // and the removal counts as removed, every other failure (lock, rights) still throws.
+    const script = [
+      "$ErrorActionPreference='Stop'",
+      `$path='${escapedPath}'`,
+      "if (Test-Path -LiteralPath $path) { try { Remove-Item -LiteralPath $path -Force } catch [System.Management.Automation.ItemNotFoundException] { } }",
+    ].join(";");
     execFileSync(
       "powershell.exe",
       ["-NoProfile", "-NonInteractive", "-Command", script],
