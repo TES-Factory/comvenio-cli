@@ -1,6 +1,14 @@
 import { ASYNC_JOB_HANDLE_SCHEMA } from "@comvenio/connector-contracts";
 import { z } from "zod";
 
+import {
+  publicAutomation,
+  publicAutomationRun,
+  publicCalendarSubscription,
+  publicSyncRun,
+  publicWeeklyPreviewEntry,
+  publicWeeklyPreviewRun,
+} from "./run-reports.ts";
 import type { K7ActionId, K7ActionSchemaContract } from "./types.ts";
 
 const uuid = z.string().uuid();
@@ -615,7 +623,7 @@ const syncRunOutput = z.object({
   started_at: isoDateTime.nullable().optional(),
   finished_at: isoDateTime.nullable().optional(),
   error: z.string().nullable().optional(),
-}).strip();
+}).strip().overwrite(publicSyncRun); // BUG 7b331d46: no free service text in a run report
 // AK-N-02: the backend only ever returns the masked source URL.
 const icalSubscriptionOutput = z.object({
   id: uuid,
@@ -627,7 +635,7 @@ const icalSubscriptionOutput = z.object({
   last_error_at: isoDateTime.nullable().optional(),
   next_sync_at: isoDateTime.nullable().optional(),
   latest_run: syncRunOutput.nullable().optional(),
-}).strip();
+}).strip().overwrite(publicCalendarSubscription);
 const activationPreviewOutput = z.object({
   token: z.string(),
   expires_at: isoDateTime,
@@ -807,7 +815,7 @@ const weeklyPreviewRunOutput = z.object({
   status: z.string().max(40),
   error: z.string().max(2_000).nullable(),
   function_run_id: uuid,
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewRun);
 const weeklyPreviewEntry = z.object({
   event_id: z.string().max(80),
   title: z.string().max(500),
@@ -815,7 +823,7 @@ const weeklyPreviewEntry = z.object({
   end_time: z.string().max(40).nullable().optional(),
   location: z.string().max(500).nullable().optional(),
   reason: z.string().max(40).optional(),
-}).strip();
+}).strip().overwrite(publicWeeklyPreviewEntry);
 const weeklyPreviewSnapshotOutput = z.object({
   id: uuid,
   plan_id: uuid.nullable(),
@@ -861,7 +869,7 @@ const automationRunOutput = z.object({
   started_at: timestamp.nullable().optional(),
   finished_at: timestamp.nullable().optional(),
   created_at: timestamp,
-}).strip();
+}).strip().overwrite(publicAutomationRun);
 const automationOutput = z.object({
   id: uuid,
   club_id: uuid,
@@ -885,7 +893,7 @@ const automationOutput = z.object({
   version: z.number().int(),
   created_at: timestamp,
   updated_at: timestamp,
-}).strip();
+}).strip().overwrite(publicAutomation);
 const automationOptionsOutput = z.object({
   kind: z.string().max(20),
   areas: z.array(z.object({
