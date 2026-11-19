@@ -16,7 +16,8 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-export const COMVENIO = new Set(["0ec34e70-999a-47c4-a1b1-bdb293110fa5", "476bc619-ddb4-4693-bbe6-45936fa4f47e"]);
+// The Comvenio club per environment — gate club-restriction (PROD, DEV since 2026-10-08).
+export const COMVENIO = new Set(["0ec34e70-999a-47c4-a1b1-bdb293110fa5", "57eb2f95-238c-4f3f-a932-aa8e20959510"]);
 
 export type Konto = { name: string; art: "BANK" | "CASH" | "IN_KIND"; standard: boolean; anfang_cents: number; ende_cents: number | null };
 export type Kategorie = { zeile: number; text: string; seite: "E" | "A"; rubrik: string; sphaere: string | null; betraege: Record<string, number> };

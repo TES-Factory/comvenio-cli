@@ -30,6 +30,7 @@ import {
   menueSchritte,
   prompt,
   standardSatz,
+  UMGEBUNGEN,
   vergleiche,
   webAppAufgaben,
   werteAus,
@@ -159,6 +160,13 @@ describe("Sandbox (09 §4.1)", () => {
     expect(argumente[argumente.indexOf("--permission-mode") + 1]).toBe("dontAsk");
     expect(argumente[argumente.indexOf("--disallowedTools") + 1]).toBe("Bash(comvenio action confirm:*)");
     expect(argumente.filter((argument) => argument.startsWith("Bash(")).every((argument) => argument.startsWith("Bash(comvenio "))).toBe(true);
+  });
+
+  test("BUG 72eb48c4: die Sandbox nutzt nur die Comvenio-Vereine des Gates club-restriction", () => {
+    // core-gates-comvenio.md: PROD 0ec34e70, DEV 57eb2f95 (Obermotzing) since 2026-10-08;
+    // 476bc619 is the inactive former DEV club.
+    expect(UMGEBUNGEN.dev.club).toBe("57eb2f95-238c-4f3f-a932-aa8e20959510");
+    expect(UMGEBUNGEN.prod.club).toBe("0ec34e70-999a-47c4-a1b1-bdb293110fa5");
   });
 
   test("der Prompt verbietet confirm und lokale Dateien und nennt die Umgebung", () => {
