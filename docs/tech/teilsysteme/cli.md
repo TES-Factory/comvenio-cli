@@ -515,6 +515,7 @@ Genutzt von: mcp-server
 | failure | tests/cli-befunde-maschinen-grant.test.ts |
 | credentials | tests/credential-store-macos.test.ts |
 | fakeSecurity | tests/credential-store-macos.test.ts |
+| file | tests/credential-store-windows.test.ts |
 | articles | tests/docs-examples.test.ts |
 | fill | tests/docs-examples.test.ts |
 | dateien | tests/feldweg-spalten-breiten.test.ts |
