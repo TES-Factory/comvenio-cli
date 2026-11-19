@@ -178,6 +178,8 @@ interface UpstreamBody {
 
 const SERVICE_ERROR_CODE = /^[A-Z][A-Z0-9_]{2,63}$/u;
 const SNAKE_ERROR_CODE = /^[a-z][a-z0-9_]{2,63}$/u;
+/** Upper bound for an error body that is still parsed (1 MiB of text). */
+const MAX_ERROR_BODY_CHARS = 1_048_576;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
 /**
@@ -201,7 +203,11 @@ function detailExtras(body: Record<string, unknown>): string {
 
 async function upstreamBody(response: Response): Promise<UpstreamBody> {
   try {
-    const text = (await response.text()).slice(0, 4000);
+    // Parse the whole body, bounded: cutting it before JSON.parse broke a valid
+    // answer whose rows carry page content (409 tab_changed with live widgets,
+    // review bde7ebdf). Only the extracted line below is shortened.
+    const text = await response.text();
+    if (text.length > MAX_ERROR_BODY_CHARS) return { detail: null, required_scope: null };
     const parsed: unknown = JSON.parse(text);
     const body = parsed !== null && typeof parsed === "object" ? parsed as { detail?: unknown; required_scope?: unknown } : {};
     const detail = body.detail;
@@ -227,11 +233,12 @@ async function upstreamBody(response: Response): Promise<UpstreamBody> {
       // keeps the generic message as before.
       // A snake_case code in an object — {"code": "tab_changed", "changed": […]}
       // (club_home_publish.py, community-hub 15 DC-3) — is shown like a coded
-      // string detail: the code and its plain extras, never the nested rows.
+      // string detail: the code and its plain extras, never the nested rows and
+      // never a message beside it (review bde7ebdf: free text is not reviewed).
       const entry = detail as { code?: unknown; message?: unknown; tabs?: unknown };
-      if (typeof entry.code === "string" && SNAKE_ERROR_CODE.test(entry.code) && typeof entry.message !== "string") {
+      if (typeof entry.code === "string" && SNAKE_ERROR_CODE.test(entry.code)) {
         line = `${entry.code}${detailExtras(entry as Record<string, unknown>)}`;
-      } else if (typeof entry.code === "string" && (SERVICE_ERROR_CODE.test(entry.code) || SNAKE_ERROR_CODE.test(entry.code))) {
+      } else if (typeof entry.code === "string" && SERVICE_ERROR_CODE.test(entry.code)) {
         const text = typeof entry.message === "string" ? entry.message : entry.code;
         const code = text.includes(entry.code) ? "" : `${entry.code}: `;
         const tabs = Array.isArray(entry.tabs)
