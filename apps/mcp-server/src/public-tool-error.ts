@@ -23,6 +23,11 @@ const PUBLIC_DETAIL_CODES: ReadonlySet<string> = new Set([
   "invalid_args",
   "invalid_schedule",
   "invalid_trigger",
+  // club-service club_home_publish.py, 409 on a stale base (community-hub 15 DC-3,
+  // BUG 15339d90): the client turns it into the bare code (no changed/added/removed
+  // rows), and cai.community.06.club_page publish only sends after assertOwnClubPage
+  // tied the tab to the club of the sign-in — the code says nothing about another club.
+  "tab_changed",
 ]);
 
 /**
