@@ -187,6 +187,7 @@ export function publicSyncRun<T>(run: T): T {
   assign(report, "status", status);
   assign(report, "trigger", known(report.trigger, SYNC_TRIGGERS, UNKNOWN));
   assign(report, "error", status === "SUCCEEDED" || report.error == null ? null : known(report.error, SYNC_ERROR_CODES, SYNC_FAILED));
+  assignShaped(report, ["started_at", "finished_at"], INSTANT);
   return report as T;
 }
 
@@ -194,6 +195,7 @@ export function publicCalendarSubscription<T>(subscription: T): T {
   const report = { ...(subscription as Report) };
   assign(report, "status", known(report.status, SUBSCRIPTION_STATUSES, UNKNOWN));
   assign(report, "last_error", known(report.last_error, SYNC_ERROR_CODES, SYNC_FAILED));
+  assignShaped(report, ["last_success_at", "last_error_at", "next_sync_at"], INSTANT);
   // latest_run is guarded by its own schema (publicSyncRun).
   return report as T;
 }
@@ -236,6 +238,15 @@ export function publicActivationPreview<T>(preview: T): T {
       typeof warning === "string" && warning.startsWith("Nicht zuordenbarer Wettbewerb") ? "UNKNOWN_COMPETITION"
         : typeof warning === "string" && warning.startsWith("Klärungsfall") ? "COMPLEX_TIME_OR_RECURRENCE"
           : "WARNING");
+  }
+  assignShaped(report, ["expires_at"], INSTANT);
+  if (Array.isArray(report.entries)) {
+    report.entries = report.entries.map((entry) => {
+      if (!isRecord(entry)) return entry;
+      const shapedEntry: Report = { ...entry };
+      assignShaped(shapedEntry, ["starts_at", "ends_at"], INSTANT);
+      return shapedEntry;
+    });
   }
   return report as T;
 }

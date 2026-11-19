@@ -71,7 +71,7 @@ Der MCP-Server ist der Comvenio AI Connector: Er macht die Vereinsfunktionen, di
 
 **Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes, aber nur einen geprüften Code in seinem zugelassenen Aufbau (Code, Zusatzfelder des Clients, bei Versionskonflikten fester Text und Tab-Kennungen); freier Text dahinter wird auf den Code gekürzt; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. Kein Werkzeug wirft einen Fehler an das SDK durch: Jede Registrierung am Server läuft über dieselbe Fehlergrenze, auch später hinzukommende Werkzeuge; der Rückfall des SDK nennt nur die eigene Eingabe oder den Werkzeugnamen, alles andere wird `UNKNOWN_ERROR`. Ein fehlgeschlagener Lauf einer Agent-Funktion trägt keinen Text des Dienstes, der Grund steht am Lauf in Web oder App. <!-- q: code:apps/mcp-server/src/runtime-tools.ts#registerAgentFunctionTools; code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; code:apps/mcp-server/src/tool-error-boundary.ts#guardToolErrors; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; bug:8916dcef; bug:b1c53c74 -->
 
-**Laufberichte.** Dasselbe gilt für Lauf- und Verlaufsdaten der Werkzeuge: Automatisierungsläufe samt auslösendem Ereignis, Kalender-Synchronisationen samt letztem Fehler eines Abos, Läufe der Wochenvorschau, externe Team-Synchronisationen und die Laufreferenzen des Club-Agenten. Nur ein erfolgreicher Automatisierungslauf behält seinen Ergebnistext. Zustand, Art, Auslöser, Grund, Pausegrund und Fehler gehen nur als eines der bekannten Wörter ihres Dienstes hinaus, sonst als fester Code (`run_failed`, `SYNC_FAILED`, `unknown`). Die Fehlerlisten einer Team-Synchronisation tragen Ausnahmetexte, deshalb geht von ihnen nur die Anzahl hinaus. Bei typisierten Antworten sitzt die Prüfung im Ausgabeschema, bei offenen in der Antwort des Handlers; sie läuft bei jeder Antwort (MCP-Text, `structuredContent`, CLI). Das veröffentlichte JSON-Schema bleibt unverändert. Ein Mustertest ordnet jedes Freitextfeld jedes Fachwerkzeugs und jede offene Ausgabe eines Lauf-, Sync-, Verlaufs-, Status-, Import- oder Exportwerkzeugs als geschützt oder als eigenen Vereinsinhalt ein. Geschützte Werkzeuge bekommen einen Kanarientext in jedes ungeprüfte Textfeld. <!-- q: code:apps/mcp-server/src/run-reports.ts#publicAutomationRun; code:apps/mcp-server/src/run-reports.ts#publicSyncRun; code:apps/mcp-server/src/run-reports.ts#publicWeeklyPreviewRun; code:apps/mcp-server/src/run-reports.ts#publicExternalSyncResult; code:apps/mcp-server/src/run-reports.ts#publicAgentRunRef; bug:7b331d46 -->
+**Laufberichte.** Dasselbe gilt für Lauf- und Verlaufsdaten der Werkzeuge: Automatisierungsläufe samt auslösendem Ereignis, Kalender-Synchronisationen samt letztem Fehler eines Abos, Läufe der Wochenvorschau, externe Team-Synchronisationen und die Laufreferenzen des Club-Agenten. Nur ein erfolgreicher Automatisierungslauf behält seinen Ergebnistext. Zustand, Art, Auslöser, Grund, Pausegrund und Fehler gehen nur als eines der bekannten Wörter ihres Dienstes hinaus, sonst als fester Code (`run_failed`, `SYNC_FAILED`, `unknown`). Die Fehlerlisten einer Team-Synchronisation tragen Ausnahmetexte, deshalb geht von ihnen nur die Anzahl hinaus, auch wenn der Dienst einen einzelnen Text statt einer Liste schickt; ihr Laufergebnis geht als feste Projektion hinaus, unbekannte Felder bleiben drinnen, und die letzte Zusammenfassung nur mit den vier bekannten Zählern. Zeitpunkte und Kennungen eines Laufberichts gehen nur in ihrer Form hinaus (Datum oder ISO-Zeitpunkt, UUID, kurze Kennung), sonst leer. Warnungen der Kalendervorschau nennen eine Feed-Kennung und gehen nur als ihre Art hinaus; Art und Zustand einer Klärung nur als bekanntes Wort. Eine Agent-Funktion gibt die Lauf-Kennung nur als UUID und den Freigabelink nur als https-Link in Comvenio ohne Zugangsdaten weiter. Bei typisierten Antworten sitzt die Prüfung im Ausgabeschema, bei offenen in der Antwort des Handlers; sie läuft bei jeder Antwort (MCP-Text, `structuredContent`, CLI). Das veröffentlichte JSON-Schema bleibt unverändert. Ein Mustertest ordnet jedes Freitextfeld jedes Fachwerkzeugs und jede offene Ausgabe eines Lauf-, Sync-, Verlaufs-, Status-, Import- oder Exportwerkzeugs als geschützt oder als eigenen Vereinsinhalt ein; ob ein Werkzeug dazugehört, liest er an Aktion und Teilaktion. Geschützte Werkzeuge bekommen einen Kanarientext in jedes ungeprüfte Textfeld; ausgenommen sind nur Felder mit eigenem Vereinsinhalt wie Name, Titel und Ort, nicht Zeitpunkte und Kennungen. <!-- q: code:apps/mcp-server/src/run-reports.ts#publicAutomationRun; code:apps/mcp-server/src/run-reports.ts#publicSyncRun; code:apps/mcp-server/src/run-reports.ts#publicWeeklyPreviewRun; code:apps/mcp-server/src/run-reports.ts#publicExternalSyncResult; code:apps/mcp-server/src/run-reports.ts#publicAgentRunRef; code:apps/mcp-server/src/run-reports.ts#publicActivationPreview; code:apps/mcp-server/src/run-reports.ts#publicClarification; code:apps/mcp-server/src/run-reports.ts#publicApprovalUrl; code:apps/mcp-server/src/run-reports.ts#publicRunId; bug:7b331d46 -->
 
 **Betrieb.** Der Server startet als Deployment-Kandidat mit geprüfter Prozesskonfiguration und schreibt beim Fehlstart einen Diagnose-Datensatz. <!-- q: code:apps/mcp-server/src/bootstrap.ts#startMcpDeploymentCandidate; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; code:apps/mcp-server/src/startup-diagnostics.ts#mcpStartupFailureRecord; comvenio-ai-connector-05 -->
 
@@ -370,20 +370,28 @@ Genutzt von: cli, pakete-und-integrationen
 | calledToolNames | apps/mcp-server/src/public/subset.ts |
 | rpcMessages | apps/mcp-server/src/public/subset.ts |
 | assign | apps/mcp-server/src/run-reports.ts |
+| assignShaped | apps/mcp-server/src/run-reports.ts |
+| count | apps/mcp-server/src/run-reports.ts |
 | errorCodes | apps/mcp-server/src/run-reports.ts |
 | isRecord | apps/mcp-server/src/run-reports.ts |
 | known | apps/mcp-server/src/run-reports.ts |
+| publicActivationPreview | apps/mcp-server/src/run-reports.ts |
 | publicAgentApprovalRef | apps/mcp-server/src/run-reports.ts |
 | publicAgentRunRef | apps/mcp-server/src/run-reports.ts |
+| publicApprovalUrl | apps/mcp-server/src/run-reports.ts |
 | publicAutomation | apps/mcp-server/src/run-reports.ts |
 | publicAutomationRun | apps/mcp-server/src/run-reports.ts |
 | publicCalendarSubscription | apps/mcp-server/src/run-reports.ts |
+| publicClarification | apps/mcp-server/src/run-reports.ts |
 | publicExternalSyncConfig | apps/mcp-server/src/run-reports.ts |
 | publicExternalSyncResult | apps/mcp-server/src/run-reports.ts |
+| publicRunId | apps/mcp-server/src/run-reports.ts |
 | publicSyncRun | apps/mcp-server/src/run-reports.ts |
 | publicTriggerEvent | apps/mcp-server/src/run-reports.ts |
 | publicWeeklyPreviewEntry | apps/mcp-server/src/run-reports.ts |
 | publicWeeklyPreviewRun | apps/mcp-server/src/run-reports.ts |
+| publicWeeklyPreviewSnapshot | apps/mcp-server/src/run-reports.ts |
+| shaped | apps/mcp-server/src/run-reports.ts |
 | syncSummary | apps/mcp-server/src/run-reports.ts |
 | agentFunctionScope | apps/mcp-server/src/runtime-tools.ts |
 | agentFunctionToolName | apps/mcp-server/src/runtime-tools.ts |
