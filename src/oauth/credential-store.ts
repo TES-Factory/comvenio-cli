@@ -71,8 +71,12 @@ function windowsUnprotect(cipherText: string): string {
   ).trim();
 }
 
-function powershellCredentialCommand(command: "read" | "write" | "delete", value?: string): string {
-  const path = `${process.env.APPDATA ?? process.env.USERPROFILE ?? "."}\\Comvenio\\cli-oauth${profileSuffix(ACCOUNT)}.dpapi`;
+export function powershellCredentialCommand(
+  command: "read" | "write" | "delete",
+  value?: string,
+  account: string = ACCOUNT,
+): string {
+  const path = `${process.env.APPDATA ?? process.env.USERPROFILE ?? "."}\\Comvenio\\cli-oauth${profileSuffix(account)}.dpapi`;
   const escapedPath = path.replace(/'/g, "''");
   if (command === "write") {
     const protectedValue = windowsProtect(value ?? "");
@@ -91,7 +95,15 @@ function powershellCredentialCommand(command: "read" | "write" | "delete", value
     return "";
   }
   if (command === "delete") {
-    const script = `Remove-Item -LiteralPath '${escapedPath}' -Force -ErrorAction SilentlyContinue`;
+    // Deleting a missing DPAPI file is idempotent, as on macOS and Linux. `Remove-Item
+    // -ErrorAction SilentlyContinue` on a missing file still leaves `$?` false, and as the
+    // last statement of `-Command` that makes powershell.exe exit 1 (BUG cf4e6e8b: login in a
+    // new profile failed). Remove only an existing file; a real failure still throws.
+    const script = [
+      "$ErrorActionPreference='Stop'",
+      `$path='${escapedPath}'`,
+      "if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }",
+    ].join(";");
     execFileSync(
       "powershell.exe",
       ["-NoProfile", "-NonInteractive", "-Command", script],
