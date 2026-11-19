@@ -73,6 +73,71 @@ describe("ComvenioApiClient public error mapping", () => {
     expect(error.message).not.toContain("<script>");
   });
 
+  test("an object detail with a snake_case code shows the code, nothing nested (community-hub 15 DC-3, BUG 15339d90)", async () => {
+    const widgetId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify({ detail: { code: "tab_changed", changed: [{ art: "widget", id: widgetId, live_version: 6, live: { secret: "s3cr3t" } }], added: [], removed: [] } }), { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "POST", service: "club", path: "/home-config/x/tabs/y/publish", context }));
+    expect(error.code).toBe("CONFLICT");
+    expect(error.detail).toBe("tab_changed");
+    expect(error.message).toBe("Der Comvenio-Dienst hat die Anfrage abgelehnt: tab_changed");
+    expect(error.message).not.toContain("s3cr3t");
+  });
+
+  test("an object detail with a snake_case code keeps its plain extras (widget_changed live_version)", async () => {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify({ detail: { code: "widget_changed", live_version: 3, live: { config: { html: "<p>x</p>" } } } }), { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "PATCH", service: "club", path: "/home-config/x/widgets/y", context }));
+    expect(error.detail).toBe("widget_changed (live_version: 3)");
+    expect(error.message).not.toContain("<p>");
+  });
+
+  test("tab_changed survives a long body: the live rows of a real page exceed 4000 characters (review bde7ebdf P1)", async () => {
+    const live = { config: { html: `<section>${"x".repeat(20_000)}</section>` } };
+    const body = JSON.stringify({ detail: { code: "tab_changed", changed: [{ art: "widget", id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", live_version: 6, live }], added: [], removed: [] } });
+    expect(body.length).toBeGreaterThan(20_000);
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(body, { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "POST", service: "club", path: "/home-config/x/tabs/y/publish", context }));
+    expect(error.detail).toBe("tab_changed");
+    expect(error.message).not.toContain("xxxx");
+  });
+
+  test("a snake_case code with a message shows only the code, never the message (review bde7ebdf P2)", async () => {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify({ detail: { code: "tab_changed", message: "tab_changed <p>private</p>", tabs: [{ tab_id: "88888888-8888-4888-8888-888888888888" }] } }), { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "POST", service: "club", path: "/x", context }));
+    expect(error.detail).toBe("tab_changed");
+    expect(error.message).not.toContain("private");
+  });
+
+  test("an object detail with an upper-case code stays as before, without extras (regression, BUG 15339d90)", async () => {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify({ detail: { code: "DESIGN_VERSION_CONFLICT", live_version: 2 } }), { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "PUT", service: "club", path: "/communities/x/design", context }));
+    expect(error.detail).toBe("DESIGN_VERSION_CONFLICT");
+  });
+
+  test("an object detail whose code is no code keeps the generic message", async () => {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://api.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify({ detail: { code: "Tab changed!", message: "frei formuliert" } }), { status: 409 }) },
+    );
+    const error = await failure(client.request({ method: "POST", service: "club", path: "/x", context }));
+    expect(error.detail).toBeUndefined();
+    expect(error.message).toBe("Der Comvenio-Dienst hat die Anfrage abgelehnt.");
+  });
+
   test("a coded string detail keeps its plain extras, nothing nested (automatisierungen-07 TC-07)", async () => {
     const client = createComvenioApiClient(
       { gatewayBaseUrl: "https://api.comvenio.app" },

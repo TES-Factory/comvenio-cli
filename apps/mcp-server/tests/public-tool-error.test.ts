@@ -79,6 +79,27 @@ describe("connector customer errors (01-fehlermodell)", () => {
     expect((missing.content[0] as { text: string }).text).not.toContain("automation_not_found");
   });
 
+  test("a stale base on club_page publish keeps tab_changed as reason (community-hub 15 DC-3, BUG 15339d90)", () => {
+    const conflict = publicToolError(context, origin, createConnectorError({
+      code: "CONFLICT",
+      message: "intern",
+      request_id: context.request_id,
+      retryable: false,
+      detail: "tab_changed",
+    }), "write");
+    expect(conflict.structuredContent).toMatchObject({ code: "CONFLICT", detail: "tab_changed" });
+    expect((conflict.content[0] as { text: string }).text).toContain("\nGrund: tab_changed\n");
+    // Not reviewed: the other community conflicts stay with the catalog sentence (BUG 947fd9fc).
+    const version = publicToolError(context, origin, createConnectorError({
+      code: "CONFLICT",
+      message: "intern",
+      request_id: context.request_id,
+      retryable: false,
+      detail: "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden",
+    }), "write");
+    expect(version.structuredContent).not.toHaveProperty("detail");
+  });
+
   test("an unreviewed service reason stays out, even on a refused input (review R3, finance receipts)", () => {
     const foreign = publicToolError(context, origin, createConnectorError({
       code: "VALIDATION_FAILED",
