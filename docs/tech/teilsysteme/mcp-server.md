@@ -69,7 +69,7 @@ Der MCP-Server ist der Comvenio AI Connector: Er macht die Vereinsfunktionen, di
 
 **Schreibklassen.** Lesen läuft direkt, umkehrbares Schreiben auf ausdrücklichen Auftrag mit Ergebnisbeleg, kritisches Schreiben mit Vorschau und zweiter Bestätigung, lange Läufe als Job mit Statusabfrage. Bestätigungen und abgeschlossene Schreibvorgänge liegen verschlüsselt im Zustandsspeicher; eine Bestätigung wird genau einmal verbraucht, ein wiederholter Schreibvorgang liefert das frühere Ergebnis, eine geänderte Payload wird abgewiesen. <!-- q: code:apps/mcp-server/src/domain-state-store.ts#sealJson; code:apps/mcp-server/src/domain-state-store.ts#confirmationMatchHash; code:apps/mcp-server/src/domain-runtime.ts#impactFor; comvenio-ai-connector-14 -->
 
-**Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. <!-- q: code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult -->
+**Fehlerantworten.** Jede Werkzeugantwort im Fehlerfall hat eine öffentliche Form: fehlender Scope als `SCOPE_REQUIRED` mit allen Scopes, Login-Befehl und Step-up; fehlendes Vereinsrecht als `PERMISSION_DENIED` mit dem Recht als Kategorie; Konflikte und Validierungsfehler behalten den Grund des Dienstes, aber nur einen geprüften Code in seinem zugelassenen Aufbau (Code, Zusatzfelder des Clients, bei Versionskonflikten fester Text und Tab-Kennungen); freier Text dahinter wird auf den Code gekürzt; fremde Fehler werden `UNKNOWN_ERROR` mit Anfragekennung. <!-- q: code:apps/mcp-server/src/public-tool-error.ts#publicToolError; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; code:apps/mcp-server/src/oauth-tool-challenge.ts#insufficientScopeToolResult; bug:8916dcef -->
 
 **Betrieb.** Der Server startet als Deployment-Kandidat mit geprüfter Prozesskonfiguration und schreibt beim Fehlstart einen Diagnose-Datensatz. <!-- q: code:apps/mcp-server/src/bootstrap.ts#startMcpDeploymentCandidate; code:apps/mcp-server/src/bootstrap.ts#readMcpProcessConfig; code:apps/mcp-server/src/startup-diagnostics.ts#mcpStartupFailureRecord; comvenio-ai-connector-05 -->
 
@@ -137,6 +137,7 @@ Genutzt von: cli, pakete-und-integrationen
 - **Homepage-Umwandlung verlor Abschnitte und Widgets** → die Reiter-Route des club-service ist flach, die Umwandlung erwartete verschachtelte Reiter und gab leere Abschnitte zurück → Abschnitte und Widgets je Reiter lesen, fremde Vereinsabschnitte brechen ab. <!-- q: commit:58791ad; bug:ddc0a35a -->
 - **Jede Terminserie scheiterte mit 422** → die Aktion schickte `name` statt `title` und keine Vorlage → Felder nach dem Vertrag des event-service, `materialize_next` sendet den nächsten Start. <!-- q: commit:089b8bf -->
 - **Konflikte kamen ohne Grund beim Nutzer an** → die öffentliche Fehlerantwort verwarf den Grund des Dienstes → Konflikt und Validierungsfehler tragen den Grund (etwa die aktuelle Version). <!-- q: commit:89a3fe9 -->
+- **Freier Text hinter einem geprüften Grund erreichte den Kunden** → die Fehlergrenze prüfte nur das erste Wort des Grunds und gab danach den ganzen Text weiter → nur der zugelassene Aufbau je Code geht durch, alles andere wird auf den Code gekürzt. <!-- q: commit:83717cb; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; bug:8916dcef -->
 - **Gleichzeitige Schrift-Uploads konnten sich überschreiben** → Lesen, Liste ersetzen und Nachlesen liefen getrennt → Registrierung in einem gesperrten Aufruf des club-service, ein unbestätigter Aufruf zählt nicht als Erfolg. <!-- q: commit:ab2d4a3 -->
 
 ## Code-Anker
@@ -344,8 +345,10 @@ Genutzt von: cli, pakete-und-integrationen
 | writeLifecycleRecord | apps/mcp-server/src/main.ts |
 | insufficientScopeToolResult | apps/mcp-server/src/oauth-tool-challenge.ts |
 | normalizedScopes | apps/mcp-server/src/oauth-tool-challenge.ts |
+| publicDetail | apps/mcp-server/src/public-tool-error.ts |
 | publicToolError | apps/mcp-server/src/public-tool-error.ts |
-| reviewedDetailCode | apps/mcp-server/src/public-tool-error.ts |
+| reviewedExtras | apps/mcp-server/src/public-tool-error.ts |
+| reviewedTabs | apps/mcp-server/src/public-tool-error.ts |
 | createAuthChallenge | apps/mcp-server/src/public/auth-challenge.ts |
 | permissionPolicyIsPublic | apps/mcp-server/src/public/policy.ts |
 | array | apps/mcp-server/src/public/redaction.ts |
