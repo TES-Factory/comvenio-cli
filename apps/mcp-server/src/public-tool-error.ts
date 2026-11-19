@@ -38,19 +38,90 @@ const PUBLIC_DETAIL_CODES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Codes reviewed together with the fixed text that community_error() puts after
- * "<CODE>: ". Only they may end at ':'; every other code keeps its exact form, or
- * free text after "invalid_args:" would reach the customer (review e20d7bdd).
+ * Codes reviewed together with the fixed text the club-service puts after
+ * "<CODE>: " — community_error() in community_tab_access.py and community_pages.py,
+ * the bulk conflict in community_home.py — and whether the client may add the tab
+ * ids. Only they may end at ':'; every other code keeps its exact form, or free
+ * text after "invalid_args:" would reach the customer (review e20d7bdd).
  */
-const COLON_DETAIL_CODES: ReadonlySet<string> = new Set([
-  "TAB_VERSION_CONFLICT",
-  "DESIGN_VERSION_CONFLICT",
+const COLON_DETAIL_FORMS: ReadonlyMap<string, { texts: ReadonlySet<string>; tabs: boolean }> = new Map([
+  ["TAB_VERSION_CONFLICT", {
+    texts: new Set([
+      "die Seite wurde inzwischen geändert, bitte neu laden",
+      "mindestens eine Seite wurde inzwischen geändert",
+    ]),
+    tabs: true,
+  }],
+  ["DESIGN_VERSION_CONFLICT", {
+    texts: new Set(["das Design wurde inzwischen geändert, bitte neu laden"]),
+    tabs: false,
+  }],
 ]);
 
-function reviewedDetailCode(detail: string): boolean {
+/**
+ * The named fields packages/comvenio-client/src/client.ts (detailExtras) puts
+ * after a snake_case code, in its order, each value an integer or a code-like word.
+ */
+const DETAIL_EXTRA_FIELDS: readonly string[] = ["live_version", "limit", "paused_reason", "field"];
+const DETAIL_EXTRA_VALUE = /^[A-Za-z0-9_.:-]{1,80}$/u;
+const TAB_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+/** The client cuts its line to 300 characters with "..." (upstreamBody). */
+const CUT_MARK = "...";
+
+/** " (live_version: 4, limit: 5)" exactly as detailExtras writes it. */
+function reviewedExtras(rest: string): boolean {
+  if (!rest.startsWith(" (") || !rest.endsWith(")")) return false;
+  let previous = -1;
+  for (const part of rest.slice(2, -1).split(", ")) {
+    const separator = part.indexOf(": ");
+    if (separator < 0) return false;
+    const index = DETAIL_EXTRA_FIELDS.indexOf(part.slice(0, separator));
+    if (index <= previous || !DETAIL_EXTRA_VALUE.test(part.slice(separator + 2))) return false;
+    previous = index;
+  }
+  return true;
+}
+
+/**
+ * " (Tabs: <uuid>, …)" as the client writes it, rebuilt from the ids alone. A list
+ * the client cut at 300 characters keeps its whole ids; null for anything else.
+ */
+function reviewedTabs(rest: string): string | null {
+  if (!rest.startsWith(" (Tabs: ")) return null;
+  let list = rest.slice(" (Tabs: ".length);
+  if (list.endsWith(")")) list = list.slice(0, -1);
+  else if (list.endsWith(CUT_MARK)) list = list.slice(0, -CUT_MARK.length).replace(/(?:^|, ?)[0-9a-f-]*$/iu, "");
+  else return null;
+  if (list === "") return "";
+  const ids = list.split(", ");
+  return ids.length <= 10 && ids.every((id) => TAB_ID.test(id)) ? ` (Tabs: ${ids.join(", ")})` : null;
+}
+
+/**
+ * The part of the service's reason that may reach the customer: a reviewed code in
+ * its reviewed form — the code, the extras of the client, for the version conflicts
+ * the fixed text and the tab ids. Anything else behind a reviewed code is cut to the
+ * code (BUG 8916dcef: free text after the first word reached MCP text,
+ * structuredContent and the CLI); an unreviewed code gives null. The code is the
+ * first word; it ends at a space or '(', for the version conflicts also at ':'.
+ */
+function publicDetail(detail: string): string | null {
   const word = detail.split(/[\s(]/u)[0] ?? "";
-  if (PUBLIC_DETAIL_CODES.has(word)) return true;
-  return word.endsWith(":") && COLON_DETAIL_CODES.has(word.slice(0, -1));
+  const colon = word.endsWith(":") ? COLON_DETAIL_FORMS.get(word.slice(0, -1)) : undefined;
+  if (colon) {
+    const code = word.slice(0, -1);
+    const rest = detail.slice(word.length);
+    const text = [...colon.texts].find((fixed) => rest === ` ${fixed}` || rest.startsWith(` ${fixed} `));
+    if (text === undefined) return code;
+    const tail = rest.slice(text.length + 1);
+    if (tail === "") return `${code}: ${text}`;
+    const tabs = colon.tabs ? reviewedTabs(tail) : null;
+    return tabs === null ? code : `${code}: ${text}${tabs}`;
+  }
+  if (!PUBLIC_DETAIL_CODES.has(word)) return null;
+  const rest = detail.slice(word.length);
+  if (rest === "") return word;
+  return !COLON_DETAIL_FORMS.has(word) && reviewedExtras(rest) ? detail : word;
 }
 
 /**
@@ -88,13 +159,11 @@ export function publicToolError(
   // (automation_changed with live_version, automatisierungen-07 DC-3) — but only for
   // reviewed codes: a free service text can tell a foreign club's file from a missing
   // one (finance receipts, review R3). Refusals and unknown objects keep the catalog
-  // sentence: a 404 says nothing about existence.
-  // The code is the first word; it ends at a space or '(', for the version conflicts
-  // also at ':' ("TAB_VERSION_CONFLICT: …").
+  // sentence: a 404 says nothing about existence. Only the reviewed form of the
+  // reason passes, never free text behind a reviewed code (BUG 8916dcef).
   const detail = connectorError?.detail
     && (connectorError.code === "CONFLICT" || connectorError.code === "VALIDATION_FAILED")
-    && reviewedDetailCode(connectorError.detail)
-    ? connectorError.detail
+    ? publicDetail(connectorError.detail)
     : null;
   // Assistants read the article through the public help tool (05-ki-zugang).
   const assistantHint = `Hilfe: comvenio_hilfe mit operation "fehler" und code "${rendered.code}".`;

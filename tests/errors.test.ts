@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { createConnectorError, type RequestContext } from "@comvenio/connector-contracts";
+
+import { publicToolError } from "../apps/mcp-server/src/public-tool-error.ts";
 import { AuthError, LoginOptionError } from "../src/auth.ts";
 import {
   PublicCliError,
@@ -110,6 +113,32 @@ describe("CLI customer errors (01-fehlermodell)", () => {
       detail: "Der Erinnerungszeitpunkt muss in der Zukunft liegen.",
     }), { lang: "de" });
     expect(formatCliError(rendered).split("\n")[1]).toBe("  Der Erinnerungszeitpunkt muss in der Zukunft liegen.");
+  });
+
+  test("a reviewed code with free text after it reaches the CLI as the bare code (BUG 8916dcef)", () => {
+    const context: RequestContext = {
+      request_id: requestId,
+      surface: "cli",
+      provider: null,
+      subject_id: "22222222-2222-4222-8222-222222222222",
+      oauth_grant_id: "55555555-5555-4555-8555-555555555555",
+      club_id: "33333333-3333-4333-8333-333333333333",
+      department_id: null,
+      scopes: ["club.read", "role.read.self"],
+      capability_version: null,
+      locale: "de-DE",
+      timezone: "Europe/Berlin",
+    };
+    const tool = publicToolError(context, "https://mcp.comvenio.app", createConnectorError({
+      code: "VALIDATION_FAILED",
+      message: "intern",
+      request_id: requestId,
+      retryable: false,
+      detail: "invalid_args Beleg gehört Verein B",
+    }), "write");
+    const output = formatCliError(toPublicError(new ConnectorClientError("x", tool.structuredContent), { lang: "de" }));
+    expect(output.split("\n")[1]).toBe("  invalid_args");
+    expect(output).not.toContain("Verein B");
   });
 
   test("TC-04: --lang and LANG select English, default is German", () => {
