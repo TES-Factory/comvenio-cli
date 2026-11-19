@@ -206,6 +206,7 @@ Genutzt von: mcp-server
 | configFieldsNotInSource | scripts/gen-schema.ts |
 | diffSummary | scripts/gen-schema.ts |
 | documentedValuesNotInSource | scripts/gen-schema.ts |
+| forwardedWidgetSources | scripts/gen-schema.ts |
 | genBooking | scripts/gen-schema.ts |
 | genEvent | scripts/gen-schema.ts |
 | genHomepage | scripts/gen-schema.ts |
@@ -532,6 +533,7 @@ Genutzt von: mcp-server
 | aufgabe | tests/probelauf.test.ts |
 | bash | tests/probelauf.test.ts |
 | bericht | tests/probelauf.test.ts |
+| posixShell | tests/probelauf.test.ts |
 | transkript | tests/probelauf.test.ts |
 | json | tests/railway-config.test.ts |
 | dienst | tests/rele-uebernahme.test.ts |
