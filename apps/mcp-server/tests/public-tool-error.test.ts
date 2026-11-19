@@ -135,6 +135,71 @@ describe("connector customer errors (01-fehlermodell)", () => {
     expect((foreign.content[0] as { text: string }).text).not.toContain("another club");
   });
 
+  test("a reviewed code keeps only its reviewed form; free text after it is cut to the code (BUG 8916dcef)", () => {
+    const answer = (code: "CONFLICT" | "VALIDATION_FAILED", detail: string) => publicToolError(context, origin, createConnectorError({
+      code,
+      message: "intern",
+      request_id: context.request_id,
+      retryable: false,
+      detail,
+    }), "write");
+    const uuid = "88888888-8888-4888-8888-888888888888";
+    // Free text behind a reviewed code: only the code passes, in text and structuredContent.
+    const cut: [code: "CONFLICT" | "VALIDATION_FAILED", detail: string, kept: string][] = [
+      ["VALIDATION_FAILED", "invalid_args Beleg gehört Verein B", "invalid_args"],
+      ["CONFLICT", "tab_changed von Max Muster im Verein B", "tab_changed"],
+      ["CONFLICT", "automation_changed (live_version: 4) Verein B hat geändert", "automation_changed"],
+      ["CONFLICT", "automation_changed (live_version: 4, owner: Verein B)", "automation_changed"],
+      ["CONFLICT", "automation_changed(live_version: 4)", "automation_changed"],
+      ["CONFLICT", "automation_paused (paused_reason: owner_left, limit: 3)", "automation_paused"],
+      ["CONFLICT", "TAB_VERSION_CONFLICT: Verein B hat die Seite geändert", "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}) und mehr`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", "TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: Verein B)", "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", "DESIGN_VERSION_CONFLICT freier Text", "DESIGN_VERSION_CONFLICT"],
+      ["CONFLICT", `DESIGN_VERSION_CONFLICT: das Design wurde inzwischen geändert, bitte neu laden (Tabs: ${uuid})`, "DESIGN_VERSION_CONFLICT"],
+      // Review 4a98b68e: a count is an integer, never a name.
+      ["CONFLICT", "automation_changed (live_version: Verein_B)", "automation_changed"],
+      ["CONFLICT", "automation_limit_reached (limit: Verein_B)", "automation_limit_reached"],
+      ["CONFLICT", "automation_changed (live_version: 9007199254740993)", "automation_changed"],
+      // Review 4a98b68e: longer than the client's 300 characters, or "..." without the cut.
+      ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${Array(10).fill(uuid).join(", ")})`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, Verein B...`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `TAB_VERSION_CONFLICT (Tabs: ${uuid}) Verein B`, "TAB_VERSION_CONFLICT"],
+      ["CONFLICT", `DESIGN_VERSION_CONFLICT (Tabs: ${uuid})`, "DESIGN_VERSION_CONFLICT"],
+    ];
+    for (const [code, detail, kept] of cut) {
+      const result = answer(code, detail);
+      expect(result.structuredContent).toMatchObject({ code, detail: kept });
+      const text = (result.content[0] as { text: string }).text;
+      expect(text).toContain(`\nGrund: ${kept}\n`);
+      expect(text).not.toContain(detail);
+      expect(text).not.toContain("Verein B");
+    }
+    // The reviewed forms pass unchanged: code, extras from client.ts in their order, the fixed texts.
+    for (const detail of [
+      "automation_limit_reached (limit: 5)",
+      "automation_paused (limit: 3, paused_reason: owner_left)",
+      "invalid_args (field: schedule.cron)",
+      // Every safe integer passes, also with 16 digits (review b71abf05).
+      "automation_changed (live_version: 9007199254740991)",
+      "automation_changed (live_version: 0)",
+      "TAB_VERSION_CONFLICT",
+      "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden",
+      `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, ${uuid})`,
+      // {"code": "TAB_VERSION_CONFLICT", "tabs": […]} without a message (review 4a98b68e).
+      `TAB_VERSION_CONFLICT (Tabs: ${uuid})`,
+    ]) {
+      expect(answer("CONFLICT", detail).structuredContent).toMatchObject({ detail });
+    }
+    // A tab list the client cut at 300 characters keeps its whole ids, nothing else.
+    const ids = Array.from({ length: 8 }, (_, index) => `${index}8888888-8888-4888-8888-888888888888`);
+    const full = `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${ids.join(", ")})`;
+    const cutByClient = `${full.slice(0, 297)}...`;
+    const kept = (answer("CONFLICT", cutByClient).structuredContent as { detail: string }).detail;
+    expect(kept).toMatch(/^TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert \(Tabs: [0-9a-f-]{36}(, [0-9a-f-]{36})+\)$/u);
+    expect(cutByClient.startsWith(kept.slice(0, -1))).toBe(true);
+  });
+
   test("TC-03: a foreign error becomes UNKNOWN_ERROR with the request ID", () => {
     const result = publicToolError(context, origin, new TypeError("boom"), "read");
     expect(result.structuredContent).toMatchObject({
