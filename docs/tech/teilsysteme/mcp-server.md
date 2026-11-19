@@ -142,7 +142,7 @@ Genutzt von: cli, pakete-und-integrationen
 - **Konflikte kamen ohne Grund beim Nutzer an** → die öffentliche Fehlerantwort verwarf den Grund des Dienstes → Konflikt und Validierungsfehler tragen den Grund (etwa die aktuelle Version). <!-- q: commit:89a3fe9 -->
 - **Freier Text hinter einem geprüften Grund erreichte den Kunden** → die Fehlergrenze prüfte nur das erste Wort des Grunds und gab danach den ganzen Text weiter → nur der zugelassene Aufbau je Code geht durch, alles andere wird auf den Code gekürzt. <!-- q: commit:83717cb; code:apps/mcp-server/src/public-tool-error.ts#publicDetail; bug:8916dcef -->
 - **Werkzeuge außerhalb der Fehlergrenze zeigten den ganzen Grund des Dienstes** → Aufgaben- und öffentliche Werkzeuge warfen den Fehler weiter, das SDK veröffentlichte seine Meldung samt freiem Dienst-Text → die Registrierung selbst führt jeden geworfenen Fehler über die Fehlergrenze. <!-- q: commit:a81c674; code:apps/mcp-server/src/tool-error-boundary.ts#guardToolErrors; bug:b1c53c74 -->
-- **Fehlerantworten scheiterten im SDK-Client an der Schemaprüfung** → der Client (1.29) prüft `structuredContent` auch bei `isError` gegen das `outputSchema`; Werkzeuge mit Schema endeten nach geladener Werkzeugliste in „Structured content does not match“ → das veröffentlichte Schema ist Erfolgsform oder öffentliche Fehlerform. <!-- q: code:apps/mcp-server/src/public-error-output.ts#withPublicErrorOutput; code:apps/mcp-server/tests/tool-error-boundary.pattern.test.ts; bug:4fd71f53 -->
+- **Fehlerantworten scheiterten im SDK-Client an der Schemaprüfung** → der Client (1.29) prüft `structuredContent` auch bei `isError` gegen das `outputSchema`; Werkzeuge mit Schema endeten nach geladener Werkzeugliste in „Structured content does not match“ → das veröffentlichte Schema ist Erfolgsform oder öffentliche Fehlerform. <!-- q: code:apps/mcp-server/src/public-error-output.ts#withPublicErrorOutput; code:apps/mcp-server/src/tool-security-schemes.ts#installToolSecuritySchemeProjection; bug:4fd71f53 -->
 - **Laufberichte zeigten den Grund des Dienstes** → Automatisierungsläufe gaben `reason` und `result_text`, Kalender-Synchronisationen `error` und `last_error`, Wochenvorschau-Läufe `error` und externe Team-Synchronisationen ihre Ausnahmetexte ungeprüft weiter, auch bei fehlgeschlagenen Läufen → nur ein erfolgreicher Lauf behält Text, alles andere wird ein bekannter oder fester Code. <!-- q: code:apps/mcp-server/src/run-reports.ts#publicAutomationRun; bug:7b331d46 -->
 - **Gleichzeitige Schrift-Uploads konnten sich überschreiben** → Lesen, Liste ersetzen und Nachlesen liefen getrennt → Registrierung in einem gesperrten Aufruf des club-service, ein unbestätigter Aufruf zählt nicht als Erfolg. <!-- q: commit:ab2d4a3 -->
 
@@ -351,6 +351,8 @@ Genutzt von: cli, pakete-und-integrationen
 | writeLifecycleRecord | apps/mcp-server/src/main.ts |
 | insufficientScopeToolResult | apps/mcp-server/src/oauth-tool-challenge.ts |
 | normalizedScopes | apps/mcp-server/src/oauth-tool-challenge.ts |
+| withPublicErrorOutput | apps/mcp-server/src/public-error-output.ts |
+| withoutDialect | apps/mcp-server/src/public-error-output.ts |
 | publicDetail | apps/mcp-server/src/public-tool-error.ts |
 | publicToolError | apps/mcp-server/src/public-tool-error.ts |
 | reviewedExtras | apps/mcp-server/src/public-tool-error.ts |
