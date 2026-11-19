@@ -170,6 +170,30 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
     }
   });
 
+  test("Lauf-Kennung und Freigabelink einer Agent-Funktion nur in ihrer Form (Prüfung 4a8506f4, BUG 7b331d46)", async () => {
+    const call = async (run: Record<string, unknown>) => {
+      globalThis.fetch = (async () => Response.json(run)) as unknown as typeof fetch;
+      const client = await connect(runtimeServer());
+      try {
+        const result = await client.callTool({ name: "cv_fn_club_faq_answer", arguments: { question: "Wo ist die Satzung?" } });
+        expectNoForeignText(result);
+        return result.structuredContent as Record<string, unknown>;
+      } finally {
+        await client.close();
+      }
+    };
+    const open = { state: "awaiting_approval", result_summary: null };
+    // a run id that is no UUID and links outside Comvenio, with credentials or not over https never leave
+    for (const url of [
+      `https://example.org/approve?${LEAK}`, `http://web.comvenio.app/approvals/${taskId}`,
+      `https://user:pw@web.comvenio.app/approvals/${taskId}`, `https://comvenio.app.example.org/${LEAK}`, `javascript:${LEAK}`, LEAK,
+    ]) {
+      expect(await call({ ...open, id: LEAK, approval: { approval_url: url } })).toMatchObject({ run_id: null, approval_url: null });
+    }
+    const link = `https://web.comvenio.app/approvals/${taskId}`;
+    expect(await call({ ...open, id: taskId, approval: { approval_url: link } })).toMatchObject({ run_id: taskId, approval_url: link });
+  });
+
   test("jeder nicht erfolgreiche oder unbekannte Laufzustand trägt keine Zusammenfassung (Prüfung f5c3a812)", async () => {
     for (const state of ["cancelled", "blocked", "expired", "running", "Verein B hat abgebrochen", "max_mustermann"]) {
       globalThis.fetch = (async () => Response.json({ id: taskId, state, error: "intern", result_summary: LEAK })) as unknown as typeof fetch;

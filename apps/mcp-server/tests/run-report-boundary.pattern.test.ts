@@ -33,9 +33,13 @@ const LEAK = "Verein B: Max Mustermann token=abc";
 const FOREIGN = ["Verein B", "Max Mustermann", "token=abc"];
 
 /** Field names that can carry free text (also the names of later tools). */
-const FREE_TEXT = /^(error|errors|last_error|reason|result_text|result_summary|summary|message|detail|details|failure|failure_reason|error_message|error_detail|log|output_text|note|notes|status_message|paused_reason|stderr|stdout|sync_log|last_sync_summary)$/u;
+const FREE_TEXT = /^(error|errors|last_error|reason|result_text|result_summary|summary|message|detail|details|failure|failure_reason|error_message|error_detail|log|output_text|note|notes|status_message|paused_reason|stderr|stdout|sync_log|last_sync_summary|warnings)$/u;
 
-/** Tools whose answer is a run, sync, history, status, import or export report. */
+/**
+ * Tools whose answer is a run, sync, history, status, import or export report. Matched
+ * against "<action_id> <operation>": a bundled action names its run in the operation
+ * (review 4a8506f4).
+ */
 const RUN_LIKE = /(run|sync|automation|weekly_preview|ical|clarification|history|_log|status|job|import|export|protocol)/u;
 
 /** Guarded: the answer turns these into a fixed public form (canary tests below). */
@@ -56,6 +60,11 @@ const GUARDED: Record<string, readonly string[]> = {
   "cai.teams.25.ical_deactivate": ["$.last_error", ".latest_run.error"],
   "cai.teams.26.sync_now": ["$.error"],
   "cai.teams.27.sync_runs": ["[].error"],
+  // utils/ical_parse.py warnings name a feed UID: only their kind passes (publicActivationPreview).
+  "cai.teams.23.ical_preview": ["$.warnings"],
+  // type and status pass only as known words (publicClarification); reason is reviewed content below.
+  "cai.teams.28.clarification_list": [],
+  "cai.teams.29.clarification_resolve": [],
 };
 
 /** Reviewed: text the club or the person wrote, or the decision it has to take — no service report. */
@@ -113,14 +122,21 @@ const OPEN_CONTENT: Record<string, { fields: readonly string[]; why: string }> =
   "cai.meeting.02.protocol_list_show_create_update_delete_advance_revert_updates_validat": { fields: ["$", "[]"], why: "the club's own meeting protocol" },
   "cai.meeting.04.note_list_list_protocol_create_update_delete": { fields: ["$", "[]"], why: "the club's own meeting notes" },
   "cai.meeting.09.resolution_list_list_protocol_show_history_create_update_approve_decli": { fields: ["$", "[]"], why: "the club's own resolutions and their history" },
+  // Found through their operation (review 4a8506f4).
+  "cai.event.18.sponsor_and_sponsor_program_workflows": { fields: ["$", "[]"], why: "tier_sync: event-service SponsorTierSyncResult, counters only" },
+  "cai.event.19.invitation_and_club_invitation_workflows": { fields: ["$", "[]"], why: "member_status: the club's own invitation after its status change" },
+  "cai.event.24.dj_settings_and_request_workflows": { fields: ["$", "[]"], why: "request_status: the club's own DJ request after its status change" },
+  "cai.finance.31.finance_views": { fields: ["$", "[]"], why: "department_history: finance-service DepartmentHistory, the club's own yearly sums" },
+  "cai.shopping.06.show": { fields: ["$", "[]"], why: "export: job handle; status through cv_job_status_read (enum-typed)" },
+  "cai.tournament.25.preview": { fields: ["$", "[]"], why: "export: job handle; status through cv_job_status_read (enum-typed)" },
 };
 
-/** Text fields of guarded answers that are the club's content, ids or times — no service report. */
+/**
+ * Text fields of guarded answers that are the club's own content — no service report. Ids
+ * and times are not exempt: they pass only in their form and get the canary (review 4a8506f4).
+ */
 const REVIEWED_TEXT = new Set([
-  "name", "title", "location", "masked_url", "capability_id", "event_id", "delivered_message_id",
-  "created_at", "updated_at", "started_at", "finished_at", "scheduled_for", "next_run_at", "last_run_at",
-  "last_success_at", "last_error_at", "next_sync_at", "range_start", "range_end", "start_time", "end_time",
-  "publish_at", "published_at",
+  "name", "title", "location", "masked_url", "token", "external_id", "mapping", "team_label",
 ]);
 
 type JsonSchemaNode = {
@@ -167,10 +183,11 @@ function isText(node: JsonSchemaNode): boolean {
 
 const contracts = fullDomainOperationContracts();
 
-function collect(select: (node: JsonSchemaNode, key: string | null) => boolean, filter: (actionId: string) => boolean = () => true) {
+/** filter gets "<action_id> <operation>" of each contract row. */
+function collect(select: (node: JsonSchemaNode, key: string | null) => boolean, filter: (name: string) => boolean = () => true) {
   const result = new Map<string, Set<string>>();
   for (const row of contracts) {
-    if (!filter(row.action_id)) continue;
+    if (!filter(`${row.action_id} ${row.operation}`)) continue;
     const found = result.get(row.action_id) ?? new Set<string>();
     walk(row.output_schema as JsonSchemaNode, "", (node, path, key) => {
       if (select(node, key)) found.add(display(path));
@@ -230,6 +247,9 @@ const subscription = {
   id: subscriptionId, team_season_id: seasonId, masked_url: "https://example.org/***", status: "ACTIVE",
   last_success_at: null, last_error: LEAK, last_error_at: null, next_sync_at: null, latest_run: failedSync,
 };
+const clarification = {
+  id: runId, team_season_id: seasonId, type: LEAK, status: LEAK, title: "Wettbewerb zuordnen", reason: "Fehlt seit 3 vollständigen Läufen",
+};
 const entry = { event_id: "e-1", title: "Training", start_time: "2026-11-20T18:00:00+00:00", end_time: null, location: null, reason: LEAK };
 
 /** One failing answer per guarded tool, as the service could send it. */
@@ -253,6 +273,13 @@ const FAILING: Record<string, unknown> = {
   "cai.teams.25.ical_deactivate": subscription,
   "cai.teams.26.sync_now": failedSync,
   "cai.teams.27.sync_runs": [failedSync],
+  "cai.teams.23.ical_preview": {
+    token: "preview-token", expires_at: "2026-11-19T11:00:00+00:00",
+    entries: [{ external_id: "uid-1", starts_at: null, ends_at: null, title: "Spiel", mapping: "MATCH" }],
+    warnings: [`Nicht zuordenbarer Wettbewerb: ${LEAK}`, `Klärungsfall ${LEAK}`, LEAK],
+  },
+  "cai.teams.28.clarification_list": [clarification],
+  "cai.teams.29.clarification_resolve": { clarification, resource_reconcile_triggered: false },
 };
 
 function output(actionId: string, value: unknown): unknown {
@@ -278,8 +305,9 @@ function setAt(target: unknown, path: string, value: unknown): boolean {
 function textFields(actionId: string): string[] {
   const row = contracts.find((contract) => contract.action_id === actionId);
   const found = new Set<string>();
+  const content = new Set(CONTENT[actionId]?.fields ?? []);
   walk(row?.output_schema as JsonSchemaNode, "", (node, path, key) => {
-    if (key !== null && isText(node) && !REVIEWED_TEXT.has(key)) found.add(path);
+    if (key !== null && isText(node) && !REVIEWED_TEXT.has(key) && !content.has(display(path))) found.add(path);
   });
   return [...found].sort();
 }
@@ -292,7 +320,7 @@ describe("run and history reports carry no free service text (BUG 7b331d46)", ()
   });
 
   test("every open output of a run-like tool is guarded or reviewed", () => {
-    const found = collect((node) => isOpen(node), (actionId) => RUN_LIKE.test(actionId));
+    const found = collect((node) => isOpen(node), (name) => RUN_LIKE.test(name));
     expect(unclassified(found, OPEN_GUARDED, fieldsOf(OPEN_CONTENT))).toEqual([]);
     expect(stale(found, OPEN_GUARDED, fieldsOf(OPEN_CONTENT))).toEqual([]);
   });
@@ -382,6 +410,38 @@ describe("run and history reports carry no free service text (BUG 7b331d46)", ()
     expect(snapshots[0]?.hidden.map((item) => item.reason)).toEqual(["not_public", "hidden"]);
   });
 
+  test("times and ids of a report pass only in their form (review 4a8506f4)", () => {
+    const run = output("cai.club.24.automation_run", {
+      ...failedRun, state: "succeeded", reason: null, result_text: "ok",
+      scheduled_for: "2026-11-19", started_at: "2026-11-19T10:00:00.123Z", finished_at: LEAK, created_at: "morgen",
+      delivered_message_id: "msg:42",
+    }) as Record<string, unknown>;
+    expect([run.scheduled_for, run.started_at, run.finished_at, run.created_at, run.delivered_message_id])
+      .toEqual(["2026-11-19", "2026-11-19T10:00:00.123Z", null, null, "msg:42"]);
+    expect(output("cai.club.24.automation_run", { ...failedRun, delivered_message_id: LEAK })).toMatchObject({ delivered_message_id: null });
+    const shown = output("cai.club.18.automation_show", { ...automation, capability_id: LEAK, next_run_at: LEAK }) as Record<string, unknown>;
+    expect([shown.capability_id, shown.next_run_at]).toEqual([null, null]);
+    const snapshot = (output("cai.club.12.weekly_preview_list", [{
+      ...(FAILING["cai.club.12.weekly_preview_list"] as Array<Record<string, unknown>>)[0],
+      range_start: LEAK, published_at: "2026-11-22T19:00:00+01:00",
+    }]) as Array<Record<string, unknown>>)[0];
+    expect([snapshot?.range_start, snapshot?.published_at]).toEqual([null, "2026-11-22T19:00:00+01:00"]);
+  });
+
+  test("ical preview: a warning leaves only as its kind (review 4a8506f4)", () => {
+    const preview = output("cai.teams.23.ical_preview", FAILING["cai.teams.23.ical_preview"]) as Record<string, unknown>;
+    expect(preview.warnings).toEqual(["UNKNOWN_COMPETITION", "COMPLEX_TIME_OR_RECURRENCE", "WARNING"]);
+  });
+
+  test("clarifications: kind and status leave only as known words (review 4a8506f4)", () => {
+    const list = output("cai.teams.28.clarification_list", [
+      clarification, { ...clarification, type: "POSSIBLE_DUPLICATE", status: "OPEN" },
+    ]) as Array<Record<string, unknown>>;
+    expect(list.map((item) => [item.type, item.status])).toEqual([["UNKNOWN", "unknown"], ["POSSIBLE_DUPLICATE", "OPEN"]]);
+    const resolved = output("cai.teams.29.clarification_resolve", FAILING["cai.teams.29.clarification_resolve"]) as { clarification: Record<string, unknown> };
+    expect([resolved.clarification.type, resolved.clarification.status]).toEqual(["UNKNOWN", "unknown"]);
+  });
+
   test("external team syncs: exception texts of a run leave only as their number", async () => {
     const answers: Record<string, unknown> = {
       list: [{ id: runId, club_id: clubId, team_label: "F-Jugend", last_sync_summary: JSON.stringify({ created: 2, errors: 1 }) },
@@ -406,6 +466,31 @@ describe("run and history reports carry no free service text (BUG 7b331d46)", ()
     expect(results.show).toMatchObject({ last_sync_summary: null });
     expect(results.run).toMatchObject({ errors: ["SYNC_FAILED"], results: [{ team_label: "F-Jugend", errors: ["SYNC_FAILED"] }] });
     expect(results.provider_run).toMatchObject({ errors: ["SYNC_FAILED"] });
+  });
+
+  test("external team syncs: string errors, provider, extra fields and summary keys carry no service text (review 4a8506f4)", async () => {
+    const run = async (operation: string, answer: unknown, input: Record<string, unknown> = {}) => {
+      const client = { request: async () => structuredClone(answer) } as never;
+      const result = await executeK8Operation("cai.event.25.external_sync_workflows", operation,
+        { operation, club_id: clubId, ...input } as never, { club_id: clubId } as never, client);
+      expectNoLeak(result);
+      return result;
+    };
+    // errors as one string instead of a list, unknown provider, extra fields at both levels
+    expect(await run("run", {
+      total_configs: 1, synced: 0, errors: `API fetch failed: ${LEAK}`, debug: LEAK,
+      results: [{ sync_config_id: LEAK, team_label: "F-Jugend", provider: LEAK, created: "3", updated: 0, unchanged: 0, errors: LEAK, trace: LEAK }],
+    })).toEqual({
+      total_configs: 1, synced: 0, errors: ["SYNC_FAILED"],
+      results: [{ sync_config_id: null, team_label: "F-Jugend", provider: "unknown", created: null, updated: 0, unchanged: 0, errors: ["SYNC_FAILED"] }],
+    });
+    // not an object at all
+    expect(await run("run", LEAK)).toEqual({ total_configs: null, synced: null, results: [], errors: ["SYNC_FAILED"] });
+    // a service text as key of the summary, or a counter that is not a number
+    const config = (summary: string) => ({ id: runId, club_id: clubId, team_label: "F-Jugend", provider: "api_fussball", last_sync_summary: summary });
+    expect(await run("show", config(JSON.stringify({ created: 1, [LEAK]: 1 })), { sync_id: runId })).toMatchObject({ last_sync_summary: null });
+    expect(await run("show", config(JSON.stringify({ created: LEAK })), { sync_id: runId })).toMatchObject({ last_sync_summary: null });
+    expect(await run("list", [{ ...config(JSON.stringify({ errors: 2 })), provider: LEAK }])).toMatchObject([{ provider: "unknown", last_sync_summary: JSON.stringify({ errors: 2 }) }]);
   });
 
   test("the job status tool reports only typed states and codes", () => {
