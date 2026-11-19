@@ -89,15 +89,26 @@ describe("connector customer errors (01-fehlermodell)", () => {
     }), "write");
     expect(conflict.structuredContent).toMatchObject({ code: "CONFLICT", detail: "tab_changed" });
     expect((conflict.content[0] as { text: string }).text).toContain("\nGrund: tab_changed\n");
-    // Not reviewed: the other community conflicts stay with the catalog sentence (BUG 947fd9fc).
-    const version = publicToolError(context, origin, createConnectorError({
+  });
+
+  test("the community version conflicts keep their reason, code followed by ':' (community-hub 14 DC-3, BUG 947fd9fc)", () => {
+    const conflict = (detail: string) => publicToolError(context, origin, createConnectorError({
       code: "CONFLICT",
       message: "intern",
       request_id: context.request_id,
       retryable: false,
-      detail: "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden",
+      detail,
     }), "write");
-    expect(version.structuredContent).not.toHaveProperty("detail");
+    const tabs = "TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: 88888888-8888-4888-8888-888888888888)";
+    expect(conflict(tabs).structuredContent).toMatchObject({ code: "CONFLICT", detail: tabs });
+    expect((conflict(tabs).content[0] as { text: string }).text).toContain(`\nGrund: ${tabs}\n`);
+    const design = "DESIGN_VERSION_CONFLICT: das Design wurde inzwischen geändert, bitte neu laden";
+    expect(conflict(design).structuredContent).toMatchObject({ code: "CONFLICT", detail: design });
+    expect(conflict("DESIGN_VERSION_CONFLICT").structuredContent).toMatchObject({ detail: "DESIGN_VERSION_CONFLICT" });
+    // The ':' only ends a reviewed code; an unreviewed one or a longer word stays out.
+    expect(conflict("COMMUNITY_PAGE_FORBIDDEN: diese Seite darfst du nicht bearbeiten").structuredContent).not.toHaveProperty("detail");
+    expect(conflict("TAB_VERSION_CONFLICTS: anders").structuredContent).not.toHaveProperty("detail");
+    expect(conflict("XTAB_VERSION_CONFLICT: anders").structuredContent).not.toHaveProperty("detail");
   });
 
   test("an unreviewed service reason stays out, even on a refused input (review R3, finance receipts)", () => {
