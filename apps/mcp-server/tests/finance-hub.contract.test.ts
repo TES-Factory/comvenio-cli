@@ -2,11 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 
 import type { JsonValue, RequestContext } from "@comvenio/connector-contracts";
-import { createConnectorError } from "@comvenio/connector-contracts";
+import { createConnectorError, isConnectorError } from "@comvenio/connector-contracts";
 import type { ComvenioApiBinary, ComvenioApiClient, ComvenioApiRequest } from "@comvenio/comvenio-client";
+import { createComvenioApiClient } from "@comvenio/comvenio-client";
 import type { CapabilitySnapshot } from "../../../packages/auth/src/index.ts";
 
 import { createK14ToolSet, HUB_ACTION_DEFINITIONS, hubOperationCount } from "../src/tools/finance/index.ts";
+import { publicToolError } from "../src/public-tool-error.ts";
 
 // Finance Hub vollständig (hub.ts): die Sicherheitsbausteine von K14 gelten
 // für jede neue Teiloperation — Mandant, Vorprüfung, Bestätigung, Datenschutz.
@@ -1261,3 +1263,37 @@ describe("Finance Hub: Verknüpfung einer Position (buchhaltung-10-01/-04)", () 
 });
 
 type JsonObjectInput = Record<string, JsonValue>;
+
+describe("Finance Hub: Grund eines abgelehnten Downloads an der MCP-Grenze (BUG b8327c6d)", () => {
+  async function refusedDownload(status: number, body: unknown) {
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://apidev.comvenio.app" },
+      { fetch: async () => new Response(JSON.stringify(body), { status }) },
+    );
+    try {
+      await createK14ToolSet({ client }).execute({
+        action_id: "cai.finance.30.audit_export",
+        input: { club_id: clubId, operation: "download", plan_id: planId, export_id: reportId },
+        context,
+        capability_snapshot: manager,
+      });
+    } catch (error) {
+      if (isConnectorError(error)) return { error, result: publicToolError(context, "https://mcp.comvenio.app", error, "read") };
+      throw error;
+    }
+    throw new Error("Expected a refused download");
+  }
+
+  test("ein geprüfter Grund kommt an, wie beim JSON-Weg", async () => {
+    const { error, result } = await refusedDownload(422, { detail: "invalid_args" });
+    expect(error.detail).toBe("invalid_args");
+    expect(result.structuredContent).toMatchObject({ code: "VALIDATION_FAILED", detail: "invalid_args" });
+  });
+
+  test("ein ungeprüfter Grund bleibt draußen — die Grenze lässt nur geprüfte Codes durch (review R3)", async () => {
+    const { error, result } = await refusedDownload(422, { detail: "receipt_invalid: file belongs to another club" });
+    expect(error.detail).toBe("receipt_invalid: file belongs to another club");
+    expect(result.structuredContent).not.toHaveProperty("detail");
+    expect((result.content[0] as { text: string }).text).not.toContain("another club");
+  });
+});
