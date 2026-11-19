@@ -81,6 +81,40 @@ Options:
 The file `~/.comvenio-cli-state.json` must, as a matter of principle, never
 be committed, logged or printed in a response.
 
+### A second sign-in in its own profile
+
+A profile holds exactly one sign-in. Running `comvenio login` again in the
+same profile replaces it, also when switching the environment
+(`--env prod` → `--env dev`) or the club. If you need two sign-ins side by
+side, for example auditor and treasurer (four-eyes approval) or PROD and DEV,
+choose a second profile with the environment variable `COMVENIO_CLI_PROFILE`:
+
+```powershell
+# PowerShell: only in this window
+$env:COMVENIO_CLI_PROFILE = "dev"
+comvenio login --env dev
+comvenio whoami
+```
+
+```bash
+# Bash: for a single command or the whole shell
+COMVENIO_CLI_PROFILE=dev comvenio login --env dev
+export COMVENIO_CLI_PROFILE=dev
+comvenio whoami
+```
+
+Each profile has its own state file `~/.comvenio-cli-state.<profile>.json`
+and its own credential store entry: on Windows the file
+`%APPDATA%\Comvenio\cli-oauth.<profile>.dpapi`, on macOS and Linux an entry of
+the service `comvenio-cli-oauth` with the profile name as account. Without
+the variable (or empty) the profile `default` applies, with the previous
+locations `~/.comvenio-cli-state.json` and `cli-oauth.dpapi`. A sign-in in
+another profile leaves it untouched.
+
+Allowed are lower-case letters, digits and hyphen, at most 32 characters,
+starting with a letter or digit. Any other value stops with
+"COMVENIO_CLI_PROFILE ist ungültig: …".
+
 ### Signing in without a browser (machine grant)
 
 Scripts, CI runs and servers do not sign in through the browser but with a

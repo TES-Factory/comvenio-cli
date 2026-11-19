@@ -464,7 +464,10 @@ comvenio news video slideshow --params params.json --upload  # Video generieren 
 - **Token opak:** Das `cvn_`-Token wird vom CLI nie dekodiert. Gültigkeit prüft
   ausschließlich der Server.
 - **State-File:** `~/.comvenio-cli-state.json` (Merge-Semantik — wird nie ganz
-  überschrieben).
+  überschrieben). Ein Profil hält genau eine Anmeldung; eine zweite daneben
+  (etwa PROD und DEV) über `COMVENIO_CLI_PROFILE=<profil>`, mit eigener Datei
+  `~/.comvenio-cli-state.<profil>.json` und eigenem Zugangsdaten-Eintrag
+  ([`docs/auth-club.md`](docs/auth-club.md), „Zweite Anmeldung in einem eigenen Profil“).
 - **Agent-freundlich:** Jeder Command kennt `--json` (maschinenlesbar auf
   stdout). Fehler gehen auf stderr mit Exit-Code != 0
   (`AuthError`→2, `HttpError`→3, sonst 1).

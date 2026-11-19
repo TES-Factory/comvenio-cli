@@ -82,6 +82,40 @@ Optionen:
 Die Datei `~/.comvenio-cli-state.json` darf grundsätzlich nie eingecheckt,
 protokolliert oder in einer Antwort ausgegeben werden.
 
+### Zweite Anmeldung in einem eigenen Profil
+
+Ein Profil hält genau eine Anmeldung. Ein erneutes `comvenio login` im
+selben Profil ersetzt sie, auch beim Wechsel der Umgebung (`--env prod` →
+`--env dev`) oder des Vereins. Wer zwei Anmeldungen nebeneinander braucht,
+etwa Prüferin und Kassier (Vier-Augen-Freigabe) oder PROD und DEV, wählt
+über die Umgebungsvariable `COMVENIO_CLI_PROFILE` ein zweites Profil:
+
+```powershell
+# PowerShell: nur in diesem Fenster
+$env:COMVENIO_CLI_PROFILE = "dev"
+comvenio login --env dev
+comvenio whoami
+```
+
+```bash
+# Bash: für einen einzelnen Befehl oder die ganze Shell
+COMVENIO_CLI_PROFILE=dev comvenio login --env dev
+export COMVENIO_CLI_PROFILE=dev
+comvenio whoami
+```
+
+Jedes Profil hat eine eigene Statusdatei `~/.comvenio-cli-state.<profil>.json`
+und einen eigenen Eintrag im Zugangsdatenspeicher: unter Windows die Datei
+`%APPDATA%\Comvenio\cli-oauth.<profil>.dpapi`, unter macOS und Linux einen
+Eintrag des Dienstes `comvenio-cli-oauth` mit dem Profilnamen als Konto. Ohne
+die Variable (oder leer) gilt das Profil `default` mit den bisherigen Orten
+`~/.comvenio-cli-state.json` und `cli-oauth.dpapi`. Eine Anmeldung in einem
+anderen Profil lässt sie unberührt.
+
+Erlaubt sind Kleinbuchstaben, Ziffern und Bindestrich, höchstens 32 Zeichen,
+beginnend mit Buchstabe oder Ziffer. Jeder andere Wert bricht mit
+„COMVENIO_CLI_PROFILE ist ungültig: …“ ab.
+
 ### Ohne Browser anmelden (Maschinen-Grant)
 
 Skripte, CI-Läufe und Server melden sich nicht über den Browser an, sondern
