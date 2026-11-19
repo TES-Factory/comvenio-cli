@@ -225,8 +225,13 @@ async function upstreamBody(response: Response): Promise<UpstreamBody> {
       // tabs say which pages changed (community-hub 14 DC-3, TC-05). Only a
       // coded error is shown, and only tab ids that are ids; any other object
       // keeps the generic message as before.
+      // A snake_case code in an object — {"code": "tab_changed", "changed": […]}
+      // (club_home_publish.py, community-hub 15 DC-3) — is shown like a coded
+      // string detail: the code and its plain extras, never the nested rows.
       const entry = detail as { code?: unknown; message?: unknown; tabs?: unknown };
-      if (typeof entry.code === "string" && SERVICE_ERROR_CODE.test(entry.code)) {
+      if (typeof entry.code === "string" && SNAKE_ERROR_CODE.test(entry.code) && typeof entry.message !== "string") {
+        line = `${entry.code}${detailExtras(entry as Record<string, unknown>)}`;
+      } else if (typeof entry.code === "string" && (SERVICE_ERROR_CODE.test(entry.code) || SNAKE_ERROR_CODE.test(entry.code))) {
         const text = typeof entry.message === "string" ? entry.message : entry.code;
         const code = text.includes(entry.code) ? "" : `${entry.code}: `;
         const tabs = Array.isArray(entry.tabs)

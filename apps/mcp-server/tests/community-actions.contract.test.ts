@@ -512,3 +512,36 @@ describe("cai.community.06.club_page — Vereinsseiten (15)", () => {
     expect(calls.map(route)).toEqual([`GET /clubs/${clubId}/community-pages`]);
   });
 });
+
+// community-hub 15 DC-3 (BUG 15339d90): a publish on a stale base is refused by
+// club_home_publish.py with 409 {"code": "tab_changed", changed/added/removed};
+// through the real client the caller learns the code, so it reads show again.
+describe("cai.community.06.club_page — veraltete Basis (15 DC-3)", () => {
+  test("publish auf veralteter Basis → 409 tab_changed mit Code durchgereicht, genau ein POST", async () => {
+    const sectionId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const widgetId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const posts: string[] = [];
+    const client = createComvenioApiClient(
+      { gatewayBaseUrl: "https://apidev.comvenio.app" },
+      {
+        fetch: async (url) => {
+          const path = new URL(String(url)).pathname;
+          if (path.endsWith(`/communities/${communityId}`)) return Response.json({ id: communityId });
+          if (path.endsWith(`/communities/${communityId}/clubs`)) return Response.json([{ community_id: communityId, club_id: clubId }]);
+          if (path.endsWith(`/clubs/${clubId}/community-pages`)) return Response.json([{ community_id: communityId, tabs: [{ id: tabId, label: "SV Motzing", version: 2 }] }]);
+          posts.push(path);
+          return Response.json({ detail: { code: "tab_changed", changed: [{ art: "widget", id: widgetId, live_version: 6, live: {} }], added: [], removed: [] } }, { status: 409 });
+        },
+      },
+    );
+    const community = createK12ToolSets({ client, write_safety: { execute: async (_request, mutation) => mutation() } }).community;
+    const run = (input: Record<string, JsonValue>) => community.execute({ action_id: "cai.community.06.club_page", input: { club_id: clubId, ...input }, context, capability_snapshot: capabilitySnapshot });
+    const input = { operation: "publish", community_id: communityId, tab_id: tabId, expected_tab_version: 2, base: { sections: { [sectionId]: 3 }, widgets: { [widgetId]: 5 } }, sections: [{ id: sectionId, layout: "full", widgets: [{ id: widgetId, kind: "text", config: { content: "<p>Willkommen</p>" } }] }] } as unknown as Record<string, JsonValue>;
+    const preview = ((await run(input)).result as { preview: { preview_id: string; confirmation_token: string } }).preview;
+    const error = await failure(run({ ...input, confirmation: { preview_id: preview.preview_id, confirmation_token: preview.confirmation_token } }));
+    expect(posts).toHaveLength(1);
+    expect(posts[0]!.endsWith(`/home-config/${communityId}/tabs/${tabId}/publish`)).toBe(true);
+    expect(error.code).toBe("CONFLICT");
+    expect(error.message).toContain("tab_changed");
+  });
+});
