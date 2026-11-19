@@ -6,10 +6,14 @@ import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/ajv";
 import { z } from "zod";
 
 import { InMemoryDomainStateStore } from "../src/domain-state-store.ts";
 import type { StatelessTransportContext } from "../src/http/types.ts";
+import { insufficientScopeToolResult } from "../src/oauth-tool-challenge.ts";
+import { PUBLIC_TOOL_ERROR_OUTPUT_SCHEMA } from "../src/public-error-output.ts";
+import { publicToolError } from "../src/public-tool-error.ts";
 import { createRuntimeServer } from "../src/runtime-tools.ts";
 import { guardToolErrors } from "../src/tool-error-boundary.ts";
 
@@ -122,8 +126,8 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
     const server = runtimeServer();
     const names = Object.keys((server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools);
     expect(names).toEqual(expect.arrayContaining(["cv_my_tasks_read", "cv_my_task_reminder_write", "public_club_by_domain"]));
-    // No listTools on this client: the SDK client would check an error's structuredContent
-    // against the output schema; the CLI reads it raw, like the domain tools answer today.
+    // Without listTools the client reads structuredContent raw, like the CLI; the SDK
+    // client's schema check of an error answer is covered below (BUG 4fd71f53).
     const client = await connect(server);
     try {
       for (const [name, args] of [
@@ -255,6 +259,74 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
       // The input check repeats only the caller's own call; the CLI reads its field from it (K16).
       const invalidInput = await client.callTool({ name: "probe_read", arguments: { count: "eins" } });
       expect((invalidInput.content as { text: string }[])[0]!.text).toStartWith("MCP error -32602: Input validation error");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("ein SDK-Client mit geladener Werkzeugliste nimmt die Fehlerantwort eines Werkzeugs mit outputSchema an (BUG 4fd71f53)", async () => {
+    const client = await connect(runtimeServer());
+    try {
+      // listTools caches the output validators; the SDK client then checks structuredContent
+      // against outputSchema also when isError is set.
+      const listed = await client.listTools();
+      for (const name of ["cv_my_tasks_read", "cv_my_task_reminder_write"]) {
+        expect(listed.tools.find((tool) => tool.name === name)?.outputSchema).toBeDefined();
+      }
+      for (const [name, args] of [
+        ["cv_my_tasks_read", { from: "2026-08-03T00:00:00.000Z", to: "2026-08-10T00:00:00.000Z" }],
+        ["cv_my_task_reminder_write", { operation: "list", task_id: taskId }],
+      ] as const) {
+        const result = await client.callTool({ name, arguments: args });
+        expect(result.isError).toBe(true);
+        expect(result.structuredContent).toMatchObject({ code: "VALIDATION_FAILED", request_id: context.request_id });
+      }
+      // The tool's own refusal (protectedToolError) answers in the same public form.
+      const past = await client.callTool({
+        name: "cv_my_task_reminder_write",
+        arguments: { operation: "set", task_id: taskId, reminder_at: "2020-01-01T00:00:00.000Z" },
+      });
+      expect(past.isError).toBe(true);
+      expect(past.structuredContent).toMatchObject({ code: "VALIDATION_FAILED", detail: "Der Erinnerungszeitpunkt muss in der Zukunft liegen." });
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("Muster: jedes Werkzeug mit outputSchema nimmt jede öffentliche Fehlerform an, die Erfolgsform bleibt geprüft (BUG 4fd71f53)", async () => {
+    const errorForms = [
+      publicToolError(context, "https://mcpdev.comvenio.app", createConnectorError({
+        code: "VALIDATION_FAILED", message: "x", request_id: context.request_id, retryable: false, detail: "invalid_args",
+      }), "write"),
+      publicToolError(context, "https://mcpdev.comvenio.app", createConnectorError({
+        code: "NOT_FOUND", message: "x", request_id: context.request_id, retryable: false,
+      }), "read"),
+      publicToolError(context, "https://mcpdev.comvenio.app", new Error("intern"), "read"),
+      insufficientScopeToolResult({ public_origin: "https://mcpdev.comvenio.app", required_scopes: ["task.write"], context }),
+    ].map((result) => {
+      expect(result.isError).toBe(true);
+      return result.structuredContent;
+    });
+    for (const form of errorForms) expect(PUBLIC_TOOL_ERROR_OUTPUT_SCHEMA.safeParse(form).success).toBe(true);
+
+    const client = await connect(runtimeServer());
+    try {
+      const listed = (await client.listTools()).tools.filter((tool) => tool.outputSchema);
+      // Domain tools, widgets, club agent, own tasks and reminders, action_confirm.
+      expect(listed.length).toBeGreaterThan(20);
+      const validator = new AjvJsonSchemaValidator();
+      for (const tool of listed) {
+        expect({ name: tool.name, type: tool.outputSchema!.type }).toEqual({ name: tool.name, type: "object" });
+        const validate = validator.getValidator(tool.outputSchema!);
+        for (const form of errorForms) {
+          expect({ name: tool.name, form, valid: validate(form).valid }).toEqual({ name: tool.name, form, valid: true });
+        }
+        // The union opens nothing beyond the error form: a foreign answer is judged as by the success form alone.
+        const { anyOf, ...root } = tool.outputSchema as unknown as { anyOf: Record<string, unknown>[] };
+        const success = validator.getValidator({ ...root, ...anyOf[0]! });
+        const foreign = { mitglied: "Verein B" };
+        expect({ name: tool.name, valid: validate(foreign).valid }).toEqual({ name: tool.name, valid: success(foreign).valid });
+      }
     } finally {
       await client.close();
     }

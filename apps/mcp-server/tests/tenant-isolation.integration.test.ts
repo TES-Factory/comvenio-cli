@@ -2002,9 +2002,11 @@ describe("Remote MCP runtime", () => {
       expect(myTasks.inputSchema.required).toEqual(expect.arrayContaining(["from", "to"]));
       expect(myTasks.securitySchemes).toEqual([{ type: "oauth2", scopes: ["task.read"] }]);
       expect(myTasks._meta.securitySchemes).toEqual(myTasks.securitySchemes);
-      expect(myTasks.outputSchema.properties.tasks.items.properties.assignments).toBeUndefined();
-      expect(myTasks.outputSchema.properties.tasks.items.properties.member_id).toBeUndefined();
-      expect(myTasks.outputSchema.properties.tasks.items.properties.user_id).toBeUndefined();
+      // The published schema is success form | public error form (BUG 4fd71f53); the task rows live in the success form.
+      const myTasksSuccess = myTasks.outputSchema.anyOf[0];
+      expect(myTasksSuccess.properties.tasks.items.properties.assignments).toBeUndefined();
+      expect(myTasksSuccess.properties.tasks.items.properties.member_id).toBeUndefined();
+      expect(myTasksSuccess.properties.tasks.items.properties.user_id).toBeUndefined();
       const taskReminder = tools.find((tool: any) =>
         tool.name === "cv_my_task_reminder_write");
       expect(taskReminder.description).toContain("ausschließlich dir");
