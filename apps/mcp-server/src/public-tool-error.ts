@@ -67,7 +67,8 @@ const COLON_DETAIL_FORMS: ReadonlyMap<string, { texts: ReadonlySet<string>; tabs
 const DETAIL_EXTRA_FIELDS: readonly string[] = ["live_version", "limit", "paused_reason", "field"];
 const DETAIL_EXTRA_INTEGER_FIELDS: ReadonlySet<string> = new Set(["live_version", "limit"]);
 const DETAIL_EXTRA_VALUE = /^[A-Za-z0-9_.:-]{1,80}$/u;
-const DETAIL_EXTRA_INTEGER = /^-?[0-9]{1,15}$/u;
+/** A safe integer as detailExtras writes it (Number.isSafeInteger, review b71abf05). */
+const DETAIL_EXTRA_INTEGER = /^-?(?:0|[1-9][0-9]{0,15})$/u;
 const TAB_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 /** The client cuts its line to 300 characters, the last three "..." (upstreamBody). */
 const MAX_DETAIL_CHARS = 300;
@@ -82,8 +83,11 @@ function reviewedExtras(rest: string): boolean {
     if (separator < 0) return false;
     const field = part.slice(0, separator);
     const index = DETAIL_EXTRA_FIELDS.indexOf(field);
-    const value = DETAIL_EXTRA_INTEGER_FIELDS.has(field) ? DETAIL_EXTRA_INTEGER : DETAIL_EXTRA_VALUE;
-    if (index <= previous || !value.test(part.slice(separator + 2))) return false;
+    const value = part.slice(separator + 2);
+    const reviewed = DETAIL_EXTRA_INTEGER_FIELDS.has(field)
+      ? DETAIL_EXTRA_INTEGER.test(value) && Number.isSafeInteger(Number(value))
+      : DETAIL_EXTRA_VALUE.test(value);
+    if (index <= previous || !reviewed) return false;
     previous = index;
   }
   return true;

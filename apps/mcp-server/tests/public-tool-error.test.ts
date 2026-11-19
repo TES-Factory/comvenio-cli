@@ -160,6 +160,7 @@ describe("connector customer errors (01-fehlermodell)", () => {
       // Review 4a98b68e: a count is an integer, never a name.
       ["CONFLICT", "automation_changed (live_version: Verein_B)", "automation_changed"],
       ["CONFLICT", "automation_limit_reached (limit: Verein_B)", "automation_limit_reached"],
+      ["CONFLICT", "automation_changed (live_version: 9007199254740993)", "automation_changed"],
       // Review 4a98b68e: longer than the client's 300 characters, or "..." without the cut.
       ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${Array(10).fill(uuid).join(", ")})`, "TAB_VERSION_CONFLICT"],
       ["CONFLICT", `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, Verein B...`, "TAB_VERSION_CONFLICT"],
@@ -179,6 +180,9 @@ describe("connector customer errors (01-fehlermodell)", () => {
       "automation_limit_reached (limit: 5)",
       "automation_paused (limit: 3, paused_reason: owner_left)",
       "invalid_args (field: schedule.cron)",
+      // Every safe integer passes, also with 16 digits (review b71abf05).
+      "automation_changed (live_version: 9007199254740991)",
+      "automation_changed (live_version: 0)",
       "TAB_VERSION_CONFLICT",
       "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden",
       `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${uuid}, ${uuid})`,
