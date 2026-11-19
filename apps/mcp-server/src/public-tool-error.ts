@@ -38,6 +38,22 @@ const PUBLIC_DETAIL_CODES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Codes reviewed together with the fixed text that community_error() puts after
+ * "<CODE>: ". Only they may end at ':'; every other code keeps its exact form, or
+ * free text after "invalid_args:" would reach the customer (review e20d7bdd).
+ */
+const COLON_DETAIL_CODES: ReadonlySet<string> = new Set([
+  "TAB_VERSION_CONFLICT",
+  "DESIGN_VERSION_CONFLICT",
+]);
+
+function reviewedDetailCode(detail: string): boolean {
+  const word = detail.split(/[\s(]/u)[0] ?? "";
+  if (PUBLIC_DETAIL_CODES.has(word)) return true;
+  return word.endsWith(":") && COLON_DETAIL_CODES.has(word.slice(0, -1));
+}
+
+/**
  * The customer-facing tool error: public code, cause and next command from
  * docs/fehler/katalog.json. A missing scope keeps the OAuth step-up challenge
  * so providers can re-authorize; `error` keeps the internal code for existing
@@ -73,10 +89,11 @@ export function publicToolError(
   // reviewed codes: a free service text can tell a foreign club's file from a missing
   // one (finance receipts, review R3). Refusals and unknown objects keep the catalog
   // sentence: a 404 says nothing about existence.
-  // The code is the first word; it ends at a space, '(' or ':' ("TAB_VERSION_CONFLICT: …").
+  // The code is the first word; it ends at a space or '(', for the version conflicts
+  // also at ':' ("TAB_VERSION_CONFLICT: …").
   const detail = connectorError?.detail
     && (connectorError.code === "CONFLICT" || connectorError.code === "VALIDATION_FAILED")
-    && PUBLIC_DETAIL_CODES.has(connectorError.detail.split(/[\s(:]/u)[0] ?? "")
+    && reviewedDetailCode(connectorError.detail)
     ? connectorError.detail
     : null;
   // Assistants read the article through the public help tool (05-ki-zugang).

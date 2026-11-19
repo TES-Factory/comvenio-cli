@@ -109,6 +109,18 @@ describe("connector customer errors (01-fehlermodell)", () => {
     expect(conflict("COMMUNITY_PAGE_FORBIDDEN: diese Seite darfst du nicht bearbeiten").structuredContent).not.toHaveProperty("detail");
     expect(conflict("TAB_VERSION_CONFLICTS: anders").structuredContent).not.toHaveProperty("detail");
     expect(conflict("XTAB_VERSION_CONFLICT: anders").structuredContent).not.toHaveProperty("detail");
+    // The ':' is reviewed for these two codes only; the other codes still need their exact
+    // form, or free text after "<code>:" would reach the customer (review e20d7bdd).
+    expect(conflict("tab_changed: beliebiger Text").structuredContent).not.toHaveProperty("detail");
+    expect(conflict("automation_changed: beliebiger Text").structuredContent).not.toHaveProperty("detail");
+    const refused = publicToolError(context, origin, createConnectorError({
+      code: "VALIDATION_FAILED",
+      message: "intern",
+      request_id: context.request_id,
+      retryable: false,
+      detail: "invalid_args: beliebiger Text",
+    }), "write");
+    expect(refused.structuredContent).not.toHaveProperty("detail");
   });
 
   test("an unreviewed service reason stays out, even on a refused input (review R3, finance receipts)", () => {
