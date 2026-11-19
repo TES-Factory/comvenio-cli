@@ -171,7 +171,7 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
   });
 
   test("jeder nicht erfolgreiche oder unbekannte Laufzustand trägt keine Zusammenfassung (Prüfung f5c3a812)", async () => {
-    for (const state of ["cancelled", "blocked", "expired", "running", "Verein B hat abgebrochen"]) {
+    for (const state of ["cancelled", "blocked", "expired", "running", "Verein B hat abgebrochen", "max_mustermann"]) {
       globalThis.fetch = (async () => Response.json({ id: taskId, state, error: "intern", result_summary: LEAK })) as unknown as typeof fetch;
       const client = await connect(runtimeServer());
       try {
@@ -179,6 +179,8 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
         expectNoForeignText(result);
         expect(JSON.stringify(result)).not.toContain("intern");
         expect(result.structuredContent).toMatchObject({ result_summary: null, error: "run_failed" });
+        // Only a state of the ai-service is repeated (review 1d99d385).
+        if (!["expired", "running"].includes(state)) expect(result.structuredContent).toMatchObject({ state: "unknown" });
       } finally {
         await client.close();
       }

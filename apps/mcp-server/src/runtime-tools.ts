@@ -759,8 +759,11 @@ function protectedToolError(
   };
 }
 
-/** A run state as the ai-service names it; anything else is reported as "unknown". */
-const RUN_STATE = /^[a-z][a-z_]{0,39}$/u;
+/**
+ * The run states of the ai-service (models/agent_function_run.py FUNCTION_RUN_STATES);
+ * any other value is reported as "unknown", never repeated (review 1d99d385).
+ */
+const RUN_STATES: ReadonlySet<string> = new Set(["pending", "awaiting_approval", "running", "succeeded", "failed", "rejected", "expired"]);
 
 /** Agent-Funktionen K2 (Strang 02 §11): one MCP tool per released function of the MCP channel.
  *
@@ -827,7 +830,7 @@ function registerAgentFunctionTools(input: {
         // as error nor as a summary about it (reviews b729144d, f5c3a812). The reason is
         // in the run in Web or App.
         const rawState = typeof run?.state === "string" ? run.state : "unknown";
-        const state = RUN_STATE.test(rawState) ? rawState : "unknown";
+        const state = RUN_STATES.has(rawState) ? rawState : "unknown";
         const succeeded = state === "succeeded";
         const approval = record(run?.approval ?? null);
         const approvalUrl = typeof approval?.approval_url === "string" ? approval.approval_url : null;
