@@ -4,6 +4,8 @@ import {
   type ListToolsResult,
 } from "@modelcontextprotocol/sdk/types.js";
 
+import { withPublicErrorOutput } from "./public-error-output.ts";
+
 export type ToolSecurityScheme =
   | { type: "noauth" }
   | { type: "oauth2"; scopes: string[] };
@@ -60,7 +62,11 @@ export function installToolSecuritySchemeProjection(
 
     return {
       ...result,
-      tools: result.tools.map((tool) => {
+      tools: result.tools.map((listed) => {
+        // Every published outputSchema also admits the public error form (BUG 4fd71f53).
+        const tool = listed.outputSchema !== null && typeof listed.outputSchema === "object"
+          ? { ...listed, outputSchema: withPublicErrorOutput(listed.outputSchema as Record<string, unknown>) }
+          : listed;
         const configured = securitySchemesByTool.get(tool.name);
         if (!configured) return tool;
         const securitySchemes = structuredClone(configured);

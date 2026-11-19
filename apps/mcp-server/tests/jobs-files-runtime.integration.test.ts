@@ -10,6 +10,7 @@ import {
 } from "@comvenio/connector-contracts";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { UnrecoverableError } from "bullmq";
 
 import { readMcpProcessConfig } from "../src/bootstrap.ts";
@@ -39,6 +40,7 @@ import { MemoryJobQueue } from "../src/jobs/memory-queue.ts";
 import { JobFilePlatform } from "../src/jobs/platform.ts";
 import { DomainJobProcessor } from "../src/jobs/processor.ts";
 import { createRuntimeServer } from "../src/runtime-tools.ts";
+import { expectOutputSchemasAdmitPublicErrors } from "./support/public-error-schema.ts";
 
 const clubId = "15151515-1515-4515-8515-151515151515";
 const otherClubId = "16161616-1616-4616-8616-161616161616";
@@ -277,6 +279,10 @@ async function runJob(state: ReturnType<typeof setup>, jobId: string): Promise<u
 }
 
 async function listedTools(jobFiles: JobFilePlatform | null): Promise<string[]> {
+  return (await listedToolDescriptors(jobFiles)).map((tool) => tool.name);
+}
+
+async function listedToolDescriptors(jobFiles: JobFilePlatform | null): Promise<Tool[]> {
   const transportContext: StatelessTransportContext = {
     provider_request: {
       request_id: context.request_id,
@@ -306,7 +312,7 @@ async function listedTools(jobFiles: JobFilePlatform | null): Promise<string[]> 
   await client.connect(clientTransport);
   const tools = await client.listTools();
   await client.close();
-  return tools.tools.map((tool) => tool.name);
+  return tools.tools;
 }
 
 const baseEnvironment = {
@@ -367,6 +373,13 @@ describe("K15b runtime visibility", () => {
     expect(names).toContain(uploadToolName);
     expect(names).not.toContain(downloadToolName);
     expect(names).not.toContain(domainToolName("cai.verify.01.url"));
+  });
+
+  test("configuration on: every platform tool's outputSchema admits the public error form (BUG 4fd71f53)", async () => {
+    const tools = await listedToolDescriptors(setup().platform);
+    const platformWithSchema = tools.filter((tool) => PLATFORM_TOOLS.includes(tool.name) && tool.outputSchema);
+    expect(platformWithSchema.length).toBeGreaterThan(0);
+    expectOutputSchemasAdmitPublicErrors(platformWithSchema, context);
   });
 });
 

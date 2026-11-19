@@ -12,6 +12,7 @@ import { InMemoryDomainStateStore } from "../src/domain-state-store.ts";
 import type { StatelessTransportContext } from "../src/http/types.ts";
 import { createRuntimeServer } from "../src/runtime-tools.ts";
 import { guardToolErrors } from "../src/tool-error-boundary.ts";
+import { expectOutputSchemasAdmitPublicErrors } from "./support/public-error-schema.ts";
 
 // BUG b1c53c74: a tool that threw reached the SDK fallback, which published
 // error.message — and the client builds it from the whole service detail. Every
@@ -122,8 +123,8 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
     const server = runtimeServer();
     const names = Object.keys((server as unknown as { _registeredTools: Record<string, unknown> })._registeredTools);
     expect(names).toEqual(expect.arrayContaining(["cv_my_tasks_read", "cv_my_task_reminder_write", "public_club_by_domain"]));
-    // No listTools on this client: the SDK client would check an error's structuredContent
-    // against the output schema; the CLI reads it raw, like the domain tools answer today.
+    // Without listTools the client reads structuredContent raw, like the CLI; the SDK
+    // client's schema check of an error answer is covered below (BUG 4fd71f53).
     const client = await connect(server);
     try {
       for (const [name, args] of [
@@ -255,6 +256,46 @@ describe("Werkzeugfehler über die geprüfte Grenze (BUG b1c53c74)", () => {
       // The input check repeats only the caller's own call; the CLI reads its field from it (K16).
       const invalidInput = await client.callTool({ name: "probe_read", arguments: { count: "eins" } });
       expect((invalidInput.content as { text: string }[])[0]!.text).toStartWith("MCP error -32602: Input validation error");
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("ein SDK-Client mit geladener Werkzeugliste nimmt die Fehlerantwort eines Werkzeugs mit outputSchema an (BUG 4fd71f53)", async () => {
+    const client = await connect(runtimeServer());
+    try {
+      // listTools caches the output validators; the SDK client then checks structuredContent
+      // against outputSchema also when isError is set.
+      const listed = await client.listTools();
+      for (const name of ["cv_my_tasks_read", "cv_my_task_reminder_write"]) {
+        expect(listed.tools.find((tool) => tool.name === name)?.outputSchema).toBeDefined();
+      }
+      for (const [name, args] of [
+        ["cv_my_tasks_read", { from: "2026-08-03T00:00:00.000Z", to: "2026-08-10T00:00:00.000Z" }],
+        ["cv_my_task_reminder_write", { operation: "list", task_id: taskId }],
+      ] as const) {
+        const result = await client.callTool({ name, arguments: args });
+        expect(result.isError).toBe(true);
+        expect(result.structuredContent).toMatchObject({ code: "VALIDATION_FAILED", request_id: context.request_id });
+      }
+      // The tool's own refusal (protectedToolError) answers in the same public form.
+      const past = await client.callTool({
+        name: "cv_my_task_reminder_write",
+        arguments: { operation: "set", task_id: taskId, reminder_at: "2020-01-01T00:00:00.000Z" },
+      });
+      expect(past.isError).toBe(true);
+      expect(past.structuredContent).toMatchObject({ code: "VALIDATION_FAILED", detail: "Der Erinnerungszeitpunkt muss in der Zukunft liegen." });
+    } finally {
+      await client.close();
+    }
+  });
+
+  test("Muster: jedes Werkzeug mit outputSchema nimmt jede öffentliche Fehlerform an, die Erfolgsform bleibt geprüft (BUG 4fd71f53)", async () => {
+    const client = await connect(runtimeServer());
+    try {
+      // Domain tools, widgets, club agent, own tasks and reminders, action_confirm;
+      // the job and file tools with their platform: jobs-files-runtime.integration.test.ts.
+      expect(expectOutputSchemasAdmitPublicErrors((await client.listTools()).tools, context)).toBeGreaterThan(20);
     } finally {
       await client.close();
     }
