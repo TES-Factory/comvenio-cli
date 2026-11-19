@@ -345,6 +345,7 @@ Genutzt von: cli, pakete-und-integrationen
 | insufficientScopeToolResult | apps/mcp-server/src/oauth-tool-challenge.ts |
 | normalizedScopes | apps/mcp-server/src/oauth-tool-challenge.ts |
 | publicToolError | apps/mcp-server/src/public-tool-error.ts |
+| reviewedDetailCode | apps/mcp-server/src/public-tool-error.ts |
 | createAuthChallenge | apps/mcp-server/src/public/auth-challenge.ts |
 | permissionPolicyIsPublic | apps/mcp-server/src/public/policy.ts |
 | array | apps/mcp-server/src/public/redaction.ts |
@@ -1115,6 +1116,9 @@ Genutzt von: cli, pakete-und-integrationen
 | failure | apps/mcp-server/tests/community-actions.contract.test.ts |
 | route | apps/mcp-server/tests/community-actions.contract.test.ts |
 | service | apps/mcp-server/tests/community-actions.contract.test.ts |
+| errorObjects | apps/mcp-server/tests/connector-error-rewrap.pattern.test.ts |
+| rewraps | apps/mcp-server/tests/connector-error-rewrap.pattern.test.ts |
+| sourceFiles | apps/mcp-server/tests/connector-error-rewrap.pattern.test.ts |
 | send | apps/mcp-server/tests/event-series-template-contract.test.ts |
 | fakeClient | apps/mcp-server/tests/feedback.contract.test.ts |
 | buildCompoundFile | apps/mcp-server/tests/files-adapters.test.ts |
