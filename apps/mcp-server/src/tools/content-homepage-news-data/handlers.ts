@@ -109,6 +109,9 @@ add("cai.community.03.apply", "apply", async (input, context, client) => {
         request_id: error.request_id,
         retryable: error.retryable,
         ...(error.retry_after_seconds === undefined ? {} : { retry_after_seconds: error.retry_after_seconds }),
+        // Keep the service's reason (TAB_VERSION_CONFLICT with tabs, 14 DC-3, BUG 947fd9fc);
+        // publicToolError decides whether it reaches the customer.
+        ...(error.detail === undefined ? {} : { detail: error.detail }),
       });
     }
     throw error;

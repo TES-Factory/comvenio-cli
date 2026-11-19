@@ -10,6 +10,7 @@ import { describe, expect, test } from "bun:test";
 
 import homepageSchema from "../../../src/schema/homepage.json";
 import { K12_ACTION_DEFINITIONS } from "../src/tools/content-homepage-news-data/definitions.ts";
+import { publicToolError } from "../src/public-tool-error.ts";
 import { assertOwnClubPage } from "../src/tools/content-homepage-news-data/handlers.ts";
 import { K12_ACTION_SCHEMAS } from "../src/tools/content-homepage-news-data/schemas.ts";
 import { createK12ToolSets } from "../src/tools/content-homepage-news-data/tool-sets.ts";
@@ -223,6 +224,9 @@ describe("cai.community.* — Abläufe (TC-02..TC-05, TC-07)", () => {
     expect(error.message).toContain(`(Tabs: ${tabId})`);
     expect(error.message).toContain("Von der Seite wurde nichts geschrieben.");
     expect(error.message).toContain("cai.community.05.design update");
+    // The reason reaches the assistant at the MCP boundary too (14 DC-3, BUG 947fd9fc).
+    const reason = `TAB_VERSION_CONFLICT: mindestens eine Seite wurde inzwischen geändert (Tabs: ${tabId})`;
+    expect(publicToolError(context, "https://mcp.comvenio.app", error, "write").structuredContent).toMatchObject({ code: "CONFLICT", detail: reason });
   });
 
   test("TC-05: ohne clear_existing hängt der Bulk an und sendet leere expected_versions", async () => {
@@ -255,6 +259,11 @@ describe("cai.community.* — Abläufe (TC-02..TC-05, TC-07)", () => {
     const error = await failure(community.execute({ action_id: "cai.community.05.design", input: { ...input, confirmation: { preview_id: preview.preview_id, confirmation_token: preview.confirmation_token } }, context, capability_snapshot: capabilitySnapshot }));
     expect(error.code).toBe("CONFLICT");
     expect(error.message).toContain("DESIGN_VERSION_CONFLICT");
+    // The reason reaches the assistant at the MCP boundary too (14 DC-3, BUG 947fd9fc).
+    expect(publicToolError(context, "https://mcp.comvenio.app", error, "write").structuredContent).toMatchObject({
+      code: "CONFLICT",
+      detail: "DESIGN_VERSION_CONFLICT: das Design wurde inzwischen geändert, bitte neu laden",
+    });
   });
 });
 

@@ -28,7 +28,30 @@ const PUBLIC_DETAIL_CODES: ReadonlySet<string> = new Set([
   // rows), and cai.community.06.club_page publish only sends after assertOwnClubPage
   // tied the tab to the club of the sign-in — the code says nothing about another club.
   "tab_changed",
+  // club-service community hub, 409 on a stale version (community-hub 14 DC-3, BUG 947fd9fc):
+  // community_error() writes "<CODE>: <fixed text>", the client adds tab ids only as UUIDs.
+  // Both answer only after the right check — require_tab_write (member club, can_edit) and
+  // _require_responsible on the design — and the CLI refuses a community outside the club
+  // of the sign-in (COMMUNITY_NOT_IN_CLUB) before any call; the ids are the caller's own tabs.
+  "TAB_VERSION_CONFLICT",
+  "DESIGN_VERSION_CONFLICT",
 ]);
+
+/**
+ * Codes reviewed together with the fixed text that community_error() puts after
+ * "<CODE>: ". Only they may end at ':'; every other code keeps its exact form, or
+ * free text after "invalid_args:" would reach the customer (review e20d7bdd).
+ */
+const COLON_DETAIL_CODES: ReadonlySet<string> = new Set([
+  "TAB_VERSION_CONFLICT",
+  "DESIGN_VERSION_CONFLICT",
+]);
+
+function reviewedDetailCode(detail: string): boolean {
+  const word = detail.split(/[\s(]/u)[0] ?? "";
+  if (PUBLIC_DETAIL_CODES.has(word)) return true;
+  return word.endsWith(":") && COLON_DETAIL_CODES.has(word.slice(0, -1));
+}
 
 /**
  * The customer-facing tool error: public code, cause and next command from
@@ -66,9 +89,11 @@ export function publicToolError(
   // reviewed codes: a free service text can tell a foreign club's file from a missing
   // one (finance receipts, review R3). Refusals and unknown objects keep the catalog
   // sentence: a 404 says nothing about existence.
+  // The code is the first word; it ends at a space or '(', for the version conflicts
+  // also at ':' ("TAB_VERSION_CONFLICT: …").
   const detail = connectorError?.detail
     && (connectorError.code === "CONFLICT" || connectorError.code === "VALIDATION_FAILED")
-    && PUBLIC_DETAIL_CODES.has(connectorError.detail.split(/[\s(]/u)[0] ?? "")
+    && reviewedDetailCode(connectorError.detail)
     ? connectorError.detail
     : null;
   // Assistants read the article through the public help tool (05-ki-zugang).
