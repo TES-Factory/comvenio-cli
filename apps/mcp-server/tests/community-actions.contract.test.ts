@@ -414,38 +414,53 @@ describe("cai.community.06.club_page — Vereinsseiten (15)", () => {
     expect(((call.body as { sections: Array<{ id: string }> }).sections)[0]!.id).toBe(sectionId);
   });
 
-  // TC-06 through the real client: the 409 of club_home_publish.py reaches the
-  // caller with the service's code, and the publish is sent exactly once.
-  async function publishAgainst(conflict: JsonValue) {
-    const posts: string[] = [];
+  // TC-06 through the real client against a service that behaves like
+  // community_tab_access.py: the tab is live at version 2 (ownPages); a publish
+  // with another expected_tab_version gets 409 TAB_VERSION_CONFLICT, the current
+  // one goes through. Every non-GET call is recorded with its method.
+  async function publishWithVersion(expected: number) {
+    const live = 2;
+    const writes: string[] = [];
     const client = createComvenioApiClient(
       { gatewayBaseUrl: "https://apidev.comvenio.app" },
       {
         fetch: async (url, init) => {
           const target = new URL(String(url));
-          if (target.pathname.endsWith(`/communities/${communityId}`)) return Response.json({ id: communityId });
-          if (target.pathname.endsWith(`/communities/${communityId}/clubs`)) return Response.json([{ community_id: communityId, club_id: clubId }]);
-          if (target.pathname.endsWith(`/clubs/${clubId}/community-pages`)) return Response.json(ownPages);
-          posts.push(`${init?.method ?? "GET"} ${target.pathname}${target.search}`);
-          return Response.json({ detail: conflict }, { status: 409 });
+          const method = init?.method ?? "GET";
+          if (method === "GET" && target.pathname.endsWith(`/communities/${communityId}`)) return Response.json({ id: communityId });
+          if (method === "GET" && target.pathname.endsWith(`/communities/${communityId}/clubs`)) return Response.json([{ community_id: communityId, club_id: clubId }]);
+          if (method === "GET" && target.pathname.endsWith(`/clubs/${clubId}/community-pages`)) return Response.json(ownPages);
+          writes.push(`${method} ${target.pathname}${target.search}`);
+          if (Number(target.searchParams.get("expected_tab_version")) !== live) {
+            return Response.json({ detail: { code: "TAB_VERSION_CONFLICT", message: "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden", tab_id: tabId, expected_version: expected, live_version: live } }, { status: 409 });
+          }
+          return Response.json({ sections: [{ id: sectionId }], widgets: [{ id: widgetId }], warnungen: [] });
         },
       },
     );
     const community = createK12ToolSets({ client, write_safety: { execute: async (_request, mutation) => mutation() } }).community;
     const run = (input: Record<string, JsonValue>) => community.execute({ action_id: "cai.community.06.club_page", input: { club_id: clubId, ...input }, context, capability_snapshot: capabilitySnapshot });
-    const input = { operation: "publish", community_id: communityId, tab_id: tabId, expected_tab_version: 1, base: { sections: { [sectionId]: 3 }, widgets: { [widgetId]: 5 } }, sections: draft } as unknown as Record<string, JsonValue>;
+    const input = { operation: "publish", community_id: communityId, tab_id: tabId, expected_tab_version: expected, base: { sections: { [sectionId]: 3 }, widgets: { [widgetId]: 5 } }, sections: draft } as unknown as Record<string, JsonValue>;
     const preview = ((await run(input)).result as { preview: { preview_id: string; confirmation_token: string } }).preview;
-    const error = await failure(run({ ...input, confirmation: { preview_id: preview.preview_id, confirmation_token: preview.confirmation_token } }));
-    return { error, posts };
+    const outcome = run({ ...input, confirmation: { preview_id: preview.preview_id, confirmation_token: preview.confirmation_token } });
+    return { outcome, writes };
   }
 
   test("[community-hub-15/TC-06] publish mit veralteter Reiter-Version → 409 TAB_VERSION_CONFLICT durchgereicht, genau ein POST", async () => {
-    const { error, posts } = await publishAgainst({ code: "TAB_VERSION_CONFLICT", message: "TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden", tab_id: tabId, expected_version: 1, live_version: 2 });
-    expect(posts).toHaveLength(1);
-    expect(posts[0]).toContain(`/home-config/${communityId}/tabs/${tabId}/publish?expected_tab_version=1`);
+    const { outcome, writes } = await publishWithVersion(1);
+    const error = await failure(outcome);
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatch(new RegExp(`^POST \\S*/home-config/${communityId}/tabs/${tabId}/publish\\?expected_tab_version=1$`));
     expect(error.code).toBe("CONFLICT");
     expect(error.retryable).toBe(false);
     expect(error.message).toContain("TAB_VERSION_CONFLICT: die Seite wurde inzwischen geändert, bitte neu laden");
+  });
+
+  test("[community-hub-15/TC-06] publish mit aktueller Reiter-Version geht durch — der Konflikt hängt an der Version", async () => {
+    const { outcome, writes } = await publishWithVersion(2);
+    expect((await outcome).result).toEqual({ published: true, tab_id: tabId, sections: 1, widgets: 1, warnungen: [] });
+    expect(writes).toHaveLength(1);
+    expect(writes[0]!.startsWith("POST ")).toBe(true);
   });
 
   test("Eingabe streng: Label über 60 Zeichen, Abteilungs-Sichtbarkeit und fremde Felder werden abgelehnt", () => {
