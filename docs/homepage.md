@@ -610,8 +610,6 @@ erledigen.
 
 ### Homepage-Designer
 
-Menüpfad: Web-App → Homepage-Designer (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anzufassen und ohne dass Besucher Zwischenstände sehen?
 
 - Klick auf „Rückgängig“ oder Strg+Z → Der letzte Entwurfsschritt wird zurückgenommen
@@ -627,7 +625,6 @@ Zweck: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anzuf
 - Klick auf „Löschen“ → Entfernt Element und zugehörige Slot-Einträge aus dem Entwurf
 - Ziehen eines Knotens im Baum → Verschiebt den Knoten an die Einfügestelle
 - Klick auf „Live-Stand laden“ → Verwirft den Entwurf des Reiters und übernimmt den bereits geladenen Live-Stand
-- Klick auf „Entwurf behalten“ im Hinweis → Führt den Entwurf mit dem bereits geladenen Live-Stand zusammen (TD-6): nur live Geändertes übernehmen, beidseitig Geändertes behalten, Hinzugefügtes übernehmen, live Entferntes entfernen
 - Klick auf „Neu laden“ in der Leinwand → Lädt die Leinwand neu und sendet den Entwurf erneut
 - Eingabe in die Felder des Formulars (Text, Beschriftung, Ziel, Widget-Einstellungen) → Ändert den Eintrag im Entwurf; Leinwand zeigt die Änderung sofort
 - Klick auf „Kopieren“ → Kopiert die Adresse in die Zwischenablage
@@ -637,7 +634,6 @@ Zweck: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anzuf
 - Klick auf „Live-Stand laden“ in der Meldung → Verwirft den Entwurf des Reiters und lädt Reiter, Sektionen und Widgets neu; ein gelöschter Reiter verschwindet aus dem Baum
 - Klick auf „Hier weiterarbeiten“ → Dieser Tab wird der aktive Designer; der andere Tab wird schreibgeschützt
 - Tippen auf „Struktur“, „Vorschau“ oder „Code“ → Wechselt zwischen Baum, Leinwand und Code-Ansicht
-- Klick auf „Entwurf behalten“ → Führt den Entwurf nach TD-6 mit dem Live-Stand aus der Antwort zusammen; Ausgangsstand = Live-Stand
 - Klick auf „Live-Stand laden“ → Verwirft den Entwurf des Reiters und übernimmt den Live-Stand aus der Antwort
 - Klick auf „Abbrechen“ oder Escape → Schließt den Dialog ohne Änderung
 - Klick auf „Gerüst (HTML)“, „Stile (CSS)“ oder „Befunde“ → Wechselt den Inhalt der Code-Ansicht
@@ -659,8 +655,6 @@ Zweck: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anzuf
 - Klick auf „Reihe auflösen“ im Formular der Reihe → Stellt die Elemente der Reihe untereinander an ihre Stelle; im Gerüst entfällt die Hülle, eine Sektion wird einspaltig (layout full, spalten_breiten null)
 
 ### Entwurfsvorschau im zweiten Fenster
-
-Menüpfad: Web-App → Entwurfsvorschau im zweiten Fenster (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Wie sieht mein Entwurf in voller Größe aus — und ist das, was ich sehe, Entwurf oder Live-Seite?
 

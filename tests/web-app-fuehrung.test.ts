@@ -428,6 +428,24 @@ describe("kundentext", () => {
     expect(kundentext("siehe src/pages/main/x.tsx")).toBeNull();
     expect(kundentext("wählt **Monat** und/oder `Jahr`")).toBe("wählt Monat und/oder Jahr");
   });
+
+  test("lässt Verweise auf Vertragskennungen weg (Checkpoint 1333396d, Punkt 5)", () => {
+    expect(kundentext("alle Teile werden gemeinsam geändert (D49)")).toBeNull();
+    expect(kundentext("führt den Entwurf mit dem Live-Stand zusammen (TD-6): nur live Geändertes")).toBeNull();
+    expect(kundentext("führt den Entwurf nach TD-6 mit dem Live-Stand zusammen")).toBeNull();
+    expect(kundentext("erfüllt AK-F-03 und DC-5")).toBeNull();
+    expect(kundentext("wie entschieden (D-AF-07)")).toBeNull();
+    expect(kundentext("Ablauf siehe D7")).toBeNull();
+    // Forms from the specifications (review 7882795e round 2).
+    expect(kundentext("Lehnt die Anfrage ab (D-29).")).toBeNull();
+    expect(kundentext("übernimmt den Stand (08 D20, D24)")).toBeNull();
+    expect(kundentext("wie vereinbart (09, D15)")).toBeNull();
+    expect(kundentext("gilt weiter (§ Master D14)")).toBeNull();
+    // Team and age names are customer words, not contract identifiers (review 7882795e P1).
+    expect(kundentext("für die U18 und die U12")).toBe("für die U18 und die U12");
+    expect(kundentext("Mannschaft D1")).toBe("Mannschaft D1");
+    expect(kundentext("Spiel der D1-Junioren")).toBe("Spiel der D1-Junioren");
+  });
 });
 
 // ─── TC-07: reachable through the existing index ────────────────────────────
@@ -464,9 +482,14 @@ describe("Ausgabe über den bestehenden Index (08 §4.4)", () => {
     expect(eintrag.pfad).toEqual({ de: "docs/veranstaltungen.md", en: "docs/en/veranstaltungen.md" });
     const de = readFileSync(join(root, eintrag.pfad.de), "utf8");
     const en = readFileSync(join(root, eintrag.pfad.en), "utf8");
-    expect(de).toContain("### Planer — News\n\nMenüpfad: Web-App → Planer — News (offene Stelle — Menüpfad manuell ergänzen)");
+    // An open menu path is no customer text (Checkpoint 1333396d, point 5): the
+    // surface keeps its purpose and actions, the path line is left out.
+    expect(de).toContain("### Planer — News\n\nZweck: ");
     expect(de).toContain("- Nadelsymbol an einer Karte → hebt die Mitteilung nach oben");
-    expect(en).toContain("Menu path: Web-App → Planer — News (open item — add the menu path manually)");
+    expect(de).not.toContain("Menüpfad manuell ergänzen");
+    expect(de).not.toContain("Menüpfad: Web-App → Planer — News");
+    expect(en).toContain("### Planer — News\n\nPurpose: ");
+    expect(en).not.toContain("add the menu path manually");
     expect(en).toContain("The descriptions below come from the German interface specifications");
     // Surfaces of other hubs stay out of the event article.
     expect(de).not.toContain("### Kasse");
