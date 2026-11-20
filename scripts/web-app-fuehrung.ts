@@ -174,6 +174,10 @@ export function hubVon(spec: { pfad: string; frontmatter: Record<string, unknown
 // and spec or file paths (`comvenio/event/planer`, `mockups/belegerfassung`).
 const INTERNE_KENNUNG = /(?<![\wÄÖÜäöüß-])[a-z][a-z0-9]*(?:-[a-z0-9]+)+(?![\wÄÖÜäöüß-])|(?<![\wÄÖÜäöüß])[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+(?:[.#][\w.-]+)?/gu;
 const KEINE_KENNUNG = new Set(["und/oder"]);
+// Contract identifiers a specification cites (`(D49)`, `nach TD-6`, `AK-F-03`,
+// `DC-5`): decisions, criteria and test cases, not words for a customer
+// (Checkpoint 1333396d, point 5). Team names like `U18` are not among them.
+const VERTRAGS_KENNUNG = /(?<![\wÄÖÜäöüß-])(?:D|TD|DC|AK-[FN]|AK|UC|TC|D-DOK)-?\d+(?![\wÄÖÜäöüß])/u;
 // Specifications quote decisions by person ("… will die Buchhaltung …"); the
 // public documentation must not (tests/public-documentation.test.ts, same pattern).
 const PERSONENNAME = new RegExp(`\\b(?:${"To" + "m"}|${"Tho" + "mas"})\\b`, "iu");
@@ -195,6 +199,7 @@ export function kundentext(text: string, titel: ReadonlyMap<string, string> = ne
     .trim();
   if (!glatt) return null;
   if ([...glatt.matchAll(INTERNE_KENNUNG)].some((m) => !KEINE_KENNUNG.has(m[0]))) return null;
+  if (VERTRAGS_KENNUNG.test(glatt)) return null;
   if (PERSONENNAME.test(glatt)) return null;
   return kundentextVerstoss(glatt) === null ? glatt : null;
 }
@@ -232,7 +237,10 @@ function zweckVon(spec: Spezifikation): string | null {
  * surface is. The event hub has no entry: EventHubEntryRoute decides by the
  * event (parent → planner, public hub switched on → public hub, else the slim
  * view), and planner sections hide at parent or child events; a path through it
- * would hold for some events and be wrong for the others.
+ * would hold for some events and be wrong for the others. The homepage has
+ * neither a club sidebar entry nor a section registry, so it has no
+ * unconditional path either (Checkpoint 1333396d, point 1: path only where
+ * unconditional; such surfaces show purpose and actions without a path).
  */
 const NAVIGATION: ReadonlyArray<{ klubEintrag: string; wurzel: string; registry: string }> = [
   { klubEintrag: "finance", wurzel: "pages/main/FinanceHub/", registry: "pages/main/FinanceHub/sectionRegistry.tsx" },

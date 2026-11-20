@@ -306,7 +306,6 @@ const WEBAPP_TEXT = {
   de: {
     folgt: "Web-App-Führung folgt, sobald UI-Spezifikationen mit Code-Ankern vorliegen.",
     menue: "Menüpfad",
-    offen: "offene Stelle — Menüpfad manuell ergänzen",
     zweck: "Zweck",
     fuehrtZu: "führt zu",
     hinweis: null,
@@ -314,7 +313,6 @@ const WEBAPP_TEXT = {
   en: {
     folgt: "The web app guide follows as soon as interface specifications with code anchors are available.",
     menue: "Menu path",
-    offen: "open item — add the menu path manually",
     zweck: "Purpose",
     fuehrtZu: "leads to",
     // The specifications exist in German only; the web app itself is German.
@@ -338,8 +336,10 @@ export function webAppBlock(root: string, domains: readonly string[], lang: Lang
   } else {
     if (text.hinweis) lines.push("", text.hinweis);
     for (const flaeche of flaechen) {
-      lines.push("", `### ${flaeche.titel}`, "");
-      lines.push(`${text.menue}: ${flaeche.menuepfad}${flaeche.menuepfad_offen ? ` (${text.offen})` : ""}`);
+      lines.push("", `### ${flaeche.titel}`);
+      // An open path is a note for us, not a step for the customer: left out
+      // (Checkpoint 1333396d, point 5); purpose and actions still lead the way.
+      if (!flaeche.menuepfad_offen) lines.push("", `${text.menue}: ${flaeche.menuepfad}`);
       if (flaeche.zweck) lines.push("", `${text.zweck}: ${flaeche.zweck}`);
       lines.push("");
       for (const aktion of flaeche.aktionen) {

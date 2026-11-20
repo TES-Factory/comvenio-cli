@@ -378,8 +378,6 @@ Bühne oder Bar legst du zusätzlich als EventArea an.
 
 ### Abschnitt „Dabei sein"
 
-Menüpfad: Web-App → Abschnitt „Dabei sein" (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Sich anmelden — offen für alle oder nur mit Einladung.
 
 - Ändern der Zahl der Begleitpersonen → setzt, wie viele mitkommen
@@ -387,15 +385,11 @@ Zweck: Sich anmelden — offen für alle oder nur mit Einladung.
 
 ### Abschnitt „Auf dem Fest"
 
-Menüpfad: Web-App → Abschnitt „Auf dem Fest" (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Was gibt es auf dem Gelände — Bühnen, Stände, Treffpunkte?
 
 - Klick auf eine Bereichskarte → öffnet die Bereichsseite (führt zu: „Bereich (öffentlich)“)
 
 ### Abschnitt „Momente"
-
-Menüpfad: Web-App → Abschnitt „Momente" (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was Gäste vom Fest zeigen und erzählen.
 
@@ -403,15 +397,11 @@ Zweck: Was Gäste vom Fest zeigen und erzählen.
 
 ### Abschnitt „Galerie"
 
-Menüpfad: Web-App → Abschnitt „Galerie" (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Die Bilder vom Fest.
 
 - Klick auf ein Bild → öffnet die Grossansicht
 
 ### Abschnitt „Geländeplan"
-
-Menüpfad: Web-App → Abschnitt „Geländeplan" (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Wo ist was — und wo sitze ich?
 
@@ -421,15 +411,11 @@ Zweck: Wo ist was — und wo sitze ich?
 
 ### Abschnitt „Aktuelles"
 
-Menüpfad: Web-App → Abschnitt „Aktuelles" (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Was gibt es Neues zur Veranstaltung?
 
 - Klick auf eine Beitragskarte → klappt den vollen Text auf
 
 ### Abschnitt „Programm"
-
-Menüpfad: Web-App → Abschnitt „Programm" (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was findet wann statt?
 
@@ -438,15 +424,11 @@ Zweck: Was findet wann statt?
 
 ### Abschnitt „Entdecken"
 
-Menüpfad: Web-App → Abschnitt „Entdecken" (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Der Einstieg: Was läuft gerade, was kommt gleich, und — bei einem Fest — welche Tage gibt es?
 
 - Klick auf einen Festtag → öffnet die öffentliche Seite dieses Tages (führt zu: „Öffentlicher Event-Hub“)
 
 ### Planer — Arbeitsplatz eines Bereichs
-
-Menüpfad: Web-App → Planer — Arbeitsplatz eines Bereichs (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Kein eigener Abschnitt der Schiene, sondern eine Ebene tiefer: Wer in „Bereiche" einen Arbeitsort öffnet, landet hier. Einbettung an genau einer Stelle — PlannerBereichePage.tsx:423.
 
@@ -463,8 +445,6 @@ Zweck: Kein eigener Abschnitt der Schiene, sondern eine Ebene tiefer: Wer in „
 
 ### Planer — Bereich: Live-Feed
 
-Menüpfad: Web-App → Planer — Bereich: Live-Feed (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Kurze Meldungen während des Fests, die zu diesem einen Arbeitsort gehören — „Bier alle", „Auftritt verschiebt sich um zwanzig Minuten". Es ist kein Beitragswesen, sondern ein Funkkanal.
 
 - eines der Merkzeichen über dem Feld → ordnet die Meldung einer Art zu (Voreinstellung „info")
@@ -474,8 +454,6 @@ Zweck: Kurze Meldungen während des Fests, die zu diesem einen Arbeitsort gehör
 - das Papierkorb-Zeichen → entfernt die Meldung ohne Rückfrage
 
 ### Planer — Bereich: Titelbild, Flyer und Galerie
-
-Menüpfad: Web-App → Planer — Bereich: Titelbild, Flyer und Galerie (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Alles Bildmaterial, das nur zu diesem Arbeitsort gehört: ein Titelbild, beliebig viele Flyer (auch PDF) und die Galerie. Je Datei wird hier entschieden, ob sie im öffentlichen Hub erscheint.
 
@@ -493,15 +471,11 @@ Zweck: Alles Bildmaterial, das nur zu diesem Arbeitsort gehört: ein Titelbild, 
 
 ### Bereich (öffentlich)
 
-Menüpfad: Web-App → Bereich (öffentlich) (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Was gibt es an dieser Bühne, an diesem Stand, in diesem Zelt?
 
 - Klick auf ein Bild oder einen Flyer → öffnet die Grossansicht
 
 ### Musikwünsche (Gästeseite)
-
-Menüpfad: Web-App → Musikwünsche (Gästeseite) (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Einen Titel wünschen — oder dem Wunsch eines anderen zustimmen.
 
@@ -511,8 +485,6 @@ Zweck: Einen Titel wünschen — oder dem Wunsch eines anderen zustimmen.
 - Klick auf das Herz bei einem Wunsch → gibt eine Stimme oder nimmt sie zurück
 
 ### DJ-Verwaltung
-
-Menüpfad: Web-App → DJ-Verwaltung (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was die Gäste sich wünschen — und was davon gespielt wird.
 
@@ -525,8 +497,6 @@ Zweck: Was die Gäste sich wünschen — und was davon gespielt wird.
 - Klick auf den Monitor-Weg → öffnet die Anzeige für den Bildschirm neben der DJ-Kabine (führt zu: „Live-Monitor“)
 
 ### Event-Einstieg
-
-Menüpfad: Web-App → Event-Einstieg (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Entscheiden, welche der fünf Event-Oberflächen jemand zu sehen bekommt.
 
@@ -541,8 +511,6 @@ Zweck: Entscheiden, welche der fünf Event-Oberflächen jemand zu sehen bekommt.
 
 ### Helfer-Hub
 
-Menüpfad: Web-App → Helfer-Hub (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Was habe ich zu tun, wann, und wo?
 
 - Klick auf einen der drei Abschnitte → zeigt dessen Inhalt
@@ -553,8 +521,6 @@ Zweck: Was habe ich zu tun, wann, und wo?
 
 ### Live-Monitor
 
-Menüpfad: Web-App → Live-Monitor (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Eine Fläche, die niemand bedient: Sie läuft auf einem Beamer oder Fernseher und zeigt, was gerade passiert — Gästebeiträge, Live-Ticker und die Musikwarteschlange. Dunkler Grund, grosse Schrift, automatischer Wechsel.
 
 - die Umschalter „Rotation" und „Grid" → wechselt zwischen einem grossen Beitrag und bis zu drei nebeneinander
@@ -563,15 +529,11 @@ Zweck: Eine Fläche, die niemand bedient: Sie läuft auf einem Beamer oder Ferns
 
 ### Momente-Seite
 
-Menüpfad: Web-App → Momente-Seite (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Ein Gast scannt einen Code am Tisch und will einen Moment teilen.
 
 - Klick auf den Beitragsknopf — oben rechts oder schwebend → öffnet die Eingabe
 
 ### Öffentlicher Event-Hub
-
-Menüpfad: Web-App → Öffentlicher Event-Hub (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Die Veranstaltung so zeigen, wie Gäste sie sehen sollen — im Gewand der Veranstaltung, nicht der Plattform.
 
@@ -580,15 +542,11 @@ Zweck: Die Veranstaltung so zeigen, wie Gäste sie sehen sollen — im Gewand de
 
 ### Offene Schichten
 
-Menüpfad: Web-App → Offene Schichten (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wo werden noch Leute gebraucht — und wie trage ich mich ein?
 
 - Klick auf den Eintragen-Knopf einer Zeile → trägt die eigene Person für die Schicht ein
 
 ### Event-Planer
-
-Menüpfad: Web-App → Event-Planer (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Der Arbeitsplatz für ein Fest. Er legt sich als eigene Ebene über die Anwendung (position: fixed, ganzer Bildschirm) und hält drei Dinge zusammen: die Kopfleiste mit Zustand und Aussenwegen, die Hierarchiekarte für den Festtag, und darunter Schiene plus den gewählten Abschnitt.
 
@@ -606,8 +564,6 @@ Zweck: Der Arbeitsplatz für ein Fest. Er legt sich als eigene Ebene über die A
 
 ### Planer — Teilnahme & Einladungen
 
-Menüpfad: Web-App → Planer — Teilnahme & Einladungen (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wer sich angemeldet hat, wer eingeladen ist, wer noch antworten muss. Anmeldungen entstehen woanders (öffentlicher Auftritt); hier werden sie gesichtet, ihr Zustand geändert, ausgegeben — und Einladungen an Mitglieder verschickt.
 
 - eine der vier Marken „Alle Tage", „Tag 1", „Tag 2", „Tag 3" → keine. Der gewählte Wert wird ausschliesslich zur Einfärbung gelesen; die Anmeldungsliste kennt ihn nicht
@@ -619,8 +575,6 @@ Zweck: Wer sich angemeldet hat, wer eingeladen ist, wer noch antworten muss. Anm
 - Knopf „Externe einladen" / „Einladen - mehrere Tage" → keine. Der Knopf ist gesperrt
 
 ### Planer — Aufgaben
-
-Menüpfad: Web-App → Planer — Aufgaben (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Aufgaben eines Festes planen und ihren Stand steuern — in drei Ansichten (Tafel, Zeitstrahl, Kalender), gefiltert nach Festphase, zugeordnet zu Arbeitsorten und Menschen.
 
@@ -637,8 +591,6 @@ Zweck: Aufgaben eines Festes planen und ihren Stand steuern — in drei Ansichte
 
 ### Planer — Bereiche
 
-Menüpfad: Web-App → Planer — Bereiche (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Arbeitsorte und Gewerke eines Fests anlegen — und als Rahmen für die Arbeit an einem einzelnen Ort dienen.
 
 - Knopf im Kopf → öffnet den Anlege-Dialog
@@ -651,8 +603,6 @@ Zweck: Arbeitsorte und Gewerke eines Fests anlegen — und als Rahmen für die A
 
 ### Planer — Dashboard
 
-Menüpfad: Web-App → Planer — Dashboard (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Der Einstieg: Was steht an, wie weit ist das Fest, und wo geht es weiter.
 
 - ein Knopf an einer Empfehlung → springt in den genannten Abschnitt
@@ -663,8 +613,6 @@ Zweck: Der Einstieg: Was steht an, wie weit ist das Fest, und wo geht es weiter.
 - ein Eintrag der Werkzeugliste → springt in den Abschnitt
 
 ### Planer — Design-Studio
-
-Menüpfad: Web-App → Planer — Design-Studio (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Der Auftritt eines Festes: Farben, Schriften, Abstände, Titelbild, Flyer, die Reihenfolge der Blöcke im öffentlichen Hub und seine Texte. Alles wirkt auf denselben öffentlichen Auftritt.
 
@@ -689,8 +637,6 @@ Zweck: Der Auftritt eines Festes: Farben, Schriften, Abstände, Titelbild, Flyer
 
 ### Planer — Festtage
 
-Menüpfad: Web-App → Planer — Festtage (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Die einzelnen Tage eines mehrtägigen Fests anlegen, ihre Bereitschaft ablesen und von dort in die Arbeit springen.
 
 - zwei Schaltflächen — „Einmal fürs Fest" und „Pro Festtag" → schreibt sofort am Gesamtfest, ohne Rückfrage
@@ -702,8 +648,6 @@ Zweck: Die einzelnen Tage eines mehrtägigen Fests anlegen, ihre Bereitschaft ab
 
 ### Planer — Gäste-Beiträge
 
-Menüpfad: Web-App → Planer — Gäste-Beiträge (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Beiträge, die Gäste am Fest einstellen, prüfen: freigeben oder ausblenden.
 
 - vier anklickbare Marken — Alle, Zur Prüfung, Veröffentlicht, Ausgeblendet → schränkt die Liste ein; die Voreinstellung ist „Alle"
@@ -712,17 +656,13 @@ Zweck: Beiträge, die Gäste am Fest einstellen, prüfen: freigeben oder ausblen
 
 ### Planer — Galerie
 
-Menüpfad: Web-App → Planer — Galerie (offene Stelle — Menüpfad manuell ergänzen)
+Zweck: Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint — neue Bilder sind es ab dem Hochladen.
 
-Zweck: Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint.
-
-- drei Wege — Knopf im Kopf, Knopf im Schrittvorschlag, Knopf im Leerzustand; dazu Ziehen und Ablegen auf das Raster → lädt die Dateien nacheinander hoch — die neuen Bilder sind zunächst privat
-- Augensymbol an einer Kachel → schaltet dieses eine Bild um
-- Papierkorb an einer Kachel → entfernt das Bild unwiderruflich
+- Klick auf das Informationssymbol einer Kachel → Ein Dialog zeigt Name, Typ, Größe und die vollständige Dateikennung samt Knopf zum Kopieren.
+- Klick auf das Augensymbol einer Kachel (Hinweis „Öffentlich — klicken, um privat zu schalten“ bzw. „Privat — klicken, um öffentlich zu schalten“) → Das eine Bild wird öffentlich bzw. privat; öffentlich heißt Public Hub, Galerie der Mitglieder in der App und Homepage-Galerie.
+- Klick auf eine Kachel, deren Vorschau geladen ist → Das Bild erscheint groß auf durchsichtigem Grund mit einem Schließkreuz an der Ecke.
 
 ### Planer — Konfiguration
-
-Menüpfad: Web-App → Planer — Konfiguration (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Modus, Sichtbarkeit, Anmeldung und aktive Werkzeuge des Fests — jede Sektion mit eigenem Speichern-Knopf.
 
@@ -732,8 +672,6 @@ Zweck: Modus, Sichtbarkeit, Anmeldung und aktive Werkzeuge des Fests — jede Se
 - der Speichern-Knopf dieser Karte → schreibt das Merkmalsprofil
 
 ### Planer — Ansprechpartner
-
-Menüpfad: Web-App → Planer — Ansprechpartner (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Wer beim Fest ansprechbar ist — mit Rolle, Telefon, E-Mail, Zuordnung zu einem Arbeitsort, einer Dringlichkeitsstufe, Sichtbarkeit und freien Notizen. Ein Kontakt kann an ein Vereinsmitglied gebunden sein; dann kommen Name und Erreichbarkeit von dort.
 
@@ -746,8 +684,6 @@ Zweck: Wer beim Fest ansprechbar ist — mit Rolle, Telefon, E-Mail, Zuordnung z
 - Bestätigen im Dialog → legt den Kontakt an oder aktualisiert ihn, samt Notizen
 
 ### Planer — Live-Regie
-
-Menüpfad: Web-App → Planer — Live-Regie (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Kurze Hinweise an Gäste senden, wichtige davon oben halten und den Verlauf der Durchführung sichern. Die Fläche heisst in der Oberfläche „Live-Regie", nicht „Live-Ticker" — der Abschnittsname in der Schiene lautet „Live-Ticker".
 
@@ -763,8 +699,6 @@ Zweck: Kurze Hinweise an Gäste senden, wichtige davon oben halten und den Verla
 - Papierkorb an einer Meldung → löscht die Meldung — ohne Rückfrage
 
 ### Planer — Musikwünsche
-
-Menüpfad: Web-App → Planer — Musikwünsche (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Gäste wünschen sich Titel und stimmen darüber ab; hier wird die Warteschlange abgearbeitet und die Regeln dafür gesetzt.
 
@@ -783,8 +717,6 @@ Zweck: Gäste wünschen sich Titel und stimmen darüber ab; hier wird die Wartes
 
 ### Planer — News
 
-Menüpfad: Web-App → Planer — News (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Mitteilungen an die Teilnehmer schreiben, anpinnen und im Verlauf behalten.
 
 - Nadelsymbol an einer Karte → hebt die Mitteilung nach oben und markiert sie
@@ -795,8 +727,6 @@ Zweck: Mitteilungen an die Teilnehmer schreiben, anpinnen und im Verlauf behalte
 - der Bestätigungsknopf im Dialog → legt die Mitteilung an — als Entwurf oder veröffentlicht, je nach Schalter
 
 ### Planer — Programm
-
-Menüpfad: Web-App → Planer — Programm (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was wann und wo passiert — Programmpunkte je Arbeitsort, mit Zeiten, Bildern, Turnierbezug und Sponsoren.
 
@@ -813,8 +743,6 @@ Zweck: Was wann und wo passiert — Programmpunkte je Arbeitsort, mit Zeiten, Bi
 
 ### Planer — Ressourcen
 
-Menüpfad: Web-App → Planer — Ressourcen (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Räume und Gebäude aus dem Vereinsbestand für das Fest reservieren und Arbeitsorten zuordnen.
 
 - Knopf „Ressource verknüpfen" im Kopf → öffnet den Dialog, mit dem gewählten Arbeitsort vorbelegt
@@ -823,8 +751,6 @@ Zweck: Räume und Gebäude aus dem Vereinsbestand für das Fest reservieren und 
 - Papierkorb an einer Zeile → entfernt die Verknüpfung sofort
 
 ### Planer — Einsatzplanung
-
-Menüpfad: Web-App → Planer — Einsatzplanung (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Einsatzfenster je Arbeitsort planen und Menschen darauf verteilen. Die Fläche heisst in der Oberfläche „Wer arbeitet wann wo?"; der Abschnittsname in der Schiene lautet „Schichtplan".
 
@@ -840,18 +766,16 @@ Zweck: Einsatzfenster je Arbeitsort planen und Menschen darauf verteilen. Die Fl
 
 ### Planer-Schiene
 
-Menüpfad: Web-App → Planer-Schiene (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Die linke Leiste des Planers. Sie zeigt, wo man ist, in welcher Phase das Fest steckt, und führt zu den 21 Abschnitten.
 
 - ein Eintrag der Liste → öffnet diesen Abschnitt; die Schiene bleibt stehen
 - Symbolknopf oben in der Schiene → wechselt zwischen 280 und 64 Pixel Breite
 - Fusszeile „Zurück zum Verein" (aufgeklappt) beziehungsweise ein Pfeilsymbol unten (eingeklappt) → verlässt den Planer und kehrt in den Vereinsbereich zurück
 - Fusszeile „Hilfe & Tipps" → öffnet die Hilfe
+- Fusszeile „Impressum", unter „Zurück zum Verein" und „Hilfe & Tipps", in derselben Form → verlässt den Planer und öffnet das Impressum
+- Fusszeile „Feedback senden", unter „Impressum" → öffnet das Feedback-Fenster der Anwendung, vorbelegt mit der aktuellen Adresse; der Planer bleibt stehen
 
 ### Planer — Speisekarte
-
-Menüpfad: Web-App → Planer — Speisekarte (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Speisekarten des Vereins einem Fest zuordnen — und auf Arbeitsort-Ebene ihre Gerichte bearbeiten.
 
@@ -863,8 +787,6 @@ Zweck: Speisekarten des Vereins einem Fest zuordnen — und auf Arbeitsort-Ebene
 
 ### Planer — Sponsoren
 
-Menüpfad: Web-App → Planer — Sponsoren (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Sponsoren aus dem Vereinsbestand dem Fest zuordnen, ihnen eine Stufe geben — und aus den Sponsoring-Angeboten des Vereins sammelweise übernehmen.
 
 - Knopf „Sponsor hinzufügen" im Kopf oder im Schrittvorschlag → öffnet den Dialog mit der Stufe „Partner" vorbelegt
@@ -875,8 +797,6 @@ Zweck: Sponsoren aus dem Vereinsbestand dem Fest zuordnen, ihnen eine Stufe gebe
 
 ### Planer — Stammdaten
 
-Menüpfad: Web-App → Planer — Stammdaten (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Titel, Zeitraum, Ort, Beschreibung, Status und Sichtbarkeit — und, ganz unten, das Löschen der Veranstaltung.
 
 - jede Eingabe in einem Textfeld → merkt die Änderung vor, ohne zu speichern
@@ -886,8 +806,6 @@ Zweck: Titel, Zeitraum, Ort, Beschreibung, Status und Sichtbarkeit — und, ganz
 - Knopf „Veranstaltung löschen" beziehungsweise „Tag löschen" → stösst einen Auftrag an; das Löschen selbst passiert danach im Hintergrund
 
 ### Planer — Turniere
-
-Menüpfad: Web-App → Planer — Turniere (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Turnierserien und ihre Ausführungen mit einem Fest verknüpfen — und von dort aus in den Turnier-Hub wechseln, wo sie tatsächlich verwaltet werden.
 
@@ -903,8 +821,6 @@ Zweck: Turnierserien und ihre Ausführungen mit einem Fest verknüpfen — und v
 - Knopf „Verwalten" an einer Ausführung → verlässt den Planer und öffnet die Turnierverwaltung
 
 ### Schichtplan (Helferansicht)
-
-Menüpfad: Web-App → Schichtplan (Helferansicht) (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Wer arbeitet wann und wo — und wo ist noch Platz für mich?
 

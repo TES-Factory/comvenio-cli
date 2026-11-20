@@ -184,14 +184,11 @@ an ihrer Kennung. Sie alle brauchen kein Jahr. `plan-reopen` bricht unabhängig 
 
 ### Bereich als Sicht — Knoten im eigenen Zeitraum, Zeitraum der Abteilung, Buchen mit Budget, Kontofreigabe und Journal mit Budget
 
-Menüpfad: Web-App → Bereich als Sicht — Knoten im eigenen Zeitraum, Zeitraum der Abteilung, Buchen mit Budget, Kontofreigabe und Journal mit Budget (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wie steht eine Abteilung in ihrem eigenen Zeitraum — und worauf lief jede Buchung?
 
 - Klick auf „<Fenster des Zeitraums>“ oder „Haushaltsjahr <Jahr>“ im Kopf → Die Ansicht wechselt zwischen dem Fenster des Zeitraums und dem Haushaltsjahr; vorgewählt ist das laufende Fenster des Zeitraums.
 - Auswahl eines anderen Fensters im Feld „Zeitraum“ neben dem Umschalter → Die Ansicht zeigt das gewählte Fenster (z. B. App-Jahr 2025/26).
 - Klick auf „Posten“ im Kopf der Sicht → Der Dialog für einen Posten im Fenster öffnet sich.
-- Klick auf „Posten speichern“ im Dialog → Je berührtem Haushalt entsteht ein Teil mit dem Monatsanteil; neu oder beim Bearbeiten werden alle Teile gemeinsam geändert (D49).
 - Klick auf „Rahmen setzen“ bzw. „Rahmen ändern“ im Kopf der Sicht → Der Rahmen-Dialog des Fensters öffnet sich (Anatomie wie der Saisonrahmen-Dialog). (führt zu: Dialog Rahmen des Fensters)
 - Klick auf „Rahmen speichern“ im Rahmen-Dialog des Fensters → Der Rahmen des Knotens im Fenster wird gesetzt, als neue Version.
 - Klick auf „Abrechnung“ im Kopf der Sicht → Die Abrechnung des Knotens im Fenster öffnet sich (Anatomie C3 der Organigramm-Spezifikation, dazu Ergebnis und Rahmenvorschlag). (führt zu: Abrechnung des Fensters)
@@ -207,8 +204,6 @@ Zweck: Wie steht eine Abteilung in ihrem eigenen Zeitraum — und worauf lief je
 
 ### Bereichsbudget
 
-Menüpfad: Web-App → Bereichsbudget (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wie steht der Bereich im Zeitraum, was bleibt am Ende, wer trägt was, und was wurde beschlossen?
 
 - Auswahl von Tag und Monat „Finanzjahr beginnt am“ → setzt den Beginn des Finanzjahrs des Vereins
@@ -217,8 +212,6 @@ Zweck: Wie steht der Bereich im Zeitraum, was bleibt am Ende, wer trägt was, un
 - Klick auf „Abbrechen“ oder Schließen → verwirft die Änderungen
 
 ### Buchhaltungs-Tab — Event-Verknüpfung
-
-Menüpfad: Web-App → Buchhaltungs-Tab — Event-Verknüpfung (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Zu welchem Event gehört dieser Posten, stimmt das, und wie bringe ich es in Ordnung?
 
@@ -238,8 +231,6 @@ Zweck: Zu welchem Event gehört dieser Posten, stimmt das, und wie bringe ich es
 - Klick auf „Abbrechen“ oder Schließen des Dialogs → bricht das Lösen ab
 
 ### Buchungen eines Kontos — prüfungssicher
-
-Menüpfad: Web-App → Buchungen eines Kontos — prüfungssicher (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was ist auf diesem Konto gebucht, ist es fertig und belegt — und wie korrigiere ich es richtig?
 
@@ -262,8 +253,6 @@ Zweck: Was ist auf diesem Konto gebucht, ist es fertig und belegt — und wie ko
 
 ### Buchung im Detail
 
-Menüpfad: Web-App → Buchung im Detail (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Was ist mit dieser Buchung — und was ist jetzt zu tun?
 
 - Klick auf die Journalnummer oder die Beschreibung einer Buchung in einer Liste der Buchhaltung (Kassenbericht, Kontenblatt, offene Punkte, Buchungen eines Knotens); nicht im Kontenblatt des Bereichsbudgets → Die Buchhaltung zeigt die Detailansicht dieser Buchung; die Liste bleibt als Rückweg gemerkt. (führt zu: Detailansicht (diese Spezifikation))
@@ -281,8 +270,6 @@ Zweck: Was ist mit dieser Buchung — und was ist jetzt zu tun?
 - Klick auf „Korrigieren“ in der Zeile einer eigenen beanstandeten Buchung im Kassenbericht → Die Detailansicht der Buchung öffnet. Erlaubt allowed_actions.correct, öffnet der Korrektur-Dialog gleich mit; sonst ist „Stornieren und neu buchen“ hervorgehoben. (führt zu: Detailansicht (diese Spezifikation))
 
 ### Budget im Organigramm
-
-Menüpfad: Web-App → Budget im Organigramm (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Wie steht jeder Knoten des Organigramms im Rahmen — und wo muss nachgesteuert werden?
 
@@ -321,8 +308,6 @@ Zweck: Wie steht jeder Knoten des Organigramms im Rahmen — und wo muss nachges
 
 ### Saison in der Budgetplanung
 
-Menüpfad: Web-App → Saison in der Budgetplanung (offene Stelle — Menüpfad manuell ergänzen)
-
 Zweck: Wie steht jeder Knoten in seiner Saison — über die Haushaltsjahre hinweg, die sie berührt?
 
 - Klick auf „Haushalt“ oder „Saison“ im Umschalter → Die Section zeigt den Haushaltsplan (Bestand) oder die Saison; bei Saison ersetzt die Saisonwahl die Planwahl.
@@ -334,8 +319,6 @@ Zweck: Wie steht jeder Knoten in seiner Saison — über die Haushaltsjahre hinw
 - Klick auf „Vorschlag übernehmen“ im Rahmen-Dialog des Haushalts → Das Betragsfeld des Rahmen-Dialogs zeigt den Vorschlag; gespeichert wird erst mit „Rahmen speichern“ bzw. „Nachtrag speichern“.
 
 ### Offene Punkte und Struktur
-
-Menüpfad: Web-App → Offene Punkte und Struktur (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Was ist in der Buchhaltung offen, und wie verteilt sich das Geld über den Verein?
 
@@ -394,8 +377,6 @@ Zweck: Was sieht ein Prüfer in diesem Plan, und was fehlt noch?
 - Klick auf „Abbrechen“ oder Escape → Der Dialog schließt, nichts wird gespeichert. (führt zu: zurück (zum Prüferpaket))
 
 ### Übersicht nach Organigramm
-
-Menüpfad: Web-App → Übersicht nach Organigramm (offene Stelle — Menüpfad manuell ergänzen)
 
 Zweck: Die Jahresübersicht zeigt die Konten des Haushalts gegliedert nach dem Organigramm, mit Einnahmen und Ausgaben als zwei Seiten und Veranstaltungen mit Ergebnis.
 
