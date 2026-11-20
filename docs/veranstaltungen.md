@@ -464,6 +464,7 @@ Zweck: Alles Bildmaterial, das nur zu diesem Arbeitsort gehört: ein Titelbild, 
 - das Papierkorb-Symbol → fragt nach und entfernt das Bild dann unwiderruflich
 - „Von diesem Bereich lösen" → nimmt dieses Bild aus diesem Bereich heraus, ohne es zu löschen
 - der Knopf oder Ziehen auf die Ablage → lädt eine oder mehrere Dateien; die Bereichsfrage kommt auch hier vorher
+- das Teilen-Symbol an einer Kachel → öffnet die Auswahl der anderen Bereiche; nach dem Bestätigen gilt der Flyer auch dort
 - „Alle teilen" im Kopf der Flyer-Ablage → wendet sämtliche Flyer auf die gewählten Bereiche an
 - das Augen-Symbol an einer Kachel → schaltet diese Datei öffentlich oder privat
 - das Papierkorb-Symbol → fragt nach („*Dateiname* wird unwiderruflich entfernt.") und löscht dann
@@ -598,7 +599,9 @@ Zweck: Arbeitsorte und Gewerke eines Fests anlegen — und als Rahmen für die A
 - ein Auswahlfeld an der Karte; ein Klick auf ein Namenskürzel entfernt die Zuweisung wieder → weist einen Menschen diesem Arbeitsort zu beziehungsweise nimmt ihn heraus
 - Stiftsymbol an einer Karte → öffnet den Dialog mit den Werten dieses Bereichs
 - der Bestätigungsknopf im Dialog → legt den Bereich an oder aktualisiert ihn
+- Kopiersymbol an einer Karte → öffnet den Kopier-Dialog, in dem Ziel-Festtage und die mitzukopierenden Inhalte gewählt werden
 - der Bestätigungsknopf im Kopier-Dialog → legt den Bereich in allen gewählten Festtagen an und überträgt, was angehakt ist; ein gleichnamiger Bereich wird wiederverwendet statt doppelt angelegt
+- Papierkorb an einer Karte → nach dem Bestätigen startet das Löschen im Hintergrund; es entfernt die Aufgaben, Zuweisungen, Anhänge und Dateien des Bereichs und archiviert ihn
 - Bestätigen im Löschdialog → stösst einen Auftrag an, der den Bereich samt verknüpfter Daten im Hintergrund entfernt; war er gerade geöffnet, kehrt die Fläche zur Übersicht zurück
 
 ### Planer — Dashboard
@@ -620,6 +623,9 @@ Zweck: Der Auftritt eines Festes: Farben, Schriften, Abstände, Titelbild, Flyer
 - Knopf „Public Preview" im Kopf → öffnet den öffentlichen Auftritt in einem neuen Tab
 - einer der sechs Reiter → tauscht den Inhaltsbereich aus
 - Feld „Stichwort" plus Knopf zum Hinzufügen → hängt ein Stichwort an; jedes erscheint als Marke mit Löschkreuz
+- Änderung in einem der Farbfelder → jede Änderung wirkt sofort auf die Vorschau
+- Auswahl in einem der sechs Felder → jede Änderung wirkt sofort auf die Vorschau
+- Knopf zum Dateiwählen; angenommen werden .jsx .tsx .js .ts .css .html .json und reiner Text → liest Quelltext und zieht daraus Gestaltungsmerkmale — bis zu acht Farben (Hexwerte), die Schriften aus den Schriftangaben, dazu bis zu zwölf Signale aus CSS-Klassennamen und Komponentennamen
 - Knopf im Reiter „Auftritt" → schlägt aus Stimmung und Stichworten einen Satz Farben und Formwerte vor
 - Knopf im Reiter „Auftritt", danach der Löschdialog → entfernt den Auftritt
 - eine der Stilvorgaben → bestimmt die Anmutung der erzeugten Bilder
@@ -658,8 +664,10 @@ Zweck: Beiträge, die Gäste am Fest einstellen, prüfen: freigeben oder ausblen
 
 Zweck: Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint — neue Bilder sind es ab dem Hochladen.
 
+- Klick auf „Bilder hochladen“ im Kopf oder im Schrittvorschlag, auf „Bilder auswählen“ im Leerzustand oder Ablegen von Dateien auf dem Raster → Das Event wird frisch gelesen, dann werden die Bilder nacheinander in die Galerie geladen; bei einem öffentlichen, bestätigten Event sofort öffentlich, sonst oder bei unbekanntem Stand privat.
 - Klick auf das Informationssymbol einer Kachel → Ein Dialog zeigt Name, Typ, Größe und die vollständige Dateikennung samt Knopf zum Kopieren.
 - Klick auf das Augensymbol einer Kachel (Hinweis „Öffentlich — klicken, um privat zu schalten“ bzw. „Privat — klicken, um öffentlich zu schalten“) → Das eine Bild wird öffentlich bzw. privat; öffentlich heißt Public Hub, Galerie der Mitglieder in der App und Homepage-Galerie.
+- Klick auf den Papierkorb einer Kachel → Das Bild wird aus der Galerie entfernt.
 - Klick auf eine Kachel, deren Vorschau geladen ist → Das Bild erscheint groß auf durchsichtigem Grund mit einem Schließkreuz an der Ecke.
 
 ### Planer — Konfiguration
@@ -783,6 +791,7 @@ Zweck: Speisekarten des Vereins einem Fest zuordnen — und auf Arbeitsort-Ebene
 - Knopf „Speisekarte hinzufügen" im Kopf oder im Leerzustand → öffnet den Dialog
 - der Bestätigungsknopf im Dialog → weist die gewählte Karte zu — oder legt eine neue an und weist sie zu
 - Knopf „Vollständige Karte ansehen" über jeder Karte → öffnet die öffentliche Ansicht der Karte — mit Vereinslogo, ihrer Gestaltung und dem QR-Code
+- Stiftsymbol an einem Gericht → öffnet den Dialog „Eintrag bearbeiten“ für das Gericht
 - Papierkorb an einer Karte → nimmt die Zuweisung zurück
 
 ### Planer — Sponsoren
@@ -811,7 +820,9 @@ Zweck: Turnierserien und ihre Ausführungen mit einem Fest verknüpfen — und v
 
 - Knopf „Tournament Hub" im Kopf → verlässt den Planer und öffnet den Turnierbereich des Vereins
 - Knopf „Serie erstellen" im Kopf → verlässt den Planer und öffnet das Anlegen einer Serie, mit diesem Fest vorbelegt
+- das Feld „Turnierserie" → merkt die gewählte Serie zum Verknüpfen vor; der Knopf zum Verknüpfen wird aktiv
 - Knopf „Aufnehmen" → verknüpft die Serie mit dem Fest — und alle ihre noch unverknüpften Ausführungen gleich mit — und schaltet den Turnier-Abschnitt des Fests ein
+- das Feld „Festtag" → merkt den gewählten Festtag zum Öffnen vor
 - Knopf „Festtag öffnen" → wechselt auf diesen Festtag, bleibt im Planer
 - Knopf „Turnier in Festtag erstellen" → verlässt den Planer und öffnet das Anlegen einer Serie, mit dem gewählten Festtag vorbelegt
 - Knopf „Programmpunkt" an einer Ausführung → legt einen Programmpunkt an — im Standard-Arbeitsort, und wenn es keinen gibt, im ersten beliebigen — und schreibt Zuordnung, Beginn und Ende ins Turnier zurück

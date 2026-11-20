@@ -188,11 +188,13 @@ Purpose: Wie steht eine Abteilung in ihrem eigenen Zeitraum — und worauf lief 
 - Klick auf „<Fenster des Zeitraums>“ oder „Haushaltsjahr <Jahr>“ im Kopf → Die Ansicht wechselt zwischen dem Fenster des Zeitraums und dem Haushaltsjahr; vorgewählt ist das laufende Fenster des Zeitraums.
 - Auswahl eines anderen Fensters im Feld „Zeitraum“ neben dem Umschalter → Die Ansicht zeigt das gewählte Fenster (z. B. App-Jahr 2025/26).
 - Klick auf „Posten“ im Kopf der Sicht → Der Dialog für einen Posten im Fenster öffnet sich.
+- Klick auf „Posten speichern“ im Dialog → Je berührtem Haushalt entsteht ein Teil mit dem Monatsanteil; neu oder beim Bearbeiten werden alle Teile gemeinsam geändert.
 - Klick auf „Rahmen setzen“ bzw. „Rahmen ändern“ im Kopf der Sicht → Der Rahmen-Dialog des Fensters öffnet sich (Anatomie wie der Saisonrahmen-Dialog). (leads to: Dialog Rahmen des Fensters)
 - Klick auf „Rahmen speichern“ im Rahmen-Dialog des Fensters → Der Rahmen des Knotens im Fenster wird gesetzt, als neue Version.
 - Klick auf „Abrechnung“ im Kopf der Sicht → Die Abrechnung des Knotens im Fenster öffnet sich (Anatomie C3 der Organigramm-Spezifikation, dazu Ergebnis und Rahmenvorschlag). (leads to: Abrechnung des Fensters)
 - Klick auf „Weitere Aktionen“ › „Zeitraum der Abteilung“ → Der Zeitraum-Dialog öffnet sich.
 - Klick auf „Zeitraum speichern“ im Zeitraum-Dialog → Der Zeitraum der Abteilung wird gesetzt und gilt für ihre Unterknoten.
+- Klick auf „Haushalt <Jahr> als Entwurf anlegen“ am Hinweis auf den fehlenden Haushalt oder im Posten-Dialog → Der Folgehaushalt entsteht als Entwurf aus dem jüngsten Vereinsplan.
 - Klick auf „Erneut laden“ im Zustand error → Der Sichtbaum wird erneut abgefragt.
 - Klick auf „Organigramm“ in der Brotkrume → Das Organigramm erscheint wieder. (leads to: zurück (Organigramm))
 - Klick auf „Buchen“ im Dialog → Die Buchung entsteht im Haushalt auf dem gewählten Posten; bei „ungeplant“ auf dem Posten „Ungeplant · <Rubrik>“, der bei Bedarf entsteht.
@@ -222,8 +224,13 @@ Purpose: Zu welchem Event gehört dieser Posten, stimmt das, und wie bringe ich 
 - Klick auf „Verknüpfung ändern“ → öffnet die Auswahl mit dem aktuellen Event und der aktuellen Rolle, um umzuhängen oder die Rolle zu wechseln
 - Klick auf „Verknüpfung lösen“ → fragt vor dem Lösen der Verknüpfung nach; der Klick selbst ändert nichts
 - Klick auf „Zur Hauptposition (Plan <Jahr>)“ → öffnet die Hauptposition desselben Events im Jahr ihres Plans; gesammelte Planwert-Änderungen werden vorher gesendet
+- Klick auf „Erneut laden“ im Hinweis zum Vorverkauf → fragt die Verknüpfungen des Events noch einmal an
+- Umschalter „Event · Objekt · Raum · Gebäude“ oben im Dialog → lädt die Auswahl der gewählten Art; Rolle und Plan-Markierung erscheinen nur bei Event
 - Eingabe und Auswahl im Feld „Event“ (Suche über den Titel) → bestimmt das Event, mit dem die Position verknüpft werden soll
+- Klick auf „Erneut laden“ in der Fehlermeldung der Eventliste im Dialog → fragt die Eventauswahl noch einmal an
+- Klick auf „Erneut laden“ in der Fehlermeldung der Plan-Zuordnung → fragt die Verknüpfungsliste noch einmal an
 - Auswahl „Hauptposition“ oder „Vorverkauf“ → legt fest, ob die Position der Posten des Eventjahrs ist oder der Vorverkauf im Plan davor
+- Klick auf „Erneut versuchen“ in der Fehlermeldung zum Verknüpfen → sendet dieselbe Verknüpfung mit denselben Angaben noch einmal
 - Klick auf „Verknüpfen“ bzw. „Speichern“, im abgeschlossenen Plan „Bestätigen und verknüpfen“ bzw. „Bestätigen und speichern“ → verknüpft die Position mit dem gewählten Event in der gewählten Rolle oder hängt sie um; im abgeschlossenen Plan mit ausdrücklicher Bestätigung
 - Klick auf „Abbrechen“ oder Schließen des Dialogs → verwirft die Auswahl
 - Klick auf „Verknüpfung lösen“, im abgeschlossenen Plan „Bestätigen und lösen“ → löst die Verknüpfung; die Position bleibt ein Event-Posten ohne Event mit Rolle Hauptposition, keine Zahl ändert sich
@@ -256,6 +263,7 @@ Purpose: Was ist mit dieser Buchung — und was ist jetzt zu tun?
 
 - Klick auf die Journalnummer oder die Beschreibung einer Buchung in einer Liste der Buchhaltung (Kassenbericht, Kontenblatt, offene Punkte, Buchungen eines Knotens); nicht im Kontenblatt des Bereichsbudgets → Die Buchhaltung zeigt die Detailansicht dieser Buchung; die Liste bleibt als Rückweg gemerkt. (leads to: Detailansicht (diese Spezifikation))
 - Klick auf „Zurück“ im Kopf der Detailansicht → Die Liste, aus der die Detailansicht geöffnet wurde, steht wieder da. (leads to: vorige Liste)
+- Klick auf „Beleg ansehen“ → Der Browser öffnet die Belegdatei in einem neuen Tab.
 - Klick auf „Korrigieren“ in der Detailansicht → Der Korrektur-Dialog öffnet mit den Werten der Buchung.
 - Klick auf „Korrektur speichern“ → Die Buchung wird geändert (PATCH mit nur den geänderten Feldern und dem Grund); eine offene Beanstandung wird CORRECTED; der Verlauf zeigt die neue Version.
 - Klick auf „Abbrechen“ oder Escape im Korrektur-Dialog → Der Dialog schließt, nichts wird gesendet.
@@ -289,8 +297,10 @@ Purpose: Wie steht jeder Knoten des Organigramms im Rahmen — und wo muss nachg
 - Klick auf „Zurück“ in der Brotkrume der Abrechnung → Die Ansicht vor der Abrechnung erscheint wieder. (leads to: zurück)
 - Klick auf „Erneut laden“ in der Störung der Abrechnung → Die Abrechnung wird erneut vom Finanzdienst abgerufen.
 - Klick auf „Stand ablegen“ rechts in der Brotkrume der Abrechnung → Der Dialog „Stand ablegen“ öffnet sich mit vorbelegter Bezeichnung.
+- Klick auf „Öffnen“ an einem Stand → Das abgelegte PDF öffnet sich in einem neuen Tab.
 - Klick auf „Löschen“ an einem Stand oder in der Meldung zur fehlenden Datei → Der Stand wird gelöscht und seine Datei weich entfernt.
 - Klick auf „Erneut laden“ in der Störung der Stände → Die Liste der Stände wird erneut abgerufen.
+- Klick auf „Stand ablegen“ im Dialog → Das PDF der Abrechnung entsteht im Browser, wird hochgeladen und mit Knoten und Zeitraum am Vereinsplan abgelegt.
 - Klick auf „Erneut ablegen“ → Legt die bereits hochgeladene Datei ab, ohne sie ein zweites Mal hochzuladen.
 - Klick auf „Abbrechen“ oder Schließen des Dialogs → Schließt den Dialog; ist eine hochgeladene Datei nicht abgelegt, wird sie weich gelöscht.
 - Klick auf „Nachtrag speichern“ (aktiver Plan) oder „Rahmen speichern“ (Entwurf) → Der Rahmen des Knotens wird gesetzt; im aktiven Plan als Nachtrag mit Grund festgehalten.
@@ -299,6 +309,7 @@ Purpose: Wie steht jeder Knoten des Organigramms im Rahmen — und wo muss nachg
 - Klick auf „Abbrechen“ oder Escape im Teilrahmen-Dialog → Der Dialog schließt, nichts wird gesendet.
 - Klick auf „Speichern“ im Posten-Dialog → Der Posten wird im Vereinsplan beim gewählten Knoten mit Rubrik angelegt oder geändert.
 - Klick auf „Abbrechen“ oder Escape im Posten-Dialog → Der Dialog schließt, nichts wird gesendet.
+- Klick auf „Aufteilen“ → Speichern setzt in einem Schritt die Unterposten der genannten Knoten und den Eigenanteil: Unterknoten mit Betrag bekommen oder ändern ihren Unterposten, ein Unterknoten mit bisherigem Unterposten und 0 € verliert ihn, der Posten selbst trägt danach „Bleibt bei“. Ungenannte Unterposten bleiben, das Gesamt bleibt. Scheitert das Speichern, ändert sich nichts.
 - Klick auf „Abbrechen“ oder Escape im Aufteilen-Dialog → Der Dialog schließt, nichts wird gesendet.
 - Klick auf „Rubrik“ mit Namenseingabe → Die Rubrik wird dem Katalog der Abteilung hinzugefügt.
 - Klick auf eine eigene Rubrik, Namen ändern, Enter → Die Rubrik heißt neu; alle Posten mit dieser Rubrik tragen den neuen Namen.
@@ -312,6 +323,7 @@ Purpose: Wie steht jeder Knoten in seiner Saison — über die Haushaltsjahre hi
 - Klick auf „Haushalt“ oder „Saison“ im Umschalter → Die Section zeigt den Haushaltsplan (Bestand) oder die Saison; bei Saison ersetzt die Saisonwahl die Planwahl.
 - Auswahl im Feld „Saison“ → Kopf und Organigramm zeigen die gewählte Saison; vorgewählt ist die Saison, die heute enthält, sonst die jüngste.
 - Klick auf einen berührten Haushalt oder „Posten im Haushalt <Label>“ im Saisonkopf eines Knotens → Die Section wechselt in die Sicht Haushalt mit diesem Plan und, aus dem Saisonkopf, diesem Knoten.
+- Klick auf „Haushalt <Label> als Entwurf anlegen“ → Der Folgehaushalt entsteht als Entwurf aus dem jüngsten Vereinsplan und übernimmt die wiederkehrenden Posten.
 - Klick auf „Saisonrahmen setzen“ am Saisonkopf oder in einer Kindzeile → Der Saisonrahmen-Dialog öffnet für diesen Knoten.
 - Klick auf „Saisonrahmen speichern“ → Der Saisonrahmen des Knotens wird gesetzt und als Version festgehalten.
 - Klick auf „Abbrechen“ oder Escape im Saisonrahmen-Dialog → Der Dialog schließt, nichts wird gesendet.
@@ -361,6 +373,7 @@ Purpose: Was sieht ein Prüfer in diesem Plan, und was fehlt noch?
 - Klick auf „Abbrechen“ oder Escape → Der Dialog schließt, nichts wird gesendet. (leads to: zurück (zum Reiter Kasse & Konten))
 - Auswahl in „Sphäre wählen“ in einer Zeile der Tabelle → Die Position bekommt die gewählte Sphäre; die Zeile verschwindet aus der Tabelle, die Kacheln rechnen neu.
 - Klick auf „Neu laden“ in der Meldung des Reiters → Der Bericht nach Sphären wird erneut abgerufen.
+- Klick auf „Als geprüft kennzeichnen“ in der Karte „Haushaltsjahr prüfen“, dann „Kennzeichnen“ in der Bestätigung → Der Dienst rechnet den Durchlauf selbst und speichert das Label mit Person, Zeitpunkt und Zusammenfassung.
 - Klick auf „Export erstellen“ im Kopf der Export-Karte → Der Dialog „Export für die Betriebsprüfung“ öffnet sich.
 - Klick auf „Herunterladen“ in der Zeile eines Stands → Die gespeicherten Bytes des Stands werden abgerufen und als ZIP gespeichert; die Oberfläche vergleicht die Prüfsumme mit dem sha256 des Stands aus AuditExportRead (die Kopfzeile X-Content-SHA256 gibt der Dienst per CORS nicht frei).
 - Klick auf „Beleg nachreichen“ in einer Zeile → Der Beleg-Dialog der Buchung öffnet sich über dem Prüferpaket; nach dem Anhängen verschwindet die Zeile aus der Liste.
@@ -383,9 +396,12 @@ Purpose: Die Jahresübersicht zeigt die Konten des Haushalts gegliedert nach dem
 - Klick auf „Alle aufklappen“ im Kopf der Karte → Alle Knoten des Baums klappen auf.
 - Klick auf „Zuklappen“ im Kopf der Karte → Alle Knoten klappen zu; die Knoten der obersten Ebene bleiben als Zeilen sichtbar.
 - Umschalter „Plan / Ist | Nur Ist“ im Kopf der Karte → Nur Ist blendet die Planzahlen und Abweichungen aus: in Knotenzeilen „von <Plan>“, auf den Seiten die Spalte Plan.
+- Klick auf eine Kontozeile einer Seite → Das Kontenblatt der Position öffnet sich wie bisher aus der Liste (Übersicht → Kontenblatt); ein Festival öffnet seine Festtage. (leads to: Kontenblatt der Position)
+- Klick auf eine Zeile der Veranstaltungen → Die Karte zeigt die Veranstaltung mit ihren Konten auf zwei Seiten.
 - Klick auf „Position für <Knoten>“ im Leersatz eines aufgeklappten Knotens → Der bestehende Dialog „Position“ öffnet sich mit der Abteilung des Knotens vorgewählt; bei einer Mannschaft mit ihrer Abteilung (der Dialog kennt keine Mannschaften), beim Verein „vereinsweit“.
 - Klick auf „Erneut laden“ in der Störung der Karte → Baum und Positionen werden erneut abgerufen.
 - Umschalter „Nach Rubrik | Nach Seite“ im Kopf der Karte → Die Karte zeigt die gewählte Sicht; die Wahl wird je Verein im Browser gemerkt.
+- Klick auf eine Buchungszeile → Die Detailansicht der Buchung öffnet sich; „Zurück zur Übersicht“ führt an dieselbe Stelle. (leads to: Detailansicht der Buchung)
 - Klick auf „Erneut laden“ in der Störung der Buchungen eines Kontos → Die Buchungen dieses Kontos werden erneut abgerufen.
 - Klick auf „Weitere <n> Buchungen“ unter den ersten 20 → Alle Buchungen des Kontos stehen in der Liste.
 - Klick auf „Konten nach Organigramm“ oder den Knotennamen in der Krume → Der Baum erscheint wieder mit demselben Klappzustand. (leads to: zurück)

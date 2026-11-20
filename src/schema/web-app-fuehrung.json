@@ -76,6 +76,11 @@
             "wirkung": "Verwirft den Entwurf des Reiters und übernimmt den bereits geladenen Live-Stand"
           },
           {
+            "element": "stand-entwurf-behalten",
+            "ausloeser": "Klick auf „Entwurf behalten“ im Hinweis",
+            "wirkung": "Führt den Entwurf mit dem bereits geladenen Live-Stand zusammen: nur live Geändertes übernehmen, beidseitig Geändertes behalten, Hinzugefügtes übernehmen, live Entferntes entfernen"
+          },
+          {
             "element": "leinwand-neu-laden",
             "ausloeser": "Klick auf „Neu laden“ in der Leinwand",
             "wirkung": "Lädt die Leinwand neu und sendet den Entwurf erneut"
@@ -120,6 +125,11 @@
             "element": "mobil-reiter",
             "ausloeser": "Tippen auf „Struktur“, „Vorschau“ oder „Code“",
             "wirkung": "Wechselt zwischen Baum, Leinwand und Code-Ansicht"
+          },
+          {
+            "element": "entwurf-behalten",
+            "ausloeser": "Klick auf „Entwurf behalten“",
+            "wirkung": "Führt den Entwurf mit dem Live-Stand aus der Antwort zusammen (nur live Geändertes übernehmen, beidseitig Geändertes behalten); der Live-Stand wird neuer Ausgangsstand"
           },
           {
             "element": "live-laden",
@@ -207,9 +217,24 @@
             "wirkung": "Tokens im Entwurf wieder wie beim Öffnen bzw. letzten Laden (Basis); die Design-Änderung fällt aus dem Zähler"
           },
           {
+            "element": "spalten-wahl",
+            "ausloeser": "Knopfgruppe „Spalten“ 1, 2, 3 oder 4 im Formular eines Bereichs",
+            "wirkung": "Setzt die Spaltenzahl des Bereichs im Entwurf; die Leinwand zeigt die Zahl auf der breitesten Stufe, auf schmaleren begrenzt das Vereins-CSS sie (zum Beispiel unter 900 px höchstens zwei, unter 600 px eine); Hinweis unter der Knopfgruppe"
+          },
+          {
+            "element": "reihe-trennlinie",
+            "ausloeser": "Ziehen des Griffs ⇔ zwischen zwei Spalten einer gewählten Reihe, oder Pfeiltasten am fokussierten Griff",
+            "wirkung": "Setzt die Spaltenbreiten der Reihe bzw. der Sektion im Entwurf; die Anzeige „65 % | 35 %“ folgt, die Leinwand zeigt die neue Aufteilung sofort"
+          },
+          {
             "element": "umbau-rueckgaengig",
             "ausloeser": "Klick auf „Rückgängig“ in der Umbau-Meldung",
             "wirkung": "Nimmt den ganzen Zug samt Aufräumen in einem Schritt zurück — wie rueckgaengig in der Werkzeugleiste"
+          },
+          {
+            "element": "reihe-gleich-verteilen",
+            "ausloeser": "Klick auf „Gleich verteilen“ im Formular der Reihe",
+            "wirkung": "Entfernt die festen Spaltenbreiten im Entwurf; die Spalten sind gleich breit"
           },
           {
             "element": "reihe-aufloesen",
@@ -288,6 +313,11 @@
             "wirkung": "Der Dialog für einen Posten im Fenster öffnet sich."
           },
           {
+            "element": "fenster-posten-speichern",
+            "ausloeser": "Klick auf „Posten speichern“ im Dialog",
+            "wirkung": "Je berührtem Haushalt entsteht ein Teil mit dem Monatsanteil; neu oder beim Bearbeiten werden alle Teile gemeinsam geändert."
+          },
+          {
             "element": "fenster-rahmen-setzen-oeffnen",
             "ausloeser": "Klick auf „Rahmen setzen“ bzw. „Rahmen ändern“ im Kopf der Sicht",
             "wirkung": "Der Rahmen-Dialog des Fensters öffnet sich (Anatomie wie der Saisonrahmen-Dialog).",
@@ -313,6 +343,11 @@
             "element": "zeitraum-speichern",
             "ausloeser": "Klick auf „Zeitraum speichern“ im Zeitraum-Dialog",
             "wirkung": "Der Zeitraum der Abteilung wird gesetzt und gilt für ihre Unterknoten."
+          },
+          {
+            "element": "fehlenden-haushalt-anlegen",
+            "ausloeser": "Klick auf „Haushalt <Jahr> als Entwurf anlegen“ am Hinweis auf den fehlenden Haushalt oder im Posten-Dialog",
+            "wirkung": "Der Folgehaushalt entsteht als Entwurf aus dem jüngsten Vereinsplan."
           },
           {
             "element": "sicht-neu-laden",
@@ -429,14 +464,39 @@
             "wirkung": "öffnet die Hauptposition desselben Events im Jahr ihres Plans; gesammelte Planwert-Änderungen werden vorher gesendet"
           },
           {
+            "element": "hauptposition-erneut-laden",
+            "ausloeser": "Klick auf „Erneut laden“ im Hinweis zum Vorverkauf",
+            "wirkung": "fragt die Verknüpfungen des Events noch einmal an"
+          },
+          {
+            "element": "ziel-art-auswahl",
+            "ausloeser": "Umschalter „Event · Objekt · Raum · Gebäude“ oben im Dialog",
+            "wirkung": "lädt die Auswahl der gewählten Art; Rolle und Plan-Markierung erscheinen nur bei Event"
+          },
+          {
             "element": "event-auswahl",
             "ausloeser": "Eingabe und Auswahl im Feld „Event“ (Suche über den Titel)",
             "wirkung": "bestimmt das Event, mit dem die Position verknüpft werden soll"
           },
           {
+            "element": "dialog-eventliste-erneut-laden",
+            "ausloeser": "Klick auf „Erneut laden“ in der Fehlermeldung der Eventliste im Dialog",
+            "wirkung": "fragt die Eventauswahl noch einmal an"
+          },
+          {
+            "element": "plan-zuordnung-erneut-laden",
+            "ausloeser": "Klick auf „Erneut laden“ in der Fehlermeldung der Plan-Zuordnung",
+            "wirkung": "fragt die Verknüpfungsliste noch einmal an"
+          },
+          {
             "element": "rolle-auswahl",
             "ausloeser": "Auswahl „Hauptposition“ oder „Vorverkauf“",
             "wirkung": "legt fest, ob die Position der Posten des Eventjahrs ist oder der Vorverkauf im Plan davor"
+          },
+          {
+            "element": "verknuepfen-erneut-versuchen",
+            "ausloeser": "Klick auf „Erneut versuchen“ in der Fehlermeldung zum Verknüpfen",
+            "wirkung": "sendet dieselbe Verknüpfung mit denselben Angaben noch einmal"
           },
           {
             "element": "verknuepfen-bestaetigen",
@@ -572,6 +632,11 @@
             "ausloeser": "Klick auf „Zurück“ im Kopf der Detailansicht",
             "wirkung": "Die Liste, aus der die Detailansicht geöffnet wurde, steht wieder da.",
             "fuehrt_zu": "vorige Liste"
+          },
+          {
+            "element": "beleg-oeffnen",
+            "ausloeser": "Klick auf „Beleg ansehen“",
+            "wirkung": "Der Browser öffnet die Belegdatei in einem neuen Tab."
           },
           {
             "element": "korrigieren",
@@ -727,6 +792,11 @@
             "wirkung": "Der Dialog „Stand ablegen“ öffnet sich mit vorbelegter Bezeichnung."
           },
           {
+            "element": "stand-oeffnen",
+            "ausloeser": "Klick auf „Öffnen“ an einem Stand",
+            "wirkung": "Das abgelegte PDF öffnet sich in einem neuen Tab."
+          },
+          {
             "element": "stand-loeschen",
             "ausloeser": "Klick auf „Löschen“ an einem Stand oder in der Meldung zur fehlenden Datei",
             "wirkung": "Der Stand wird gelöscht und seine Datei weich entfernt."
@@ -735,6 +805,11 @@
             "element": "staende-neu-laden",
             "ausloeser": "Klick auf „Erneut laden“ in der Störung der Stände",
             "wirkung": "Die Liste der Stände wird erneut abgerufen."
+          },
+          {
+            "element": "stand-ablegen",
+            "ausloeser": "Klick auf „Stand ablegen“ im Dialog",
+            "wirkung": "Das PDF der Abrechnung entsteht im Browser, wird hochgeladen und mit Knoten und Zeitraum am Vereinsplan abgelegt."
           },
           {
             "element": "stand-ablegen-wiederholen",
@@ -775,6 +850,11 @@
             "element": "posten-abbrechen",
             "ausloeser": "Klick auf „Abbrechen“ oder Escape im Posten-Dialog",
             "wirkung": "Der Dialog schließt, nichts wird gesendet."
+          },
+          {
+            "element": "aufteilen-speichern",
+            "ausloeser": "Klick auf „Aufteilen“",
+            "wirkung": "Speichern setzt in einem Schritt die Unterposten der genannten Knoten und den Eigenanteil: Unterknoten mit Betrag bekommen oder ändern ihren Unterposten, ein Unterknoten mit bisherigem Unterposten und 0 € verliert ihn, der Posten selbst trägt danach „Bleibt bei“. Ungenannte Unterposten bleiben, das Gesamt bleibt. Scheitert das Speichern, ändert sich nichts."
           },
           {
             "element": "aufteilen-abbrechen",
@@ -824,6 +904,11 @@
             "element": "haushalt-oeffnen",
             "ausloeser": "Klick auf einen berührten Haushalt oder „Posten im Haushalt <Label>“ im Saisonkopf eines Knotens",
             "wirkung": "Die Section wechselt in die Sicht Haushalt mit diesem Plan und, aus dem Saisonkopf, diesem Knoten."
+          },
+          {
+            "element": "folgehaushalt-anlegen",
+            "ausloeser": "Klick auf „Haushalt <Label> als Entwurf anlegen“",
+            "wirkung": "Der Folgehaushalt entsteht als Entwurf aus dem jüngsten Vereinsplan und übernimmt die wiederkehrenden Posten."
           },
           {
             "element": "saisonrahmen-oeffnen",
@@ -1037,6 +1122,11 @@
             "wirkung": "Der Bericht nach Sphären wird erneut abgerufen."
           },
           {
+            "element": "haushaltsjahr-kennzeichnen",
+            "ausloeser": "Klick auf „Als geprüft kennzeichnen“ in der Karte „Haushaltsjahr prüfen“, dann „Kennzeichnen“ in der Bestätigung",
+            "wirkung": "Der Dienst rechnet den Durchlauf selbst und speichert das Label mit Person, Zeitpunkt und Zusammenfassung."
+          },
+          {
             "element": "export-erstellen-oeffnen",
             "ausloeser": "Klick auf „Export erstellen“ im Kopf der Export-Karte",
             "wirkung": "Der Dialog „Export für die Betriebsprüfung“ öffnet sich."
@@ -1133,6 +1223,17 @@
             "wirkung": "Nur Ist blendet die Planzahlen und Abweichungen aus: in Knotenzeilen „von <Plan>“, auf den Seiten die Spalte Plan."
           },
           {
+            "element": "konto-oeffnen",
+            "ausloeser": "Klick auf eine Kontozeile einer Seite",
+            "wirkung": "Das Kontenblatt der Position öffnet sich wie bisher aus der Liste (Übersicht → Kontenblatt); ein Festival öffnet seine Festtage.",
+            "fuehrt_zu": "Kontenblatt der Position"
+          },
+          {
+            "element": "veranstaltung-oeffnen",
+            "ausloeser": "Klick auf eine Zeile der Veranstaltungen",
+            "wirkung": "Die Karte zeigt die Veranstaltung mit ihren Konten auf zwei Seiten."
+          },
+          {
             "element": "knoten-position-anlegen",
             "ausloeser": "Klick auf „Position für <Knoten>“ im Leersatz eines aufgeklappten Knotens",
             "wirkung": "Der bestehende Dialog „Position“ öffnet sich mit der Abteilung des Knotens vorgewählt; bei einer Mannschaft mit ihrer Abteilung (der Dialog kennt keine Mannschaften), beim Verein „vereinsweit“."
@@ -1146,6 +1247,12 @@
             "element": "sicht-wechseln",
             "ausloeser": "Umschalter „Nach Rubrik | Nach Seite“ im Kopf der Karte",
             "wirkung": "Die Karte zeigt die gewählte Sicht; die Wahl wird je Verein im Browser gemerkt."
+          },
+          {
+            "element": "buchung-oeffnen",
+            "ausloeser": "Klick auf eine Buchungszeile",
+            "wirkung": "Die Detailansicht der Buchung öffnet sich; „Zurück zur Übersicht“ führt an dieselbe Stelle.",
+            "fuehrt_zu": "Detailansicht der Buchung"
           },
           {
             "element": "buchungen-neu-laden",
@@ -1523,6 +1630,11 @@
             "element": "flyer-hochladen",
             "ausloeser": "der Knopf oder Ziehen auf die Ablage",
             "wirkung": "lädt eine oder mehrere Dateien; die Bereichsfrage kommt auch hier vorher"
+          },
+          {
+            "element": "flyer-teilen",
+            "ausloeser": "das Teilen-Symbol an einer Kachel",
+            "wirkung": "öffnet die Auswahl der anderen Bereiche; nach dem Bestätigen gilt der Flyer auch dort"
           },
           {
             "element": "alle-flyer-teilen",
@@ -2002,9 +2114,19 @@
             "wirkung": "legt den Bereich an oder aktualisiert ihn"
           },
           {
+            "element": "bereich-kopieren",
+            "ausloeser": "Kopiersymbol an einer Karte",
+            "wirkung": "öffnet den Kopier-Dialog, in dem Ziel-Festtage und die mitzukopierenden Inhalte gewählt werden"
+          },
+          {
             "element": "kopieren-ausfuehren",
             "ausloeser": "der Bestätigungsknopf im Kopier-Dialog",
             "wirkung": "legt den Bereich in allen gewählten Festtagen an und überträgt, was angehakt ist; ein gleichnamiger Bereich wird wiederverwendet statt doppelt angelegt"
+          },
+          {
+            "element": "bereich-loeschen",
+            "ausloeser": "Papierkorb an einer Karte",
+            "wirkung": "nach dem Bestätigen startet das Löschen im Hintergrund; es entfernt die Aufgaben, Zuweisungen, Anhänge und Dateien des Bereichs und archiviert ihn"
           },
           {
             "element": "loeschen-ausfuehren",
@@ -2078,6 +2200,21 @@
             "element": "stichworte",
             "ausloeser": "Feld „Stichwort\" plus Knopf zum Hinzufügen",
             "wirkung": "hängt ein Stichwort an; jedes erscheint als Marke mit Löschkreuz"
+          },
+          {
+            "element": "farben",
+            "ausloeser": "Änderung in einem der Farbfelder",
+            "wirkung": "jede Änderung wirkt sofort auf die Vorschau"
+          },
+          {
+            "element": "formwerte",
+            "ausloeser": "Auswahl in einem der sechs Felder",
+            "wirkung": "jede Änderung wirkt sofort auf die Vorschau"
+          },
+          {
+            "element": "referenz-importieren",
+            "ausloeser": "Knopf zum Dateiwählen; angenommen werden .jsx .tsx .js .ts .css .html .json und reiner Text",
+            "wirkung": "liest Quelltext und zieht daraus Gestaltungsmerkmale — bis zu acht Farben (Hexwerte), die Schriften aus den Schriftangaben, dazu bis zu zwölf Signale aus CSS-Klassennamen und Komponentennamen"
           },
           {
             "element": "stil-berater",
@@ -2222,6 +2359,11 @@
         "zweck": "Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint — neue Bilder sind es ab dem Hochladen.",
         "aktionen": [
           {
+            "element": "bilder-hochladen",
+            "ausloeser": "Klick auf „Bilder hochladen“ im Kopf oder im Schrittvorschlag, auf „Bilder auswählen“ im Leerzustand oder Ablegen von Dateien auf dem Raster",
+            "wirkung": "Das Event wird frisch gelesen, dann werden die Bilder nacheinander in die Galerie geladen; bei einem öffentlichen, bestätigten Event sofort öffentlich, sonst oder bei unbekanntem Stand privat."
+          },
+          {
             "element": "bild-info",
             "ausloeser": "Klick auf das Informationssymbol einer Kachel",
             "wirkung": "Ein Dialog zeigt Name, Typ, Größe und die vollständige Dateikennung samt Knopf zum Kopieren."
@@ -2230,6 +2372,11 @@
             "element": "sichtbarkeit-umschalten",
             "ausloeser": "Klick auf das Augensymbol einer Kachel (Hinweis „Öffentlich — klicken, um privat zu schalten“ bzw. „Privat — klicken, um öffentlich zu schalten“)",
             "wirkung": "Das eine Bild wird öffentlich bzw. privat; öffentlich heißt Public Hub, Galerie der Mitglieder in der App und Homepage-Galerie."
+          },
+          {
+            "element": "bild-loeschen",
+            "ausloeser": "Klick auf den Papierkorb einer Kachel",
+            "wirkung": "Das Bild wird aus der Galerie entfernt."
           },
           {
             "element": "bild-gross-ansehen",
@@ -2687,6 +2834,11 @@
             "wirkung": "öffnet die öffentliche Ansicht der Karte — mit Vereinslogo, ihrer Gestaltung und dem QR-Code"
           },
           {
+            "element": "gericht-bearbeiten",
+            "ausloeser": "Stiftsymbol an einem Gericht",
+            "wirkung": "öffnet den Dialog „Eintrag bearbeiten“ für das Gericht"
+          },
+          {
             "element": "zuweisung-entfernen",
             "ausloeser": "Papierkorb an einer Karte",
             "wirkung": "nimmt die Zuweisung zurück"
@@ -2779,9 +2931,19 @@
             "wirkung": "verlässt den Planer und öffnet das Anlegen einer Serie, mit diesem Fest vorbelegt"
           },
           {
+            "element": "serie-waehlen",
+            "ausloeser": "das Feld „Turnierserie\"",
+            "wirkung": "merkt die gewählte Serie zum Verknüpfen vor; der Knopf zum Verknüpfen wird aktiv"
+          },
+          {
             "element": "serie-verknuepfen",
             "ausloeser": "Knopf „Aufnehmen\"",
             "wirkung": "verknüpft die Serie mit dem Fest — und alle ihre noch unverknüpften Ausführungen gleich mit — und schaltet den Turnier-Abschnitt des Fests ein"
+          },
+          {
+            "element": "festtag-waehlen",
+            "ausloeser": "das Feld „Festtag\"",
+            "wirkung": "merkt den gewählten Festtag zum Öffnen vor"
           },
           {
             "element": "festtag-oeffnen",
@@ -2860,11 +3022,6 @@
   },
   "hinweise": [
     "club/einstellungen/allgemein-rechtliches: kein Anker im Code",
-    "club/homepage-generator/designer#entwurf-behalten: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "club/homepage-generator/designer#reihe-gleich-verteilen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "club/homepage-generator/designer#reihe-trennlinie: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "club/homepage-generator/designer#spalten-wahl: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "club/homepage-generator/designer#stand-entwurf-behalten: Auslöser oder Wirkung fehlt oder nennt Internes",
     "club/homepage-generator/galerie-formular: kein Anker im Code",
     "club/homepage/galerie-diashow: kein Anker im Code",
     "club/homepage/impressum: kein Anker im Code",
@@ -2872,37 +3029,10 @@
     "club/mitglieder/mitglied-vereinsfoto: kein Anker im Code",
     "comvenio/event/abschnitt-turniere: kein Anker im Code",
     "comvenio/event/abschnitt-wetter: kein Anker im Code",
-    "comvenio/event/bereich-galerie#flyer-teilen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/gelaendeplan-export: kein Anker im Code",
     "comvenio/event/helfer-zugang: kein Anker im Code",
-    "comvenio/event/planer-bereiche#bereich-kopieren: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-bereiche#bereich-loeschen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-design-studio#farben: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-design-studio#formwerte: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-design-studio#referenz-importieren: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-galerie#bild-loeschen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-galerie#bilder-hochladen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-speisekarte#gericht-bearbeiten: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-turniere#festtag-waehlen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-turniere#serie-waehlen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/analyse: kein Anker im Code",
-    "comvenio/finance/bereich-als-sicht#fehlenden-haushalt-anlegen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/bereich-als-sicht#fenster-posten-speichern: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchhaltung-event-verknuepfung#dialog-eventliste-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchhaltung-event-verknuepfung#hauptposition-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchhaltung-event-verknuepfung#plan-zuordnung-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchhaltung-event-verknuepfung#verknuepfen-erneut-versuchen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchhaltung-event-verknuepfung#ziel-art-auswahl: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/buchungsdetail#beleg-oeffnen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/budget-organigramm#aufteilen-speichern: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/budget-organigramm#stand-ablegen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/budget-organigramm#stand-oeffnen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/budget-saison#folgehaushalt-anlegen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/investitionsplaner: kein Anker im Code",
-    "comvenio/finance/pruefung#haushaltsjahr-kennzeichnen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/uebersicht-nach-organigramm#buchung-oeffnen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/uebersicht-nach-organigramm#konto-oeffnen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/uebersicht-nach-organigramm#veranstaltung-oeffnen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/turniere/turnier-hub-rueckweg: kein Anker im Code",
     "comvenio/web/gruendung-erscheinungsbild: kein Anker im Code"
   ]

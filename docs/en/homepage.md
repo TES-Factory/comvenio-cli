@@ -590,6 +590,7 @@ Purpose: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anz
 - Klick auf „Löschen“ → Entfernt Element und zugehörige Slot-Einträge aus dem Entwurf
 - Ziehen eines Knotens im Baum → Verschiebt den Knoten an die Einfügestelle
 - Klick auf „Live-Stand laden“ → Verwirft den Entwurf des Reiters und übernimmt den bereits geladenen Live-Stand
+- Klick auf „Entwurf behalten“ im Hinweis → Führt den Entwurf mit dem bereits geladenen Live-Stand zusammen: nur live Geändertes übernehmen, beidseitig Geändertes behalten, Hinzugefügtes übernehmen, live Entferntes entfernen
 - Klick auf „Neu laden“ in der Leinwand → Lädt die Leinwand neu und sendet den Entwurf erneut
 - Eingabe in die Felder des Formulars (Text, Beschriftung, Ziel, Widget-Einstellungen) → Ändert den Eintrag im Entwurf; Leinwand zeigt die Änderung sofort
 - Klick auf „Kopieren“ → Kopiert die Adresse in die Zwischenablage
@@ -599,6 +600,7 @@ Purpose: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anz
 - Klick auf „Live-Stand laden“ in der Meldung → Verwirft den Entwurf des Reiters und lädt Reiter, Sektionen und Widgets neu; ein gelöschter Reiter verschwindet aus dem Baum
 - Klick auf „Hier weiterarbeiten“ → Dieser Tab wird der aktive Designer; der andere Tab wird schreibgeschützt
 - Tippen auf „Struktur“, „Vorschau“ oder „Code“ → Wechselt zwischen Baum, Leinwand und Code-Ansicht
+- Klick auf „Entwurf behalten“ → Führt den Entwurf mit dem Live-Stand aus der Antwort zusammen (nur live Geändertes übernehmen, beidseitig Geändertes behalten); der Live-Stand wird neuer Ausgangsstand
 - Klick auf „Live-Stand laden“ → Verwirft den Entwurf des Reiters und übernimmt den Live-Stand aus der Antwort
 - Klick auf „Abbrechen“ oder Escape → Schließt den Dialog ohne Änderung
 - Klick auf „Gerüst (HTML)“, „Stile (CSS)“ oder „Befunde“ → Wechselt den Inhalt der Code-Ansicht
@@ -616,7 +618,10 @@ Purpose: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anz
 - Farbfeld wählen oder Hex-Wert eingeben bei einer Kernfarbe (Hauptfarbe, Akzent, Text auf Akzent, Hintergrund, Text, gedämpfter Text) oder einer weiteren Vereinsfarbe → Setzt die Rolle in tokens.palette des Design-Entwurfs; Leinwand und Fenster zeigen sie sofort; das Panel zählt als eine Änderung „Design“
 - Regler Rundung, Abstände, Schriftgröße oder Knopfgruppe Schatten bewegen → Setzt radius.md, spacing_scale, type_scale oder shadow_level im Design-Entwurf; die Seite zeigt es sofort
 - Klick auf „Auf Ausgangsstand zurücksetzen“ → Tokens im Entwurf wieder wie beim Öffnen bzw. letzten Laden (Basis); die Design-Änderung fällt aus dem Zähler
+- Knopfgruppe „Spalten“ 1, 2, 3 oder 4 im Formular eines Bereichs → Setzt die Spaltenzahl des Bereichs im Entwurf; die Leinwand zeigt die Zahl auf der breitesten Stufe, auf schmaleren begrenzt das Vereins-CSS sie (zum Beispiel unter 900 px höchstens zwei, unter 600 px eine); Hinweis unter der Knopfgruppe
+- Ziehen des Griffs ⇔ zwischen zwei Spalten einer gewählten Reihe, oder Pfeiltasten am fokussierten Griff → Setzt die Spaltenbreiten der Reihe bzw. der Sektion im Entwurf; die Anzeige „65 % | 35 %“ folgt, die Leinwand zeigt die neue Aufteilung sofort
 - Klick auf „Rückgängig“ in der Umbau-Meldung → Nimmt den ganzen Zug samt Aufräumen in einem Schritt zurück — wie rueckgaengig in der Werkzeugleiste
+- Klick auf „Gleich verteilen“ im Formular der Reihe → Entfernt die festen Spaltenbreiten im Entwurf; die Spalten sind gleich breit
 - Klick auf „Reihe auflösen“ im Formular der Reihe → Stellt die Elemente der Reihe untereinander an ihre Stelle; im Gerüst entfällt die Hülle, eine Sektion wird einspaltig (layout full, spalten_breiten null)
 
 ### Entwurfsvorschau im zweiten Fenster
