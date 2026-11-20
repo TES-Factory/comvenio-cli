@@ -618,7 +618,10 @@ Purpose: Wo steht was auf meiner Homepage, und wie ändere ich es, ohne HTML anz
 - Farbfeld wählen oder Hex-Wert eingeben bei einer Kernfarbe (Hauptfarbe, Akzent, Text auf Akzent, Hintergrund, Text, gedämpfter Text) oder einer weiteren Vereinsfarbe → Setzt die Rolle in tokens.palette des Design-Entwurfs; Leinwand und Fenster zeigen sie sofort; das Panel zählt als eine Änderung „Design“
 - Regler Rundung, Abstände, Schriftgröße oder Knopfgruppe Schatten bewegen → Setzt radius.md, spacing_scale, type_scale oder shadow_level im Design-Entwurf; die Seite zeigt es sofort
 - Klick auf „Auf Ausgangsstand zurücksetzen“ → Tokens im Entwurf wieder wie beim Öffnen bzw. letzten Laden (Basis); die Design-Änderung fällt aus dem Zähler
+- Knopfgruppe „Spalten“ 1, 2, 3 oder 4 im Formular eines Bereichs → Setzt die Spaltenzahl des Bereichs im Entwurf; die Leinwand zeigt die Zahl auf der breitesten Stufe, auf schmaleren begrenzt das Vereins-CSS sie (zum Beispiel unter 900 px höchstens zwei, unter 600 px eine); Hinweis unter der Knopfgruppe
+- Ziehen des Griffs ⇔ zwischen zwei Spalten einer gewählten Reihe, oder Pfeiltasten am fokussierten Griff → Setzt die Spaltenbreiten der Reihe bzw. der Sektion im Entwurf; die Anzeige „65 % | 35 %“ folgt, die Leinwand zeigt die neue Aufteilung sofort
 - Klick auf „Rückgängig“ in der Umbau-Meldung → Nimmt den ganzen Zug samt Aufräumen in einem Schritt zurück — wie rueckgaengig in der Werkzeugleiste
+- Klick auf „Gleich verteilen“ im Formular der Reihe → Entfernt die festen Spaltenbreiten im Entwurf; die Spalten sind gleich breit
 - Klick auf „Reihe auflösen“ im Formular der Reihe → Stellt die Elemente der Reihe untereinander an ihre Stelle; im Gerüst entfällt die Hülle, eine Sektion wird einspaltig (layout full, spalten_breiten null)
 
 ### Entwurfsvorschau im zweiten Fenster
