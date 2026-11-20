@@ -175,9 +175,18 @@ export function hubVon(spec: { pfad: string; frontmatter: Record<string, unknown
 const INTERNE_KENNUNG = /(?<![\wÄÖÜäöüß-])[a-z][a-z0-9]*(?:-[a-z0-9]+)+(?![\wÄÖÜäöüß-])|(?<![\wÄÖÜäöüß])[a-z][a-z0-9-]*(?:\/[a-z0-9-]+)+(?:[.#][\w.-]+)?/gu;
 const KEINE_KENNUNG = new Set(["und/oder"]);
 // Contract identifiers a specification cites (`(D49)`, `nach TD-6`, `AK-F-03`,
-// `DC-5`): decisions, criteria and test cases, not words for a customer
-// (Checkpoint 1333396d, point 5). Team names like `U18` are not among them.
-const VERTRAGS_KENNUNG = /(?<![\wÄÖÜäöüß-])(?:D|TD|DC|AK-[FN]|AK|UC|TC|D-DOK)-?\d+(?![\wÄÖÜäöüß])/u;
+// `D-AF-07`, `DC-5`): decisions, criteria and test cases, not words for a
+// customer (Checkpoint 1333396d, point 5). A bare `D<n>` counts only where it
+// is cited — in parentheses or after "nach/siehe/gemäß" — because `D1` is also
+// a youth class ("D1-Junioren"); team names like `U18` never match.
+const VERTRAGS_KENNUNG = new RegExp(
+  [
+    String.raw`(?<![\wÄÖÜäöüß-])(?:TD|DC|UC|TC|BR)-\d+(?![\wÄÖÜäöüß])`,
+    String.raw`(?<![\wÄÖÜäöüß-])[A-Z]{1,4}(?:-[A-Z]{1,4})+-\d+(?![\wÄÖÜäöüß])`,
+    String.raw`(?:(?<=\()|(?<=\b(?:nach|siehe|gemäß) ))D\d+(?![\wÄÖÜäöüß-])`,
+  ].join("|"),
+  "u",
+);
 // Specifications quote decisions by person ("… will die Buchhaltung …"); the
 // public documentation must not (tests/public-documentation.test.ts, same pattern).
 const PERSONENNAME = new RegExp(`\\b(?:${"To" + "m"}|${"Tho" + "mas"})\\b`, "iu");

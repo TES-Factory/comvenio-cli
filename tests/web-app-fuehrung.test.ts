@@ -434,8 +434,12 @@ describe("kundentext", () => {
     expect(kundentext("führt den Entwurf mit dem Live-Stand zusammen (TD-6): nur live Geändertes")).toBeNull();
     expect(kundentext("führt den Entwurf nach TD-6 mit dem Live-Stand zusammen")).toBeNull();
     expect(kundentext("erfüllt AK-F-03 und DC-5")).toBeNull();
-    // Team and age names are customer words, not contract identifiers.
+    expect(kundentext("wie entschieden (D-AF-07)")).toBeNull();
+    expect(kundentext("Ablauf siehe D7")).toBeNull();
+    // Team and age names are customer words, not contract identifiers (review 7882795e P1).
     expect(kundentext("für die U18 und die U12")).toBe("für die U18 und die U12");
+    expect(kundentext("Mannschaft D1")).toBe("Mannschaft D1");
+    expect(kundentext("Spiel der D1-Junioren")).toBe("Spiel der D1-Junioren");
   });
 });
 
