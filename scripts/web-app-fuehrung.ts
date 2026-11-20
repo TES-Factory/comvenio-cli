@@ -181,9 +181,11 @@ const KEINE_KENNUNG = new Set(["und/oder"]);
 // a youth class ("D1-Junioren"); team names like `U18` never match.
 const VERTRAGS_KENNUNG = new RegExp(
   [
-    String.raw`(?<![\wÄÖÜäöüß-])(?:TD|DC|UC|TC|BR)-\d+(?![\wÄÖÜäöüß])`,
+    String.raw`(?<![\wÄÖÜäöüß-])(?:D|TD|DC|UC|TC|BR)-\d+(?![\wÄÖÜäöüß])`,
     String.raw`(?<![\wÄÖÜäöüß-])[A-Z]{1,4}(?:-[A-Z]{1,4})+-\d+(?![\wÄÖÜäöüß])`,
-    String.raw`(?:(?<=\()|(?<=\b(?:nach|siehe|gemäß) ))D\d+(?![\wÄÖÜäöüß-])`,
+    // Cited: anywhere inside parentheses ("(08 D20, D24)", "(§ Master D14)") or after a citing word.
+    String.raw`\([^()]*?(?<![\wÄÖÜäöüß-])D\d+(?![\wÄÖÜäöüß-])[^()]*\)`,
+    String.raw`(?<=\b(?:nach|siehe|gemäß) )D\d+(?![\wÄÖÜäöüß-])`,
   ].join("|"),
   "u",
 );

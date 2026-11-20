@@ -436,6 +436,11 @@ describe("kundentext", () => {
     expect(kundentext("erfüllt AK-F-03 und DC-5")).toBeNull();
     expect(kundentext("wie entschieden (D-AF-07)")).toBeNull();
     expect(kundentext("Ablauf siehe D7")).toBeNull();
+    // Forms from the specifications (review 7882795e round 2).
+    expect(kundentext("Lehnt die Anfrage ab (D-29).")).toBeNull();
+    expect(kundentext("übernimmt den Stand (08 D20, D24)")).toBeNull();
+    expect(kundentext("wie vereinbart (09, D15)")).toBeNull();
+    expect(kundentext("gilt weiter (§ Master D14)")).toBeNull();
     // Team and age names are customer words, not contract identifiers (review 7882795e P1).
     expect(kundentext("für die U18 und die U12")).toBe("für die U18 und die U12");
     expect(kundentext("Mannschaft D1")).toBe("Mannschaft D1");
