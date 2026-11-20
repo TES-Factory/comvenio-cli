@@ -658,6 +658,7 @@ Zweck: Beiträge, die Gäste am Fest einstellen, prüfen: freigeben oder ausblen
 
 Zweck: Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint — neue Bilder sind es ab dem Hochladen.
 
+- Klick auf „Bilder hochladen“ im Kopf oder im Schrittvorschlag, auf „Bilder auswählen“ im Leerzustand oder Ablegen von Dateien auf dem Raster → Das Event wird frisch gelesen, dann werden die Bilder nacheinander in die Galerie geladen; bei einem öffentlichen, bestätigten Event sofort öffentlich, sonst oder bei unbekanntem Stand privat.
 - Klick auf das Informationssymbol einer Kachel → Ein Dialog zeigt Name, Typ, Größe und die vollständige Dateikennung samt Knopf zum Kopieren.
 - Klick auf das Augensymbol einer Kachel (Hinweis „Öffentlich — klicken, um privat zu schalten“ bzw. „Privat — klicken, um öffentlich zu schalten“) → Das eine Bild wird öffentlich bzw. privat; öffentlich heißt Public Hub, Galerie der Mitglieder in der App und Homepage-Galerie.
 - Klick auf eine Kachel, deren Vorschau geladen ist → Das Bild erscheint groß auf durchsichtigem Grund mit einem Schließkreuz an der Ecke.

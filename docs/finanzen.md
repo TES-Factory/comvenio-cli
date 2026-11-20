@@ -189,6 +189,7 @@ Zweck: Wie steht eine Abteilung in ihrem eigenen Zeitraum — und worauf lief je
 - Klick auf „<Fenster des Zeitraums>“ oder „Haushaltsjahr <Jahr>“ im Kopf → Die Ansicht wechselt zwischen dem Fenster des Zeitraums und dem Haushaltsjahr; vorgewählt ist das laufende Fenster des Zeitraums.
 - Auswahl eines anderen Fensters im Feld „Zeitraum“ neben dem Umschalter → Die Ansicht zeigt das gewählte Fenster (z. B. App-Jahr 2025/26).
 - Klick auf „Posten“ im Kopf der Sicht → Der Dialog für einen Posten im Fenster öffnet sich.
+- Klick auf „Posten speichern“ im Dialog → Je berührtem Haushalt entsteht ein Teil mit dem Monatsanteil; neu oder beim Bearbeiten werden alle Teile gemeinsam geändert.
 - Klick auf „Rahmen setzen“ bzw. „Rahmen ändern“ im Kopf der Sicht → Der Rahmen-Dialog des Fensters öffnet sich (Anatomie wie der Saisonrahmen-Dialog). (führt zu: Dialog Rahmen des Fensters)
 - Klick auf „Rahmen speichern“ im Rahmen-Dialog des Fensters → Der Rahmen des Knotens im Fenster wird gesetzt, als neue Version.
 - Klick auf „Abrechnung“ im Kopf der Sicht → Die Abrechnung des Knotens im Fenster öffnet sich (Anatomie C3 der Organigramm-Spezifikation, dazu Ergebnis und Rahmenvorschlag). (führt zu: Abrechnung des Fensters)

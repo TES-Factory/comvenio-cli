@@ -76,6 +76,11 @@
             "wirkung": "Verwirft den Entwurf des Reiters und übernimmt den bereits geladenen Live-Stand"
           },
           {
+            "element": "stand-entwurf-behalten",
+            "ausloeser": "Klick auf „Entwurf behalten“ im Hinweis",
+            "wirkung": "Führt den Entwurf mit dem bereits geladenen Live-Stand zusammen: nur live Geändertes übernehmen, beidseitig Geändertes behalten, Hinzugefügtes übernehmen, live Entferntes entfernen"
+          },
+          {
             "element": "leinwand-neu-laden",
             "ausloeser": "Klick auf „Neu laden“ in der Leinwand",
             "wirkung": "Lädt die Leinwand neu und sendet den Entwurf erneut"
@@ -120,6 +125,11 @@
             "element": "mobil-reiter",
             "ausloeser": "Tippen auf „Struktur“, „Vorschau“ oder „Code“",
             "wirkung": "Wechselt zwischen Baum, Leinwand und Code-Ansicht"
+          },
+          {
+            "element": "entwurf-behalten",
+            "ausloeser": "Klick auf „Entwurf behalten“",
+            "wirkung": "Führt den Entwurf mit dem Live-Stand aus der Antwort zusammen (nur live Geändertes übernehmen, beidseitig Geändertes behalten); der Live-Stand wird neuer Ausgangsstand"
           },
           {
             "element": "live-laden",
@@ -286,6 +296,11 @@
             "element": "fenster-posten-anlegen-oeffnen",
             "ausloeser": "Klick auf „Posten“ im Kopf der Sicht",
             "wirkung": "Der Dialog für einen Posten im Fenster öffnet sich."
+          },
+          {
+            "element": "fenster-posten-speichern",
+            "ausloeser": "Klick auf „Posten speichern“ im Dialog",
+            "wirkung": "Je berührtem Haushalt entsteht ein Teil mit dem Monatsanteil; neu oder beim Bearbeiten werden alle Teile gemeinsam geändert."
           },
           {
             "element": "fenster-rahmen-setzen-oeffnen",
@@ -2222,6 +2237,11 @@
         "zweck": "Bilder des Fests sammeln und je Bild entscheiden, ob es öffentlich erscheint — neue Bilder sind es ab dem Hochladen.",
         "aktionen": [
           {
+            "element": "bilder-hochladen",
+            "ausloeser": "Klick auf „Bilder hochladen“ im Kopf oder im Schrittvorschlag, auf „Bilder auswählen“ im Leerzustand oder Ablegen von Dateien auf dem Raster",
+            "wirkung": "Das Event wird frisch gelesen, dann werden die Bilder nacheinander in die Galerie geladen; bei einem öffentlichen, bestätigten Event sofort öffentlich, sonst oder bei unbekanntem Stand privat."
+          },
+          {
             "element": "bild-info",
             "ausloeser": "Klick auf das Informationssymbol einer Kachel",
             "wirkung": "Ein Dialog zeigt Name, Typ, Größe und die vollständige Dateikennung samt Knopf zum Kopieren."
@@ -2860,11 +2880,9 @@
   },
   "hinweise": [
     "club/einstellungen/allgemein-rechtliches: kein Anker im Code",
-    "club/homepage-generator/designer#entwurf-behalten: Auslöser oder Wirkung fehlt oder nennt Internes",
     "club/homepage-generator/designer#reihe-gleich-verteilen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "club/homepage-generator/designer#reihe-trennlinie: Auslöser oder Wirkung fehlt oder nennt Internes",
     "club/homepage-generator/designer#spalten-wahl: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "club/homepage-generator/designer#stand-entwurf-behalten: Auslöser oder Wirkung fehlt oder nennt Internes",
     "club/homepage-generator/galerie-formular: kein Anker im Code",
     "club/homepage/galerie-diashow: kein Anker im Code",
     "club/homepage/impressum: kein Anker im Code",
@@ -2881,13 +2899,11 @@
     "comvenio/event/planer-design-studio#formwerte: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/planer-design-studio#referenz-importieren: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/planer-galerie#bild-loeschen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/event/planer-galerie#bilder-hochladen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/planer-speisekarte#gericht-bearbeiten: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/planer-turniere#festtag-waehlen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/event/planer-turniere#serie-waehlen: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/analyse: kein Anker im Code",
     "comvenio/finance/bereich-als-sicht#fehlenden-haushalt-anlegen: Auslöser oder Wirkung fehlt oder nennt Internes",
-    "comvenio/finance/bereich-als-sicht#fenster-posten-speichern: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/buchhaltung-event-verknuepfung#dialog-eventliste-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/buchhaltung-event-verknuepfung#hauptposition-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
     "comvenio/finance/buchhaltung-event-verknuepfung#plan-zuordnung-erneut-laden: Auslöser oder Wirkung fehlt oder nennt Internes",
