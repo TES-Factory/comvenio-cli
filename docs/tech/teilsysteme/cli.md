@@ -178,6 +178,9 @@ Genutzt von: mcp-server
 | withVorlagenBlock | scripts/docs-lib.ts |
 | withWebAppBlock | scripts/docs-lib.ts |
 | withWidgetsBlock | scripts/docs-lib.ts |
+| checkPair | scripts/faq-import.ts |
+| importFaq | scripts/faq-import.ts |
+| replaceSection | scripts/faq-import.ts |
 | abteilungsPlan | scripts/finance-sim.ts |
 | act | scripts/finance-sim.ts |
 | beleg | scripts/finance-sim.ts |
@@ -519,6 +522,9 @@ Genutzt von: mcp-server
 | file | tests/credential-store-windows.test.ts |
 | articles | tests/docs-examples.test.ts |
 | fill | tests/docs-examples.test.ts |
+| payload | tests/faq-import.test.ts |
+| source | tests/faq-import.test.ts |
+| withDocs | tests/faq-import.test.ts |
 | dateien | tests/feldweg-spalten-breiten.test.ts |
 | client | tests/finance-belege.test.ts |
 | datei | tests/finance-belege.test.ts |
