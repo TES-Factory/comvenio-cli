@@ -1,0 +1,11 @@
+{
+  "Dienstname": "probe-service",
+  "Route": "/api/probe",
+  "Dateipfad": "src/probe",
+  "Tabelle, Modell, Feld": "`probe_feld`",
+  "Kennung": "TC-17",
+  "Fehlercode": "FEHLER_PROBE",
+  "interner Begriff": "Tech Doc",
+  "fremdes Element": "> ein Zitat",
+  "Quellspur": "<!-- Kommentar -->"
+}
