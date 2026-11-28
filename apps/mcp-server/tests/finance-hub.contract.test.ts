@@ -84,6 +84,19 @@ describe("Finance Hub: Inventar", () => {
 });
 
 describe("Finance Hub: Mandant und Vorprüfung", () => {
+  test("Versteigerung bindet Schreibziel und Vorabspende an den Vereinstermin", async () => {
+    const { calls, client } = recording(() => ({version:1, lots:{}, awards:{}, donations:[]}));
+    const finance = createK14ToolSet({client, write_safety:allowWrites, confirmation:confirmAll});
+    const input = {club_id:clubId,event_id:entryId,operation:"auction_record",data:{
+      kind:"donation", date:"2026-11-15", amount_cents:2000, expected_version:0, request_id:entryId,
+    }};
+    await finance.execute({action_id:"cai.finance.25.entry_correction",input,context,capability_snapshot:manager});
+    expect(calls.at(-1)?.path).toBe(`/clubs/${clubId}/events/${entryId}/auction`);
+    expect(calls.at(-1)?.body).toEqual(input.data);
+    await expect(finance.execute({action_id:"cai.finance.25.entry_correction", input,
+      context:{...context,department_id:otherClubId}, capability_snapshot:manager})).rejects.toBeDefined();
+    expect(calls).toHaveLength(1);
+  });
   test("ein Storno an einer Buchung eines anderen Vereins wird vor dem Schreiben abgewiesen", async () => {
     const { calls, client } = recording(() => ({ id: entryId, club_id: otherClubId }));
     const finance = createK14ToolSet({ client, write_safety: allowWrites, confirmation: confirmAll });

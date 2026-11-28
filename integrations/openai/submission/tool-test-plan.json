@@ -1325,7 +1325,7 @@
     },
     {
       "tool_name": "cv_event_08_series_list_show_create_materialize_promote_56c35d49",
-      "prompt": "Prüfe „Comvenio: Veranstaltungen – series list show create update delete materialize next promote recurring promote yearly“ mit synthetischen Daten im ausgewählten Testverein.",
+      "prompt": "Prüfe „Comvenio: Veranstaltungen – series list show create update delete materialize next promote recurring promote yearly assi“ mit synthetischen Daten im ausgewählten Testverein.",
       "expected_response_fixture": "fixtures/provider/openai/full-connector-v1.response.json",
       "required_surfaces": [
         "web",
