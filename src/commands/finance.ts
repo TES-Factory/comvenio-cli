@@ -3,7 +3,7 @@ import { loadState } from "../auth.ts";
 import { PublicCliError } from "../errors.ts";
 import { output } from "../format.ts";
 import { connector } from "./action.ts";
-import { callFinance, checkClubChoice, mapClassic, runBelege, runHub, runPruefung } from "./finance-connector.ts";
+import { callFinance, checkClubChoice, mapClassic, runAuction, runBelege, runHub, runPruefung } from "./finance-connector.ts";
 
 // Vereins-Buchhaltung des finance-service: Jahresplan, Budgetposten, Buchungen,
 // der ganze Finance Hub. Seit dem Geräte-Token-Abbau (geraetetoken-abbau-04)
@@ -45,6 +45,10 @@ export type FinanceCommandOpts = {
   position?: string;
   // belegerfassung-10: beleg-event --event, beleg-event --none, beleg-buchen --event-posten.
   event?: string;
+  stand?: string;
+  person?: string;
+  los?: string;
+  zuschlag?: string;
   none?: boolean;
   eventPosten?: boolean;
   input?: string;
@@ -74,6 +78,10 @@ export function registerFinanceCommands(cli: CAC): void {
       "Vereins-Buchhaltung und Investitionsplaner über die Anmeldung mit comvenio login — der ganze Finance Hub (finance run <bereich> <operation>)",
     )
     .option("--club <id>", "Nur zur Kontrolle: muss dem Verein der Anmeldung entsprechen")
+    .option("--stand <version>", "Versteigerung: Version aus dem zuletzt gelesenen Stand")
+    .option("--person <text>", "Versteigerung: Geber, Name oder Bieternummer")
+    .option("--los <id>", "Versteigerung: Kennung der Sachspende")
+    .option("--zuschlag <id>", "Versteigerung: Kennung des zu bezahlenden Zuschlags")
     .option("--year <jahr>", "Planjahr — Pflicht bei allen plan-*, position-list/create und summary")
     .option("--file <path>", "JSON-Payload; einzelne Optionen überschreiben einzelne Felder daraus")
     .option("--name <text>", "Name einer Budgetposition")
@@ -114,6 +122,8 @@ export function registerFinanceCommands(cli: CAC): void {
     .example("  $ comvenio finance plan-create --year 2026 --capital 500000")
     .example("  $ comvenio finance position-create --year 2026 --name Sommerfest --expense 120000")
     .example("  $ comvenio finance entry-create <positions-id> --description Getränke --expense 4550 --date 2026-07-01")
+    .example("  $ comvenio finance versteigerung stand --event <termin-id> --json")
+    .example('  $ comvenio finance versteigerung sachspende --event <termin-id> --name "Christbaum" --date 2026-11-15 --stand 0 --idempotency-key <uuid>')
     .example("  $ comvenio finance entry-approve <buchungs-id>")
     .example("  $ comvenio finance beleg-event <beleg-id> --event <event-id>")
     .example("  $ comvenio finance beleg-buchen <beleg-id> --event-posten --expense 45900 --date 2026-07-05 --account <konto-id> --description \"Getränke Sommerfest\"")
@@ -124,7 +134,9 @@ export function registerFinanceCommands(cli: CAC): void {
       const state = await loadState();
       checkClubChoice(opts.club, state.oauth.clubId);
       const via = await connector();
-      const result = action === "run"
+      const result = action === "versteigerung"
+        ? await runAuction(via, id, opts)
+        : action === "run"
         ? await runHub(via, id, operation, opts)
         : action === "pruefung"
         ? await runPruefung(via, opts, id)

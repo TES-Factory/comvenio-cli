@@ -98,6 +98,24 @@ function optional(input: JsonObject, keys: string[]): Record<string, string> {
 }
 
 const club = (input: JsonObject) => `/clubs/${str(input, "club_id")}`;
+const auctionPath = (i: JsonObject) => `${club(i)}/events/${str(i, "event_id")}/auction`;
+const auctionRoute = "/clubs/{club_id}/events/{event_id}/auction";
+const auctionBase = { request_id: uuid, expected_version: z.number().int().nonnegative() };
+const auctionName = z.string().trim().min(1).max(160);
+const auctionAmount = z.number().int().positive().max(2147483647);
+const auctionCommand = z.discriminatedUnion("kind", [
+  z.object({ ...auctionBase, kind: z.literal("lot"), name: auctionName, date: z.iso.date(), person: auctionName.optional() }).strict(),
+  z.object({ ...auctionBase, kind: z.literal("bid"), lot_id: uuid, person: auctionName, amount_cents: auctionAmount }).strict(),
+  z.object({ ...auctionBase, kind: z.enum(["withdraw", "award", "return", "take"]), lot_id: uuid }).strict(),
+  z.object({ ...auctionBase, kind: z.literal("payment"), award_id: uuid, date: z.iso.date(), account_id: uuid.optional() }).strict(),
+  z.object({ ...auctionBase, kind: z.literal("donation"), amount_cents: auctionAmount, date: z.iso.date(), person: auctionName.optional(), account_id: uuid.optional(), existing_entry_id: uuid.optional() }).strict(),
+]);
+function clubAuctionOnly(input: JsonObject, context: RequestContext): void {
+  if (context.department_id || input.department_id) throw createConnectorError({
+    code: "TENANT_MISMATCH", message: "Die Versteigerung verlangt den vereinsweiten Finanzzugang.",
+    request_id: context.request_id, retryable: false,
+  });
+}
 const byId = (input: JsonObject) => `${club(input)}/finance-plans/by-id/${str(input, "plan_id")}`;
 const BY_ID = "/clubs/{club_id}/finance-plans/by-id/{plan_id}";
 
@@ -273,6 +291,7 @@ const ACTIONS: Record<string, { source: string; ops: Op[] }> = {
     // (money_account_required) und Beleg oder Eigenbeleg-Begründung
     // (receipt_required). cai.finance.16 kennt beides nicht — in einem Verein
     // mit Geldkonten nimmt der Dienst dort keine Buchung an.
+    { op: "auction_record", method: "POST", template: auctionRoute, path: auctionPath, risk: "write", shape: { event_id: uuid, data: auctionCommand }, body: payload, check: clubAuctionOnly },
     { op: "entry_create", method: "POST", template: "/positions/{position_id}/entries", path: (i) => `/positions/${str(i, "position_id")}/entries`, risk: "write", shape: { position_id: uuid, data }, body: payload, preflight: positionOwn },
     // bereich-als-sicht-04 §4.3: ungeplant buchen — der Dienst legt beim ersten
     // Mal den Posten „Ungeplant · <Rubrik>“ an (D46); die Vorschau sagt, ob.
@@ -366,6 +385,7 @@ const ACTIONS: Record<string, { source: string; ops: Op[] }> = {
     { op: "download", method: "GET", template: `${BY_ID}/audit-exports/{export_id}/download`, path: (i) => `${byId(i)}/audit-exports/${str(i, "export_id")}/download`, risk: "read", shape: { plan_id: uuid, export_id: uuid }, binary: true },
   ] },
   "cai.finance.31.finance_views": { source: "event-finance|views", ops: [
+    { op: "auction_show", method: "GET", template: auctionRoute, path: auctionPath, risk: "read", shape: { event_id: uuid }, check: clubAuctionOnly },
     // belegerfassung-01/-03: the club's receipt inbox and one receipt (its
     // candidates need the club check first — cai.finance.25).
     { op: "receipt_inbox", method: "GET", template: "/clubs/{club_id}/receipt-scans", path: (i) => `${club(i)}/receipt-scans`, risk: "read", shape: { status: z.string().max(200).optional() }, query: (i) => optional(i, ["status"]), multiDepartment: true },

@@ -7,6 +7,26 @@ stichwoerter: [finanzen, buchhaltung, jahresplan, budgetposten, buchung, cent]
 
 # Vereins-Buchhaltung
 
+## Christbaumversteigerung mit Vorabspenden
+
+Mit `comvenio finance versteigerung stand --event <Termin-ID> --json` liest du Lose, Gebote, Zuschläge und Geldspenden für genau diesen Vereinstermin. Der Stand enthält die Versionsnummer `version`. Nach jeder Eingabe kommt der neue Stand zurück. Für jeden Schreibvorgang verwendest du die zuletzt gelesene Version mit `--stand` und eine neue UUID mit `--idempotency-key`. Bei einem Verbindungsabbruch wiederholst du denselben Befehl mit demselben Schlüssel.
+
+```powershell
+$eingabe = [guid]::NewGuid().ToString()
+comvenio finance versteigerung sachspende --event <Termin-ID> --stand 0 --idempotency-key $eingabe --name "Christbaum" --date 2026-11-15 --person "Gärtnerei"
+```
+
+Die folgenden Aktionen stehen nach `comvenio finance versteigerung`. Bei Geldbeträgen steht `--revenue` für Cent. Für 20 € gibst du `2000` ein.
+
+| Aktion | Zusätzliche Angaben |
+|---|---|
+| `sachspende` | `--name`, `--date` und optional `--person`. Die zurückgegebene Los-ID wird beim Bieten verwendet. |
+| `geldspende` | `--revenue`, `--date` mit dem tatsächlichen Eingangstag, optional `--person`. Für neue Eingänge das Geldkonto mit `--account` wählen, wenn der Verein Geldkonten führt. Für eine bereits gebuchte Einnahme am Veranstaltungsposten `--entry <Buchungs-ID>` angeben. |
+| `gebot` | `--los`, `--person` (Name oder Bieternummer) und `--revenue`. |
+| `zurücknehmen` / `zuschlag` | `--los`. Wirkt auf das letzte gültige Höchstgebot der laufenden Runde. |
+| `zurückschenken` / `mitnehmen` | `--los`. Eine Rückgabe öffnet die nächste Runde am selben Los. |
+| `zahlung` | `--zuschlag <Zuschlags-ID>`, `--date` und gegebenenfalls `--account`. Der Betrag stammt aus dem Zuschlag. |
+
 ## Wozu
 
 Die Finanzbefehle decken die Vereins-Buchhaltung ab: den Jahresplan, die Budgetposten darunter und
@@ -460,13 +480,13 @@ Zweck: Der Arbeitsplatz des Kassiers für alles, was als Beleg hereinkommt: zuor
 - `cai.finance.22.plan_lifecycle` — close, next_period (ändern mit Bestätigung) · Scopes: `finance.write`
 - `cai.finance.23.settings` — show, update (lesen, ändern) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.24.money_account` — list, create, update, opening, opening_versions, cash_book, reconciliation, grants, grant_set, grant_revoke, transfers, transfer_show, transfer_create, transfer_reverse, booking_accounts (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
-- `cai.finance.25.entry_correction` — entry_create, entry_create_unplanned, reverse, receipt, versions, receipt_scan_create, receipt_candidates, receipt_attach, receipt_book, receipt_reject, receipt_event_set, receipt_withdraw, receipt_file, position_link_set, position_link_remove, tax_sphere, objection_create, objections, objection_withdraw (ändern, ändern mit Bestätigung, lesen) · Scopes: `finance.write`, `finance.read`
+- `cai.finance.25.entry_correction` — auction_record, entry_create, entry_create_unplanned, reverse, receipt, versions, receipt_scan_create, receipt_candidates, receipt_attach, receipt_book, receipt_reject, receipt_event_set, receipt_withdraw, receipt_file, position_link_set, position_link_remove, tax_sphere, objection_create, objections, objection_withdraw (ändern, ändern mit Bestätigung, lesen) · Scopes: `finance.write`, `finance.read`
 - `cai.finance.26.cash_report` — list, create, show, submit, reject, entries, approve_entries, approve, tax_report (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.27.department_transfer` — list, account_choices, show, create, confirm, reject, withdraw, reverse (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.28.plan_result` — result, open_items, open_item_create, open_item_update, open_item_delete, resolutions, resolution_create, resolution_update, resolution_delete (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.29.procedure_doc` — show, version, save (lesen, ändern) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.30.audit_export` — list, create, download (lesen, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
-- `cai.finance.31.finance_views` — receipt_inbox, receipt_scan, event, event_reconciliation, series_comparison, department_history, link_options, event_links, event_link_view, location_links, analysis_ranking, analysis_target, object (lesen) · Scopes: `finance.read`
+- `cai.finance.31.finance_views` — auction_show, receipt_inbox, receipt_scan, event, event_reconciliation, series_comparison, department_history, link_options, event_links, event_link_view, location_links, analysis_ranking, analysis_target, object (lesen) · Scopes: `finance.read`
 - `cai.finance.32.investment_plan` — list, create, show, update, delete, dashboard, feasibility, funding_summary, loan_details (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.33.investment_item` — list, create, update, delete (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`
 - `cai.finance.34.investment_funding` — list, create, update, delete, loan_show, loan_create, loan_update (lesen, ändern, ändern mit Bestätigung) · Scopes: `finance.read`, `finance.write`

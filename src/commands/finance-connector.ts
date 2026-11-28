@@ -250,7 +250,7 @@ const READ_OPERATIONS = new Set([
   // buchhaltung-14-02
   "transfers", "transfer_show",
   // buchhaltung-10-01/-04
-  "link_options", "event_links", "event_link_view", "location_links",
+  "link_options", "event_links", "event_link_view", "location_links", "auction_show",
   // buchhaltung-10-05
   "analysis_ranking", "analysis_target",
   // belegerfassung-01/-03
@@ -534,4 +534,26 @@ export async function runHub(client: CliConnectorClient, area: string | undefine
     return { written: opts.out, size_bytes: bytes.byteLength, sha256: sha };
   }
   return result;
+}
+
+const auctionKinds: Record<string, string> = {
+  sachspende: "lot", geldspende: "donation", gebot: "bid", zurücknehmen: "withdraw",
+  zuschlag: "award", zurückschenken: "return", mitnehmen: "take", zahlung: "payment",
+};
+
+export async function runAuction(client: CliConnectorClient, action: string | undefined, opts: FinanceCommandOpts): Promise<JsonObject> {
+  if (!opts.event) throw new Error("Bitte den Vereinstermin mit --event angeben.");
+  if (action === "stand") return callFinance(client, FINANCE_AREAS.views!, { operation: "auction_show", event_id: opts.event }, { write: false });
+  const kind = action && Object.hasOwn(auctionKinds, action) ? auctionKinds[action] : undefined;
+  if (!kind) throw new Error("Versteigerung: stand, " + Object.keys(auctionKinds).join(", "));
+  if (opts.stand === undefined || !/^\d+$/.test(String(opts.stand))) throw new Error("--stand verlangt die Version aus dem letzten Abruf.");
+  if (!opts.idempotencyKey) throw new Error("--idempotency-key verlangt eine UUID je Eingabe. Für Wiederholungen dieselbe UUID verwenden.");
+  const data = compact({
+    kind, request_id: opts.idempotencyKey, expected_version: Number(opts.stand),
+    lot_id: opts.los, award_id: opts.zuschlag, name: opts.name === undefined ? undefined : String(opts.name),
+    person: opts.person === undefined ? undefined : String(opts.person),
+    date: opts.date, amount_cents: cents(opts.revenue, "--revenue"), existing_entry_id: opts.entry, account_id: opts.account,
+  });
+  return callFinance(client, FINANCE_AREAS.entry!, { operation: "auction_record", event_id: opts.event, data },
+    { write: true, key: opts.idempotencyKey, confirm: opts.confirm !== false });
 }
